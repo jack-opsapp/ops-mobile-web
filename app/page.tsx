@@ -42,7 +42,12 @@ export default function LandingPage() {
 
   const handleGetStarted = () => {
     setTutorialStartTime(Date.now())
-    router.push('/tutorial/1')
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('t') === 'interactive') {
+      router.push('/tutorial-interactive')
+    } else {
+      router.push('/tutorial/1')
+    }
   }
 
   return (
