@@ -11,6 +11,7 @@ import {
   isJobBoardAnimationPhase,
 } from '@/lib/tutorial/TutorialPhase'
 import type { DemoProject } from '@/lib/constants/demo-data'
+import { DEMO_TASK_TYPES } from '@/lib/constants/demo-data'
 
 import { MockJobBoard } from './MockJobBoard'
 import { MockCalendar } from './MockCalendar'
@@ -66,12 +67,23 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
   const showProjectForm = isProjectFormPhase(phase)
   const showTaskForm = isTaskFormPhase(phase)
   const hasTask = !!selectedTaskType && !!selectedCrew && !!selectedDate
+
+  // Build the added task object for project form display
+  const addedTask = hasTask ? {
+    type: selectedTaskType!,
+    typeColor: DEMO_TASK_TYPES.find(t => t.name === selectedTaskType)?.color || '#59779F',
+    crew: selectedCrew!,
+    date: selectedDate!,
+  } : null
+
   const showSummary = phase === 'tutorialSummary'
   const showCompleted = phase === 'completed'
 
   // Active tab for tab bar
   const activeTab = isCalendarPhase(phase) ? 'schedule' as const : 'jobs' as const
-  const tabBarDimmed = isJobBoardAnimationPhase(phase) || showProjectForm
+
+  // Dim content behind forms
+  const contentDimmed = showProjectForm || showTaskForm
 
   // Handle phase completion
   if (showCompleted) {
@@ -79,27 +91,27 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
     return null
   }
 
-  // Handle FAB interactions
+  // --- Interaction handlers ---
+
   const handleFABTap = () => {
-    // jobBoardIntro → fabTap
+    // jobBoardIntro -> fabTap
     advance()
   }
 
   const handleCreateProject = () => {
-    // fabTap → projectFormClient
+    // fabTap -> projectFormClient
     advance()
   }
 
-  // Handle project form interactions
   const handleSelectClient = (name: string) => {
     setSelectedClient(name)
-    // projectFormClient → projectFormName
+    // projectFormClient -> projectFormName
     setTimeout(() => advance(), 300)
   }
 
   const handleProjectNameChange = (name: string) => {
     setProjectName(name)
-    // Debounce: advance after user types something
+    // Debounce: advance after user types 3+ chars
     if (name.length >= 3) {
       setTimeout(() => {
         if (phase === 'projectFormName') advance()
@@ -108,16 +120,15 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
   }
 
   const handleAddTask = () => {
-    // projectFormAddTask → taskFormType
+    // projectFormAddTask -> taskFormType
     advance()
   }
 
   const handleCreate = () => {
-    // projectFormComplete → dragToAccepted
+    // projectFormComplete -> dragToAccepted
     advance()
   }
 
-  // Handle task form interactions
   const handleSelectType = (type: string) => {
     setSelectedTaskType(type)
     setTimeout(() => advance(), 300)
@@ -134,127 +145,161 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
   }
 
   const handleTaskDone = () => {
-    // taskFormDone → projectFormComplete
+    // taskFormDone -> projectFormComplete
     advance()
   }
 
-  // Handle calendar interactions
   const handleMonthTap = () => {
-    // calendarMonthPrompt → calendarMonth
+    // calendarMonthPrompt -> calendarMonth
     advance()
   }
 
-  // Continue button handler
   const handleContinue = () => {
     advance()
   }
 
+  // Determine continue/done button variant
+  const continueVariant = phase === 'tutorialSummary' ? 'fullWidth' as const : 'inline' as const
+
   return (
     <div
-      className="relative w-full h-full overflow-hidden bg-ops-background flex flex-col"
+      className="relative w-full h-full overflow-hidden bg-ops-background"
       style={{ touchAction: 'none' }}
     >
-      {/* Layer 6: Tooltip (top, z-60) */}
-      <div style={{ zIndex: 60, position: 'relative' }}>
-        <CollapsibleTooltip
-          title={phaseConfig.tooltipText}
-          description={phaseConfig.tooltipDescription}
-          phaseKey={phase}
-        />
-      </div>
+      {/* Layer 1: Mock app content (z-0) */}
+      <div
+        className="absolute inset-0 flex flex-col transition-opacity duration-300"
+        style={{ zIndex: 0, opacity: contentDimmed ? 0.3 : 1 }}
+      >
+        {/* Content fills space above tab bar */}
+        <div className="flex-1 overflow-hidden">
+          {showJobBoard && (
+            <MockJobBoard
+              phase={phase}
+              userProject={
+                phase === 'dragToAccepted' ||
+                phase === 'projectListStatusDemo' ||
+                phase === 'projectListSwipe' ||
+                phase === 'closedProjectsScroll'
+                  ? userProject
+                  : null
+              }
+            />
+          )}
 
-      {/* Layer 1: Mock app content */}
-      <div className="flex-1 relative overflow-hidden">
-        {showJobBoard && (
-          <MockJobBoard
-            phase={phase}
-            userProject={
-              // Only show user project on job board after form is complete
-              phase === 'dragToAccepted' ||
-              phase === 'projectListStatusDemo' ||
-              phase === 'projectListSwipe' ||
-              phase === 'closedProjectsScroll'
-                ? userProject
-                : null
-            }
-          />
-        )}
+          {showCalendar && (
+            <MockCalendar
+              phase={phase}
+              viewMode={phase === 'calendarMonth' ? 'month' : 'week'}
+              onToggleMonth={handleMonthTap}
+              userProject={
+                userProject
+                  ? {
+                      name: userProject.name,
+                      clientName: userProject.clientName,
+                      taskType: userProject.taskType,
+                      taskTypeColor: userProject.taskTypeColor,
+                      date: selectedDate || 'Today',
+                    }
+                  : undefined
+              }
+            />
+          )}
 
-        {showCalendar && (
-          <MockCalendar
-            phase={phase}
-            onMonthTap={handleMonthTap}
-          />
-        )}
-
-        {showSummary && (
-          <div className="flex-1 flex items-center justify-center px-6">
-            <div className="text-center">
-              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-ops-accent/10 border border-ops-accent/30 flex items-center justify-center">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-ops-accent">
-                  <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+          {showSummary && (
+            <div className="flex-1 flex items-center justify-center px-6 h-full">
+              <div className="text-center">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-ops-accent/10 border border-ops-accent/30 flex items-center justify-center">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-ops-accent">
+                    <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Layer 2: Blocking overlay (z-20) */}
+      {/* Layer 2: Tab bar (z-10) - always visible at bottom */}
+      <div className="absolute bottom-0 left-0 right-0" style={{ zIndex: 10 }}>
+        <MockTabBar activeTab={activeTab} />
+      </div>
+
+      {/* Layer 3: Blocking overlay (z-20) - only during jobBoardIntro */}
       {showBlockingOverlay && (
         <div
-          className="absolute inset-0 bg-black/60"
+          className="absolute inset-0 bg-black/60 transition-opacity duration-300"
           style={{ zIndex: 20 }}
         />
       )}
 
-      {/* Layer 3: FAB (z-30, above blocking overlay) */}
+      {/* Layer 4: FAB (z-30, above blocking overlay) */}
       {showFAB && (
-        <MockFAB
-          phase={phase}
-          onFABTap={handleFABTap}
-          onCreateProject={handleCreateProject}
-        />
+        <div style={{ zIndex: 30 }}>
+          <MockFAB
+            phase={phase}
+            onFABTap={handleFABTap}
+            onCreateProject={handleCreateProject}
+          />
+        </div>
       )}
 
-      {/* Layer 5: Form sheets (z-50+) */}
+      {/* Layer 5: Form sheets (z-40) - slide up from bottom */}
       {showProjectForm && (
-        <MockProjectForm
-          phase={phase}
-          visible
-          selectedClient={selectedClient}
-          projectName={projectName}
-          hasTask={hasTask}
-          onSelectClient={handleSelectClient}
-          onProjectNameChange={handleProjectNameChange}
-          onAddTask={handleAddTask}
-          onCreate={handleCreate}
-        />
+        <div
+          className="absolute inset-0"
+          style={{ zIndex: 40 }}
+        >
+          <MockProjectForm
+            phase={phase}
+            isVisible
+            selectedClient={selectedClient}
+            projectName={projectName}
+            addedTask={addedTask}
+            onSelectClient={handleSelectClient}
+            onChangeProjectName={handleProjectNameChange}
+            onAddTask={handleAddTask}
+            onCreate={handleCreate}
+          />
+        </div>
       )}
 
       {showTaskForm && (
-        <MockTaskForm
-          phase={phase}
-          visible
-          selectedType={selectedTaskType}
-          selectedCrew={selectedCrew}
-          selectedDate={selectedDate}
-          onSelectType={handleSelectType}
-          onSelectCrew={handleSelectCrew}
-          onSelectDate={handleSelectDate}
-          onDone={handleTaskDone}
-        />
+        <div
+          className="absolute inset-0"
+          style={{ zIndex: 45 }}
+        >
+          <MockTaskForm
+            phase={phase}
+            visible
+            selectedType={selectedTaskType}
+            selectedCrew={selectedCrew}
+            selectedDate={selectedDate}
+            onSelectType={handleSelectType}
+            onSelectCrew={handleSelectCrew}
+            onSelectDate={handleSelectDate}
+            onDone={handleTaskDone}
+          />
+        </div>
       )}
 
-      {/* Layer 7: Continue/Done button (z-70) */}
-      <ContinueButton
-        label={phaseConfig.continueLabel || 'CONTINUE'}
-        onClick={handleContinue}
-        visible={phaseConfig.showContinueButton}
-      />
+      {/* Layer 6: Tooltip (z-50, always on top of content) */}
+      <div className="absolute top-0 left-0 right-0" style={{ zIndex: 50 }}>
+        <CollapsibleTooltip
+          text={phaseConfig.tooltipText}
+          description={phaseConfig.tooltipDescription}
+          phase={phase}
+        />
+      </div>
 
-      {/* Tab bar (bottom, visual only) */}
-      <MockTabBar activeTab={activeTab} dimmed={tabBarDimmed} />
+      {/* Layer 7: Continue/Done button (z-60) */}
+      {phaseConfig.showContinueButton && (
+        <ContinueButton
+          label={phaseConfig.continueLabel || 'CONTINUE'}
+          onClick={handleContinue}
+          variant={continueVariant}
+        />
+      )}
     </div>
   )
 }

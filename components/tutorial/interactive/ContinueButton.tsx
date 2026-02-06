@@ -1,21 +1,52 @@
 'use client'
 
 interface ContinueButtonProps {
-  label: string
+  label: string // "CONTINUE" or "DONE"
   onClick: () => void
-  visible: boolean
+  variant?: 'inline' | 'fullWidth'
 }
 
-export function ContinueButton({ label, onClick, visible }: ContinueButtonProps) {
-  if (!visible) return null
+export function ContinueButton({ label, onClick, variant = 'inline' }: ContinueButtonProps) {
+  if (variant === 'fullWidth') {
+    // DONE button: full width, matching iOS tutorialSummary style
+    return (
+      <div className="absolute bottom-0 left-0 right-0 flex justify-center px-10 pb-[120px]" style={{ zIndex: 60 }}>
+        <button
+          onClick={onClick}
+          className="w-full bg-white text-black font-mohave font-medium text-[16px] tracking-wide rounded-[5px] animate-fade-in
+                     hover:bg-gray-100 active:bg-gray-200 transition-colors duration-150"
+          style={{
+            paddingTop: '18px',
+            paddingBottom: '18px',
+            boxShadow: '0 0 20px rgba(0,0,0,0.8), 0 8px 40px rgba(0,0,0,0.6), 0 12px 60px rgba(0,0,0,0.4)',
+          }}
+        >
+          {label}
+        </button>
+      </div>
+    )
+  }
 
+  // CONTINUE button: inline, centered, above tab bar
   return (
-    <div className="absolute bottom-8 left-0 right-0 flex justify-center px-6" style={{ zIndex: 70 }}>
+    <div className="absolute bottom-[100px] left-0 right-0 flex justify-center" style={{ zIndex: 60 }}>
       <button
         onClick={onClick}
-        className="h-14 px-12 rounded-ops font-mohave font-semibold text-ops-body tracking-wide bg-white text-black hover:bg-gray-200 active:bg-gray-300 transition-all duration-200 animate-fade-in w-full max-w-sm"
+        className="flex items-center gap-2 bg-white text-black font-mohave font-medium text-[16px] tracking-wide rounded-[8px] animate-fade-in
+                   hover:bg-gray-100 active:bg-gray-200 transition-colors duration-150"
+        style={{
+          paddingLeft: '24px',
+          paddingRight: '24px',
+          paddingTop: '12px',
+          paddingBottom: '12px',
+          boxShadow: '0 0 20px rgba(0,0,0,0.8), 0 8px 40px rgba(0,0,0,0.6), 0 12px 60px rgba(0,0,0,0.4)',
+        }}
       >
-        {label}
+        <span>{label}</span>
+        {/* arrow.right icon */}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-black">
+          <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </button>
     </div>
   )

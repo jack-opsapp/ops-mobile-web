@@ -1,14 +1,15 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import type { TutorialPhase } from '@/lib/tutorial/TutorialPhase'
 
 interface CollapsibleTooltipProps {
-  title: string
+  text: string
   description: string
-  phaseKey: string // used to retrigger typewriter on phase change
+  phase: TutorialPhase
 }
 
-export function CollapsibleTooltip({ title, description, phaseKey }: CollapsibleTooltipProps) {
+export function CollapsibleTooltip({ text, description, phase }: CollapsibleTooltipProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [displayTitle, setDisplayTitle] = useState('')
   const [displayDesc, setDisplayDesc] = useState('')
@@ -28,14 +29,14 @@ export function CollapsibleTooltip({ title, description, phaseKey }: Collapsible
     if (titleTimerRef.current) clearInterval(titleTimerRef.current)
     if (descTimerRef.current) clearInterval(descTimerRef.current)
 
-    if (!title) return
+    if (!text) return
 
-    // Title typewriter: 20ms per char
+    // Title typewriter: 20ms per char (matching iOS 0.02s/char)
     let ti = 0
     titleTimerRef.current = setInterval(() => {
       ti++
-      setDisplayTitle(title.slice(0, ti))
-      if (ti >= title.length) {
+      setDisplayTitle(text.slice(0, ti))
+      if (ti >= text.length) {
         if (titleTimerRef.current) clearInterval(titleTimerRef.current)
         setTitleDone(true)
       }
@@ -45,9 +46,9 @@ export function CollapsibleTooltip({ title, description, phaseKey }: Collapsible
       if (titleTimerRef.current) clearInterval(titleTimerRef.current)
       if (descTimerRef.current) clearInterval(descTimerRef.current)
     }
-  }, [phaseKey, title])
+  }, [phase, text])
 
-  // Start description after title finishes: 15ms per char
+  // Start description after title finishes: 15ms per char (matching iOS 0.015s/char)
   useEffect(() => {
     if (!titleDone || !description) return
 
@@ -66,59 +67,79 @@ export function CollapsibleTooltip({ title, description, phaseKey }: Collapsible
     }
   }, [titleDone, description])
 
-  if (!title) return null
+  if (!text) return null
 
   return (
     <div
-      className="mx-4 mt-4 rounded-ops overflow-hidden transition-all duration-300 cursor-pointer select-none"
+      className="mx-4 mt-4 rounded-ops cursor-pointer select-none transition-all duration-300"
       style={{
         background: '#0D0D0D',
-        border: '1px solid rgba(89, 119, 159, 0.4)',
+        border: '1px solid rgba(89, 119, 159, 0.3)',
         boxShadow: '0 0 20px rgba(0,0,0,0.8), 0 8px 40px rgba(0,0,0,0.6), 0 12px 60px rgba(0,0,0,0.4)',
       }}
       onClick={() => setCollapsed(!collapsed)}
     >
-      <div className="px-4 py-3 flex items-start gap-3">
-        {/* Lightbulb icon */}
-        <div className="flex-shrink-0 mt-0.5">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-ops-accent">
-            <path d="M9 21h6M12 3a6 6 0 0 0-4 10.5V17h8v-3.5A6 6 0 0 0 12 3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+      {collapsed ? (
+        /* Collapsed state */
+        <div className="flex items-center gap-3 px-4 py-2.5">
+          {/* Lightbulb icon */}
+          <div className="flex-shrink-0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#59779F">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17a1 1 0 001 1h6a1 1 0 001-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zM9 21a1 1 0 001 1h4a1 1 0 001-1v-1H9v1z" />
+            </svg>
+          </div>
+
+          {/* Hint label */}
+          <span className="font-kosugi text-[14px] font-bold text-ops-text-secondary uppercase tracking-wide">
+            Tap for hint
+          </span>
+
+          {/* Chevron down */}
+          <div className="flex-shrink-0 ml-auto">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-ops-text-secondary">
+              <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
         </div>
+      ) : (
+        /* Expanded state */
+        <div className="flex items-start gap-3 px-4 py-3.5">
+          {/* Lightbulb icon */}
+          <div className="flex-shrink-0 mt-0.5">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#59779F">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17a1 1 0 001 1h6a1 1 0 001-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zM9 21a1 1 0 001 1h4a1 1 0 001-1v-1H9v1z" />
+            </svg>
+          </div>
 
-        <div className="flex-1 min-w-0">
-          {/* Title */}
-          <p className="font-mohave font-bold text-[16px] text-white leading-tight">
-            {displayTitle}
-            {!titleDone && (
-              <span className="animate-cursor-blink text-ops-accent">|</span>
-            )}
-          </p>
-
-          {/* Description */}
-          {!collapsed && titleDone && description && (
-            <p className="font-kosugi text-[13px] text-ops-text-secondary leading-snug mt-1.5">
-              {displayDesc}
-              {!descDone && (
+          {/* Text content */}
+          <div className="flex-1 min-w-0">
+            {/* Title: bodyBold (Mohave Medium 16pt) */}
+            <p className="font-mohave font-medium text-[16px] text-white leading-tight">
+              {displayTitle}
+              {!titleDone && (
                 <span className="animate-cursor-blink text-ops-accent">|</span>
               )}
             </p>
-          )}
-        </div>
 
-        {/* Collapse indicator */}
-        <div className="flex-shrink-0 mt-1">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            className={`text-ops-text-tertiary transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`}
-          >
-            <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+            {/* Description: caption (Kosugi 14pt), secondaryText */}
+            {titleDone && description && (
+              <p className="font-kosugi text-[14px] text-ops-text-secondary leading-snug mt-1.5">
+                {displayDesc}
+                {!descDone && (
+                  <span className="animate-cursor-blink text-ops-accent">|</span>
+                )}
+              </p>
+            )}
+          </div>
+
+          {/* Chevron up */}
+          <div className="flex-shrink-0 mt-1">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-ops-text-secondary">
+              <path d="M18 15l-6-6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

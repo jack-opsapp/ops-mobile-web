@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { TutorialPhase } from '@/lib/tutorial/TutorialPhase'
 
 interface MockFABProps {
@@ -9,14 +9,103 @@ interface MockFABProps {
   onCreateProject: () => void
 }
 
+// Menu items config: order matches iOS (bottom to top in the VStack above FAB)
+// In the iOS code, the VStack renders: New Task Type, Create Task, Create Project, Create Client
+// With stagger delays: 0.8, 0.6, 0.4, 0.2 respectively
+// Visually bottom-to-top from FAB: Create Client (0.2), Create Project (0.4), Create Task (0.6), New Task Type (0.8)
+const MENU_ITEMS = [
+  {
+    id: 'taskType',
+    label: 'NEW TASK TYPE',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
+        <line x1="7" y1="7" x2="7.01" y2="7" />
+      </svg>
+    ),
+    dimmedInTutorial: true,
+    delay: 0.6,
+  },
+  {
+    id: 'createTask',
+    label: 'CREATE TASK',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 11l3 3L22 4" />
+        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+      </svg>
+    ),
+    dimmedInTutorial: true,
+    delay: 0.4,
+  },
+  {
+    id: 'createProject',
+    label: 'CREATE PROJECT',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+      </svg>
+    ),
+    dimmedInTutorial: false,
+    delay: 0.2,
+  },
+  {
+    id: 'createClient',
+    label: 'CREATE CLIENT',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+        <line x1="18" y1="8" x2="18" y2="14" />
+        <line x1="15" y1="11" x2="21" y2="11" />
+      </svg>
+    ),
+    dimmedInTutorial: true,
+    delay: 0.0,
+  },
+]
+
 export function MockFAB({ phase, onFABTap, onCreateProject }: MockFABProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [pulsing, setPulsing] = useState(false)
+  const [itemsVisible, setItemsVisible] = useState<boolean[]>(new Array(MENU_ITEMS.length).fill(false))
+  const staggerTimeouts = useRef<NodeJS.Timeout[]>([])
 
-  // Pulsing on jobBoardIntro
+  // Sync state to phase
   useEffect(() => {
     setPulsing(phase === 'jobBoardIntro')
-    setMenuOpen(phase === 'fabTap')
+
+    if (phase === 'fabTap') {
+      setMenuOpen(true)
+      // Stagger menu items in from bottom (last item first, matching iOS delay order)
+      // Items render top-to-bottom: [taskType(0.6), createTask(0.4), createProject(0.2), createClient(0.0)]
+      // We reveal from bottom: createClient first, then createProject, then createTask, then taskType
+      const reversed = [...MENU_ITEMS].reverse()
+      staggerTimeouts.current.forEach(clearTimeout)
+      staggerTimeouts.current = []
+      setItemsVisible(new Array(MENU_ITEMS.length).fill(false))
+
+      reversed.forEach((item, reverseIdx) => {
+        const actualIdx = MENU_ITEMS.length - 1 - reverseIdx
+        const timeout = setTimeout(() => {
+          setItemsVisible(prev => {
+            const next = [...prev]
+            next[actualIdx] = true
+            return next
+          })
+        }, reverseIdx * 150) // 150ms stagger between each
+        staggerTimeouts.current.push(timeout)
+      })
+    } else {
+      setMenuOpen(false)
+      setItemsVisible(new Array(MENU_ITEMS.length).fill(false))
+      staggerTimeouts.current.forEach(clearTimeout)
+      staggerTimeouts.current = []
+    }
+
+    return () => {
+      staggerTimeouts.current.forEach(clearTimeout)
+    }
   }, [phase])
 
   const handleFABClick = () => {
@@ -31,65 +120,172 @@ export function MockFAB({ phase, onFABTap, onCreateProject }: MockFABProps) {
     }
   }
 
+  // Only visible during jobBoardIntro and fabTap
   if (phase !== 'jobBoardIntro' && phase !== 'fabTap') return null
 
+  const isFABDisabled = phase === 'fabTap'
+
   return (
-    <div className="absolute bottom-20 right-4" style={{ zIndex: 30 }}>
-      {/* Menu items */}
+    <>
+      {/* Gradient overlay when menu is open */}
       {menuOpen && (
-        <div className="mb-3 space-y-2 animate-fade-in">
-          <button
-            onClick={handleCreateProject}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-ops bg-ops-card border border-ops-accent/40 hover:border-ops-accent transition-colors w-full"
-            style={{
-              boxShadow: '0 0 12px rgba(89, 119, 159, 0.3)',
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-ops-accent">
-              <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className="font-mohave font-semibold text-[13px] text-white">Create Project</span>
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-ops bg-ops-card border border-white/10 opacity-40 w-full pointer-events-none">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-ops-text-tertiary">
-              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" strokeWidth="1.5" />
-            </svg>
-            <span className="font-mohave text-[13px] text-ops-text-tertiary">Create Task</span>
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-ops bg-ops-card border border-white/10 opacity-40 w-full pointer-events-none">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-ops-text-tertiary">
-              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor" strokeWidth="1.5" />
-            </svg>
-            <span className="font-mohave text-[13px] text-ops-text-tertiary">Add Client</span>
-          </button>
-        </div>
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            zIndex: 25,
+            background: 'linear-gradient(to left, rgba(0,0,0,0.85) 0%, transparent 100%)',
+          }}
+        />
       )}
 
-      {/* FAB button */}
-      <button
-        onClick={handleFABClick}
-        className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 ml-auto ${
-          menuOpen ? 'bg-ops-text-tertiary rotate-45' : 'bg-ops-accent'
-        }`}
+      {/* FAB container - positioned bottom-right */}
+      <div
+        className="absolute"
         style={{
-          boxShadow: pulsing
-            ? '0 0 0 0 rgba(89, 119, 159, 0.7)'
-            : '0 4px 12px rgba(0,0,0,0.4)',
-          animation: pulsing ? 'fab-pulse 1.5s ease-in-out infinite' : 'none',
+          zIndex: 30,
+          bottom: '140px',
+          right: '36px',
         }}
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white">
-          <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-        </svg>
-      </button>
+        {/* Menu items - stacked above FAB, right-aligned */}
+        {menuOpen && (
+          <div
+            className="flex flex-col items-end mb-6"
+            style={{ gap: '24px' }}
+          >
+            {MENU_ITEMS.map((item, idx) => {
+              const isCreateProject = item.id === 'createProject'
+              const isDimmed = item.dimmedInTutorial && phase === 'fabTap'
+              const isVisible = itemsVisible[idx]
 
+              return (
+                <button
+                  key={item.id}
+                  onClick={isCreateProject ? handleCreateProject : undefined}
+                  disabled={!isCreateProject}
+                  className="flex items-center gap-3 transition-all duration-300"
+                  style={{
+                    opacity: isVisible ? (isDimmed ? 0.4 : 1) : 0,
+                    transform: isVisible ? 'translateX(0)' : 'translateX(40px)',
+                    pointerEvents: isCreateProject ? 'auto' : 'none',
+                  }}
+                >
+                  {/* Label */}
+                  <span
+                    className="font-mohave font-medium text-white whitespace-nowrap"
+                    style={{ fontSize: '16px', letterSpacing: '0.5px' }}
+                  >
+                    {item.label}
+                  </span>
+
+                  {/* Circle icon */}
+                  <div
+                    className="flex items-center justify-center rounded-full shrink-0"
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      color: '#AAAAAA',
+                      border: '1px solid #AAAAAA',
+                    }}
+                  >
+                    {item.icon}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Main FAB button */}
+        <div className="flex justify-end">
+          <button
+            onClick={handleFABClick}
+            disabled={isFABDisabled}
+            className="relative flex items-center justify-center rounded-full transition-all duration-300"
+            style={{
+              width: '64px',
+              height: '64px',
+              background: isFABDisabled
+                ? 'rgba(0,0,0,0.8)'
+                : 'rgba(30,30,30,0.8)',
+              backdropFilter: isFABDisabled ? 'none' : 'blur(20px)',
+              WebkitBackdropFilter: isFABDisabled ? 'none' : 'blur(20px)',
+              boxShadow: pulsing
+                ? '0 4px 12px rgba(0,0,0,0.3), 0 0 20px rgba(89,119,159,0.4)'
+                : '0 4px 12px rgba(0,0,0,0.3)',
+              border: isFABDisabled
+                ? '2px solid #777777'
+                : '2px solid #FFFFFF',
+              transform: menuOpen ? 'rotate(225deg)' : 'rotate(0deg)',
+            }}
+          >
+            {/* Plus icon */}
+            <svg
+              width="30"
+              height="30"
+              viewBox="0 0 24 24"
+              fill="none"
+              style={{
+                color: isFABDisabled ? '#777777' : '#FFFFFF',
+              }}
+            >
+              <path
+                d="M12 5v14M5 12h14"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+            </svg>
+
+            {/* Pulsing accent border ring (jobBoardIntro only) */}
+            {pulsing && (
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  border: '2px solid #59779F',
+                  animation: 'fab-pulse-ring 1.5s ease-in-out infinite',
+                }}
+              />
+            )}
+
+            {/* Pulsing scale animation (jobBoardIntro only) */}
+            {pulsing && (
+              <div
+                className="absolute rounded-full"
+                style={{
+                  inset: '-4px',
+                  border: '2px solid rgba(89,119,159,0.5)',
+                  animation: 'fab-glow 1.5s ease-in-out infinite',
+                }}
+              />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Keyframe animations */}
       <style jsx>{`
-        @keyframes fab-pulse {
-          0% { box-shadow: 0 0 0 0 rgba(89, 119, 159, 0.7); }
-          70% { box-shadow: 0 0 0 16px rgba(89, 119, 159, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(89, 119, 159, 0); }
+        @keyframes fab-pulse-ring {
+          0%, 100% {
+            opacity: 0.3;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.05);
+          }
+        }
+        @keyframes fab-glow {
+          0%, 100% {
+            opacity: 0;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.6;
+            transform: scale(1.15);
+          }
         }
       `}</style>
-    </div>
+    </>
   )
 }
