@@ -31,13 +31,6 @@ export default function TutorialStepPage() {
     tutorialStartTime,
   } = useOnboardingStore()
 
-  // Variant A: redirect to interactive tutorial
-  useEffect(() => {
-    if (variant === 'a') {
-      router.replace('/tutorial/interactive')
-    }
-  }, [variant, router])
-
   const steps = variant === 'a' ? TUTORIAL_STEPS_A : TUTORIAL_STEPS_B
   const stepIndex = parseInt(params.step as string, 10) - 1
   const step = steps[stepIndex]
@@ -77,11 +70,8 @@ export default function TutorialStepPage() {
     router.push('/tutorial/complete')
   }
 
-  // While redirecting variant A or if step not found
-  if (variant === 'a' || !step) {
-    if (!step && variant !== 'a') {
-      router.push('/tutorial/1')
-    }
+  if (!step) {
+    router.push('/tutorial/1')
     return null
   }
 
