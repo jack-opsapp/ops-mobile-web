@@ -8,9 +8,7 @@ export function useVariant(): Variant {
   const setVariant = useOnboardingStore((s) => s.setVariant)
 
   useEffect(() => {
-    if (variant) return
-
-    // Read from cookie
+    // Always read cookie — it's the source of truth (set by middleware from URL params)
     const cookies = document.cookie.split(';')
     const variantCookie = cookies
       .find((c) => c.trim().startsWith('ops_variant='))
@@ -18,9 +16,11 @@ export function useVariant(): Variant {
       ?.trim()
 
     if (variantCookie === 'a' || variantCookie === 'b') {
-      setVariant(variantCookie)
-    } else {
-      // Fallback: random assignment
+      if (variantCookie !== variant) {
+        setVariant(variantCookie)
+      }
+    } else if (!variant) {
+      // No cookie and no stored variant: random assignment
       setVariant(Math.random() < 0.5 ? 'a' : 'b')
     }
   }, [variant, setVariant])
