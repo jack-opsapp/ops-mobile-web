@@ -113,10 +113,18 @@ export default function InteractiveTutorialPage() {
 
   // Interactive tutorial
   return (
-    <div className="h-screen bg-ops-background overflow-hidden">
-      <TutorialProvider>
-        <TutorialShell onComplete={handleComplete} />
-      </TutorialProvider>
+    <div className="h-screen bg-ops-background overflow-hidden flex items-center justify-center">
+      <div
+        className="relative w-full overflow-hidden"
+        style={{
+          maxHeight: 'min(calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)), 932px)',
+          height: '100%',
+        }}
+      >
+        <TutorialProvider>
+          <TutorialShell onComplete={handleComplete} />
+        </TutorialProvider>
+      </div>
     </div>
   )
 }
