@@ -82,3 +82,9 @@ input:-webkit-autofill:focus {
   -webkit-text-fill-color: #FFFFFF;
   caret-color: #FFFFFF;
 }
+
+/* Tutorial card shimmer animation (iOS UniversalJobBoardCard shimmer) */
+@keyframes cardShimmer {
+  0% { transform: translateX(-100px); }
+  100% { transform: translateX(calc(100vw + 100px)); }
+}

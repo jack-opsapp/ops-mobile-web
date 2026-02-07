@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useRef, useCallback } from 'react'
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import type { TutorialPhase } from '@/lib/tutorial/TutorialPhase'
 
 interface MockCalendarProps {
@@ -184,6 +184,25 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
   }, [activeDay, today, userProject, getEventsForDay])
 
   // =========================================================================
+  // MONTH VIEW EXPANSION ANIMATION (simulates iOS pinch-to-expand)
+  // =========================================================================
+
+  const [monthExpanded, setMonthExpanded] = useState(false)
+
+  useEffect(() => {
+    if (phase === 'calendarMonth' && isMonthView) {
+      // Auto-animate expansion after a short delay
+      const timer = setTimeout(() => setMonthExpanded(true), 800)
+      return () => clearTimeout(timer)
+    } else {
+      setMonthExpanded(false)
+    }
+  }, [phase, isMonthView])
+
+  // Cell height: collapsed ~44px (aspect-square), expanded ~120px
+  const monthCellHeight = monthExpanded ? 120 : undefined // undefined = aspect-square
+
+  // =========================================================================
   // SWIPE GESTURE for week day row
   // =========================================================================
 
@@ -312,8 +331,11 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
             </span>
           </div>
 
-          {/* Card container for month grid */}
-          <div className="rounded-xl p-3" style={{ background: '#0D0D0D' }}>
+          {/* Card container for month grid — scrollable when expanded */}
+          <div
+            className="rounded-xl p-3"
+            style={{ background: '#0D0D0D', overflowY: monthExpanded ? 'auto' : 'hidden', maxHeight: monthExpanded ? 'calc(100vh - 220px)' : 'none' }}
+          >
             {/* Day of week headers (Mon-Sun) */}
             <div className="grid grid-cols-7 mb-1">
               {dayAbbreviations.map((abbr, i) => (
@@ -327,7 +349,14 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
             <div className="grid grid-cols-7 gap-px">
               {/* Empty cells for offset */}
               {Array.from({ length: monthData.startDay }, (_, i) => (
-                <div key={`empty-${i}`} className="aspect-square" />
+                <div
+                  key={`empty-${i}`}
+                  style={{
+                    height: monthExpanded ? monthCellHeight : undefined,
+                    transition: 'height 0.8s ease-in-out',
+                  }}
+                  className={monthExpanded ? '' : 'aspect-square'}
+                />
               ))}
 
               {/* Day cells */}
@@ -343,14 +372,23 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                 const displayBars = allColors.slice(0, 3)
                 const extraCount = allColors.length - 3
 
+                // Demo event names for expanded view
+                const eventNames = [
+                  'Coating', 'Paving', 'Cleaning', 'Sealing', 'Demolition', 'Installation', 'Diagnostic'
+                ]
+
                 return (
                   <div
                     key={dayNum}
-                    className="aspect-square flex flex-col items-center justify-center relative px-0.5"
+                    className={`flex flex-col items-center relative px-0.5 ${monthExpanded ? 'justify-start pt-1' : 'justify-center aspect-square'}`}
+                    style={{
+                      height: monthExpanded ? monthCellHeight : undefined,
+                      transition: 'height 0.8s ease-in-out',
+                    }}
                   >
                     {/* Today highlight circle */}
                     {isToday && (
-                      <div className="absolute rounded-full bg-ops-accent opacity-50" style={{ width: 24, height: 24 }} />
+                      <div className="absolute rounded-full bg-ops-accent opacity-50" style={{ width: 24, height: 24, top: monthExpanded ? 0 : '50%', left: '50%', transform: monthExpanded ? 'translateX(-50%)' : 'translate(-50%, -50%)', transition: 'top 0.8s ease-in-out' }} />
                     )}
                     <span
                       className={`font-mohave text-[12px] relative z-10 ${
@@ -359,21 +397,29 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                     >
                       {dayNum}
                     </span>
-                    {/* Event bars instead of dots */}
+                    {/* Event bars — expand to show titles when expanded */}
                     {displayBars.length > 0 && (
-                      <div className="flex flex-col items-center gap-[2px] mt-[2px] relative z-10 w-full px-[10%]">
+                      <div className="flex flex-col items-center gap-[2px] mt-[2px] relative z-10 w-full px-[4%]" style={{ transition: 'all 0.8s ease-in-out' }}>
                         {displayBars.map((color, j) => (
                           <div
                             key={j}
-                            className="rounded-sm"
+                            className="rounded-sm w-full overflow-hidden"
                             style={{
                               backgroundColor: color,
-                              height: 10,
-                              width: '80%',
-                              minWidth: 8,
-                              opacity: 0.5,
+                              height: monthExpanded ? 28 : 10,
+                              opacity: monthExpanded ? 0.7 : 0.5,
+                              transition: 'height 0.8s ease-in-out, opacity 0.8s ease-in-out',
+                              display: 'flex',
+                              alignItems: 'center',
+                              paddingLeft: monthExpanded ? 3 : 0,
                             }}
-                          />
+                          >
+                            {monthExpanded && (
+                              <span className="font-kosugi text-[7px] text-white truncate leading-none" style={{ opacity: 1 }}>
+                                {userProject && isToday && j === 0 ? userProject.name.slice(0, 8) : eventNames[(dayNum + j) % eventNames.length].slice(0, 8)}
+                              </span>
+                            )}
+                          </div>
                         ))}
                       </div>
                     )}

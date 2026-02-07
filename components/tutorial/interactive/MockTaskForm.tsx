@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { DEMO_TASK_TYPES, DEMO_CREW, DEMO_DATE_OPTIONS } from '@/lib/constants/demo-data'
+import { DEMO_TASK_TYPES, DEMO_CREW } from '@/lib/constants/demo-data'
 import type { TutorialPhase } from '@/lib/tutorial/TutorialPhase'
 
 interface MockTaskFormProps {
@@ -29,6 +29,9 @@ export function MockTaskForm({
 }: MockTaskFormProps) {
   const [showTypeDropdown, setShowTypeDropdown] = useState(false)
   const [showCrewList, setShowCrewList] = useState(false)
+  const [showDateSheet, setShowDateSheet] = useState(false)
+  const [dateStartDate, setDateStartDate] = useState<number | null>(null)
+  const [dateEndDate, setDateEndDate] = useState<number | null>(null)
 
   // Derive selected task type object from name
   const selectedTaskTypeObj = selectedType
@@ -378,13 +381,25 @@ export function MockTaskForm({
                 >
                   {selectedCrew ? (
                     <div className="flex items-center gap-2">
-                      {/* Simple avatar circle */}
-                      <div
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mohave font-bold text-white"
-                        style={{ background: '#59779F' }}
-                      >
-                        {selectedCrew.charAt(0)}
-                      </div>
+                      {/* Avatar circle - stroke only with 2-letter initials */}
+                      {(() => {
+                        const crewMember = DEMO_CREW.find(c => c.short === selectedCrew)
+                        const initials = crewMember
+                          ? `${crewMember.firstName.charAt(0)}${crewMember.lastName.charAt(0)}`
+                          : selectedCrew.charAt(0)
+                        return (
+                          <div
+                            className="w-6 h-6 rounded-full flex items-center justify-center font-mohave font-bold"
+                            style={{
+                              border: '2px solid #59779F',
+                              color: '#59779F',
+                              fontSize: 24 * 0.4,
+                            }}
+                          >
+                            {initials}
+                          </div>
+                        )
+                      })()}
                       <span className="font-mohave text-[16px] text-white">
                         {selectedCrew}
                       </span>
@@ -434,12 +449,18 @@ export function MockTaskForm({
                         )}
                       </div>
 
-                      {/* Avatar */}
+                      {/* Avatar - stroke circle with 2-letter initials */}
                       <div
-                        className="rounded-full flex items-center justify-center text-[13px] font-mohave font-bold text-white flex-shrink-0"
-                        style={{ background: '#59779F', width: 40, height: 40 }}
+                        className="rounded-full flex items-center justify-center font-mohave font-bold flex-shrink-0"
+                        style={{
+                          width: 40,
+                          height: 40,
+                          border: '2px solid #59779F',
+                          color: '#59779F',
+                          fontSize: 40 * 0.4,
+                        }}
                       >
-                        {crew.short.charAt(0)}
+                        {`${crew.firstName.charAt(0)}${crew.lastName.charAt(0)}`}
                       </div>
 
                       {/* Name */}
@@ -473,54 +494,38 @@ export function MockTaskForm({
                 DATES
               </span>
 
-              {/* Date display / tap target */}
-              <div
-                className="flex items-center justify-between px-4 py-3 mb-2"
-                style={{
-                  borderRadius: '5px',
-                  border: isFieldActive('date')
-                    ? '2px solid #59779F'
-                    : '1px solid rgba(255,255,255,0.1)',
-                  ...(isFieldActive('date') ? {
-                    animation: 'tutorialPulse 1.2s ease-in-out infinite',
-                  } : {}),
-                }}
+              {/* Date display / tap target — opens calendar sheet */}
+              <button
+                onClick={() => isFieldActive('date') && setShowDateSheet(true)}
+                disabled={!isFieldActive('date')}
+                className="w-full"
               >
-                <div className="flex items-center gap-2">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
-                    <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
-                    <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <div
+                  className="flex items-center justify-between px-4 py-3"
+                  style={{
+                    borderRadius: '5px',
+                    border: isFieldActive('date')
+                      ? '2px solid #59779F'
+                      : '1px solid rgba(255,255,255,0.1)',
+                    ...(isFieldActive('date') ? {
+                      animation: 'tutorialPulse 1.2s ease-in-out infinite',
+                    } : {}),
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
+                      <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    <span className={`font-mohave text-[16px] ${selectedDate ? 'text-white' : 'text-[#AAAAAA]'}`}>
+                      {selectedDate ?? 'Tap to Schedule'}
+                    </span>
+                  </div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-[#AAAAAA]">
+                    <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  <span className={`font-mohave text-[16px] ${selectedDate ? 'text-white' : 'text-[#AAAAAA]'}`}>
-                    {selectedDate ?? 'Tap to Schedule'}
-                  </span>
                 </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-[#AAAAAA]">
-                  <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-
-              {/* Date pill buttons */}
-              {isFieldActive('date') && (
-                <div className="flex gap-2">
-                  {DEMO_DATE_OPTIONS.map(opt => (
-                    <button
-                      key={opt.id}
-                      onClick={() => onSelectDate(opt.label)}
-                      className="flex-1 py-2.5 rounded-full font-mohave font-medium text-[13px] transition-all duration-200"
-                      style={{
-                        background: selectedDate === opt.label ? '#59779F' : 'transparent',
-                        color: selectedDate === opt.label ? '#FFFFFF' : '#AAAAAA',
-                        border: selectedDate === opt.label
-                          ? '1px solid #59779F'
-                          : '1px solid rgba(255,255,255,0.2)',
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+              </button>
             </div>
 
             {/* 5. Notes Field (always disabled at 0.5 opacity in tutorial) */}
@@ -568,6 +573,48 @@ export function MockTaskForm({
         )}
       </div>
 
+      {/* Calendar Scheduler Sheet — slides up when date field is tapped */}
+      {showDateSheet && isFieldActive('date') && (
+        <MockCalendarSchedulerSheet
+          startDate={dateStartDate}
+          endDate={dateEndDate}
+          onSelectDate={(dayNum) => {
+            if (dayNum === -1) {
+              // Clear signal
+              setDateStartDate(null)
+              setDateEndDate(null)
+              return
+            }
+            if (dateStartDate === null || (dateStartDate !== null && dateEndDate !== null && dateStartDate !== dateEndDate)) {
+              // First tap or reset after range: set both to same day
+              setDateStartDate(dayNum)
+              setDateEndDate(dayNum)
+            } else if (dateStartDate === dayNum) {
+              // Tapped same day again — keep as single day
+              return
+            } else {
+              // Second tap: set range (auto-sort)
+              const start = Math.min(dateStartDate, dayNum)
+              const end = Math.max(dateStartDate, dayNum)
+              setDateStartDate(start)
+              setDateEndDate(end)
+            }
+          }}
+          onConfirm={() => {
+            if (dateStartDate !== null) {
+              const today = new Date()
+              const month = today.toLocaleString('en-US', { month: 'short' })
+              const dateStr = dateEndDate && dateEndDate !== dateStartDate
+                ? `${month} ${dateStartDate} - ${dateEndDate}`
+                : `${month} ${dateStartDate}, ${today.getFullYear()}`
+              onSelectDate(dateStr)
+              setShowDateSheet(false)
+            }
+          }}
+          onCancel={() => setShowDateSheet(false)}
+        />
+      )}
+
       {/* Inline keyframe animation for tutorial pulse */}
       <style jsx>{`
         @keyframes tutorialPulse {
@@ -575,6 +622,231 @@ export function MockTaskForm({
           50% { opacity: 0.3; }
         }
       `}</style>
+    </div>
+  )
+}
+
+// =============================================================================
+// CALENDAR SCHEDULER SHEET (matches iOS CalendarSchedulerSheet)
+// =============================================================================
+
+function MockCalendarSchedulerSheet({
+  startDate,
+  endDate,
+  onSelectDate,
+  onConfirm,
+  onCancel,
+}: {
+  startDate: number | null
+  endDate: number | null
+  onSelectDate: (day: number) => void
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = today.getMonth()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  let firstDayOfWeek = new Date(year, month, 1).getDay() - 1
+  if (firstDayOfWeek < 0) firstDayOfWeek = 6
+
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December']
+  const dayAbbreviations = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+
+  const todayDate = today.getDate()
+  const hasRange = startDate !== null && endDate !== null && startDate !== endDate
+  const hasDates = startDate !== null
+
+  const duration = hasRange ? Math.abs(endDate! - startDate!) + 1 : hasDates ? 1 : 0
+
+  const formatDate = (day: number | null) => {
+    if (day === null) return 'Select date'
+    return `${monthNames[month].slice(0, 3)} ${day}, ${year}`
+  }
+
+  return (
+    <div
+      className="absolute inset-0 flex flex-col animate-fade-up"
+      style={{ zIndex: 60, background: '#000000' }}
+    >
+      {/* Header: Cancel | Schedule Task | Clear */}
+      <div className="flex items-center px-4" style={{ height: 60 }}>
+        <span
+          className="font-mohave font-medium text-[16px] uppercase"
+          style={{ color: '#777777', opacity: 0.5 }}
+        >
+          Cancel
+        </span>
+        <span className="absolute left-1/2 -translate-x-1/2 font-mohave font-medium text-[16px] text-white uppercase">
+          Schedule Task
+        </span>
+        {hasDates && (
+          <span
+            className="ml-auto font-mohave font-medium text-[14px] uppercase cursor-pointer"
+            style={{ color: '#C44848' }}
+            onClick={() => {
+              onSelectDate(-1) // reset signal
+            }}
+          >
+            Clear
+          </span>
+        )}
+      </div>
+
+      <div className="h-px" style={{ background: 'rgba(255,255,255,0.1)' }} />
+
+      {/* Selected dates header card */}
+      <div className="px-4 py-4">
+        <div
+          className="flex items-center justify-between px-4 py-3"
+          style={{
+            background: '#0D0D0D',
+            borderRadius: 8,
+            border: hasDates
+              ? '1px solid rgba(89,119,159,0.4)'
+              : '1px solid rgba(255,255,255,0.1)',
+          }}
+        >
+          {/* START */}
+          <div className="flex flex-col items-start">
+            <span className="font-kosugi text-[10px] text-[#AAAAAA] uppercase tracking-wider">
+              Start
+            </span>
+            <span className={`font-mohave font-medium text-[14px] mt-0.5 ${hasDates ? 'text-white' : 'text-[#777777]'}`}>
+              {formatDate(startDate)}
+            </span>
+          </div>
+
+          {/* Arrow */}
+          <span className="font-mohave text-[14px] mx-2" style={{ color: '#59779F' }}>
+            →
+          </span>
+
+          {/* END */}
+          <div className="flex flex-col items-center">
+            <span className="font-kosugi text-[10px] text-[#AAAAAA] uppercase tracking-wider">
+              End
+            </span>
+            <span className={`font-mohave font-medium text-[14px] mt-0.5 ${hasRange ? 'text-white' : 'text-[#777777]'}`}>
+              {hasRange ? formatDate(endDate) : 'Select date'}
+            </span>
+          </div>
+
+          {/* DURATION */}
+          <div className="flex flex-col items-end">
+            <span className="font-kosugi text-[10px] text-[#AAAAAA] uppercase tracking-wider">
+              Duration
+            </span>
+            <span className={`font-mohave font-medium text-[14px] mt-0.5 ${duration > 0 ? 'text-[#59779F]' : 'text-[#777777]'}`}>
+              {duration > 0 ? `${duration} day${duration > 1 ? 's' : ''}` : '—'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Calendar grid */}
+      <div className="flex-1 overflow-y-auto px-4">
+        {/* Month navigation header */}
+        <div className="flex items-center justify-between px-2 pb-3">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-[#59779F]">
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span className="font-mohave font-medium text-[16px] text-white">
+            {monthNames[month]} {year}
+          </span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-[#59779F]">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+
+        {/* Weekday headers */}
+        <div className="grid grid-cols-7 mb-1">
+          {dayAbbreviations.map((abbr, i) => (
+            <div key={i} className="text-center font-kosugi text-[12px] text-[#AAAAAA] py-1" style={{ height: 30 }}>
+              {abbr}
+            </div>
+          ))}
+        </div>
+
+        {/* Day grid */}
+        <div className="grid grid-cols-7">
+          {/* Empty cells */}
+          {Array.from({ length: firstDayOfWeek }, (_, i) => (
+            <div key={`empty-${i}`} style={{ height: 44 }} />
+          ))}
+
+          {/* Day cells */}
+          {Array.from({ length: daysInMonth }, (_, i) => {
+            const dayNum = i + 1
+            const isToday = dayNum === todayDate
+            const isStart = startDate === dayNum
+            const isEnd = endDate === dayNum
+            const isInRange = startDate !== null && endDate !== null && dayNum > startDate && dayNum < endDate
+            const isSelected = isStart || isEnd
+
+            // Border radius logic for range selection
+            let borderStyle: React.CSSProperties = {}
+            if (isSelected && !hasRange) {
+              borderStyle = { border: '2px solid white', borderRadius: 8 }
+            } else if (isStart && hasRange) {
+              borderStyle = {
+                borderTop: '2px solid white', borderBottom: '2px solid white', borderLeft: '2px solid white',
+                borderTopLeftRadius: 8, borderBottomLeftRadius: 8,
+              }
+            } else if (isEnd && hasRange) {
+              borderStyle = {
+                borderTop: '2px solid white', borderBottom: '2px solid white', borderRight: '2px solid white',
+                borderTopRightRadius: 8, borderBottomRightRadius: 8,
+              }
+            } else if (isInRange) {
+              borderStyle = {
+                borderTop: '2px solid white', borderBottom: '2px solid white',
+              }
+            }
+
+            return (
+              <div
+                key={dayNum}
+                className="flex items-center justify-center relative cursor-pointer"
+                style={{ height: 44, ...borderStyle }}
+                onClick={() => onSelectDate(dayNum)}
+              >
+                {/* Today accent circle */}
+                {isToday && !isSelected && (
+                  <div
+                    className="absolute rounded-full bg-ops-accent"
+                    style={{ width: 32, height: 32 }}
+                  />
+                )}
+                <span
+                  className={`font-mohave font-medium text-[16px] relative z-10 ${
+                    isToday ? 'text-white' : isSelected ? 'text-white' : 'text-white/70'
+                  }`}
+                >
+                  {dayNum}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Confirm button */}
+      <div className="px-4 py-4 pb-6">
+        <button
+          onClick={onConfirm}
+          disabled={!hasDates}
+          className="w-full py-3.5 font-kosugi font-normal text-[14px] uppercase tracking-wider transition-all duration-200"
+          style={{
+            borderRadius: 8,
+            background: hasDates ? '#FFFFFF' : '#0D0D0D',
+            color: hasDates ? '#000000' : '#777777',
+          }}
+        >
+          Confirm Dates
+        </button>
+      </div>
     </div>
   )
 }

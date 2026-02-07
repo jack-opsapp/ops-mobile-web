@@ -735,6 +735,7 @@ function ListView({
                           project={project}
                           variant="list"
                           isHighlighted={!swipeDismissed}
+                          showShimmer={!swipeDismissed}
                           statusOverride={userStatus}
                         />
                       </div>

@@ -26,6 +26,7 @@ interface MockProjectCardProps {
   project: DemoProject
   variant: 'dashboard' | 'list'
   isHighlighted?: boolean
+  showShimmer?: boolean
   statusOverride?: string
   className?: string
   style?: React.CSSProperties
@@ -35,6 +36,7 @@ export function MockProjectCard({
   project,
   variant,
   isHighlighted = false,
+  showShimmer = false,
   statusOverride,
   className = '',
   style,
@@ -60,6 +62,7 @@ export function MockProjectCard({
       effectiveStatus={effectiveStatus}
       statusColor={statusColor}
       isHighlighted={isHighlighted}
+      showShimmer={showShimmer}
       className={className}
       style={style}
     />
@@ -208,6 +211,7 @@ function ListCard({
   effectiveStatus,
   statusColor,
   isHighlighted,
+  showShimmer,
   className,
   style,
 }: {
@@ -215,6 +219,7 @@ function ListCard({
   effectiveStatus: string
   statusColor: string
   isHighlighted: boolean
+  showShimmer: boolean
   className: string
   style?: React.CSSProperties
 }) {
@@ -231,17 +236,38 @@ function ListCard({
         height: 80,
         background: '#0D0D0D',
         borderRadius: 5,
-        border: isHighlighted
-          ? '2px solid rgba(89, 119, 159, 0.8)'
-          : '1px solid rgba(255,255,255,0.2)',
+        border: showShimmer
+          ? '2px solid #59779F'
+          : isHighlighted
+            ? '2px solid rgba(89, 119, 159, 0.8)'
+            : '1px solid rgba(255,255,255,0.2)',
         boxShadow: isHighlighted
           ? '0 0 16px rgba(89, 119, 159, 0.25)'
           : 'none',
         position: 'relative',
+        overflow: 'hidden',
         ...style,
       }}
     >
-      <div className="flex h-full">
+      {/* Shimmer overlay - sweeping blue gradient */}
+      {showShimmer && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ zIndex: 1 }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              width: 80,
+              background: 'linear-gradient(to right, transparent, rgba(89,119,159,0.15), rgba(89,119,159,0.25), rgba(89,119,159,0.15), transparent)',
+              animation: 'cardShimmer 1.5s linear infinite',
+            }}
+          />
+        </div>
+      )}
+      <div className="flex h-full" style={{ position: 'relative', zIndex: 2 }}>
         {/* Left content area */}
         <div className="flex-1 flex flex-col justify-end min-w-0" style={{ padding: 14 }}>
           {/* Title + subtitle block */}

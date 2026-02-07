@@ -9,6 +9,8 @@ export interface DemoCrew {
   id: string
   name: string
   short: string
+  firstName: string
+  lastName: string
 }
 
 export interface DemoTaskType {
@@ -36,11 +38,11 @@ export const DEMO_CLIENTS: DemoClient[] = [
 ]
 
 export const DEMO_CREW: DemoCrew[] = [
-  { id: 'crew-1', name: 'Pete "Maverick" Mitchell', short: 'Maverick' },
-  { id: 'crew-2', name: 'Nick "Goose" Bradshaw', short: 'Goose' },
-  { id: 'crew-3', name: 'Tom "Iceman" Kazansky', short: 'Iceman' },
-  { id: 'crew-4', name: 'Mike "Viper" Metcalf', short: 'Viper' },
-  { id: 'crew-5', name: 'Rick "Jester" Heatherly', short: 'Jester' },
+  { id: 'crew-1', name: 'Pete "Maverick" Mitchell', short: 'Maverick', firstName: 'Pete', lastName: 'Mitchell' },
+  { id: 'crew-2', name: 'Nick "Goose" Bradshaw', short: 'Goose', firstName: 'Nick', lastName: 'Bradshaw' },
+  { id: 'crew-3', name: 'Tom "Iceman" Kazansky', short: 'Iceman', firstName: 'Tom', lastName: 'Kazansky' },
+  { id: 'crew-4', name: 'Mike "Viper" Metcalf', short: 'Viper', firstName: 'Mike', lastName: 'Metcalf' },
+  { id: 'crew-5', name: 'Rick "Jester" Heatherly', short: 'Jester', firstName: 'Rick', lastName: 'Heatherly' },
 ]
 
 export const DEMO_TASK_TYPES: DemoTaskType[] = [
@@ -69,9 +71,3 @@ export const DEMO_PROJECTS: DemoProject[] = [
   { id: 'proj-8', name: 'Locker Room Reno', clientName: 'Miramar Flight Academy', status: 'completed', taskType: 'Demolition', taskTypeColor: '#E8945A', crew: 'Maverick' },
 ]
 
-// Date pills for task form
-export const DEMO_DATE_OPTIONS = [
-  { id: 'today', label: 'Today' },
-  { id: 'tomorrow', label: 'Tomorrow' },
-  { id: 'next-week', label: 'Next Week' },
-]
