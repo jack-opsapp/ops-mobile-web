@@ -9,6 +9,7 @@ import type { TutorialPhase } from '@/lib/tutorial/TutorialPhase'
 interface MockJobBoardProps {
   phase: TutorialPhase
   userProject: DemoProject | null
+  onSwipeComplete?: () => void
 }
 
 type StatusColumn = 'new' | 'accepted' | 'inProgress' | 'completed' | 'closed'
@@ -43,7 +44,85 @@ const LIST_PHASES: TutorialPhase[] = [
   'closedProjectsScroll',
 ]
 
-export function MockJobBoard({ phase, userProject }: MockJobBoardProps) {
+// =============================================================================
+// SHARED HEADER COMPONENTS
+// =============================================================================
+
+type SectionTab = 'DASHBOARD' | 'CLIENTS' | 'PROJECTS' | 'TASKS'
+
+function MockAppHeader() {
+  return (
+    <div className="px-4 pt-3 pb-1 flex items-center justify-between">
+      <h2 className="font-mohave font-bold text-[20px] uppercase tracking-wider text-white">
+        Job Board
+      </h2>
+      <div className="flex items-center gap-3">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-ops-text-secondary">
+          <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5" />
+          <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-ops-text-secondary">
+          <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+    </div>
+  )
+}
+
+function MockSectionSelector({ selected, animateToProjects }: { selected: SectionTab; animateToProjects?: boolean }) {
+  const tabs: SectionTab[] = ['DASHBOARD', 'CLIENTS', 'PROJECTS', 'TASKS']
+  const [activeTab, setActiveTab] = useState<SectionTab>(selected)
+
+  useEffect(() => {
+    if (animateToProjects) {
+      const timer = setTimeout(() => {
+        setActiveTab('PROJECTS')
+      }, 600)
+      return () => clearTimeout(timer)
+    } else {
+      setActiveTab(selected)
+    }
+  }, [selected, animateToProjects])
+
+  return (
+    <div className="px-4 pb-2">
+      <div
+        className="flex rounded-xl overflow-hidden"
+        style={{ background: '#0D0D0D', padding: 3 }}
+      >
+        {tabs.map(tab => {
+          const isActive = activeTab === tab
+          return (
+            <div
+              key={tab}
+              className="flex-1 flex items-center justify-center transition-all duration-300"
+              style={{
+                padding: '7px 0',
+                borderRadius: 10,
+                background: isActive ? '#FFFFFF' : 'transparent',
+              }}
+            >
+              <span
+                className="font-mohave text-[11px] uppercase tracking-wider font-bold transition-colors duration-300"
+                style={{
+                  color: isActive ? '#0D0D0D' : '#777777',
+                }}
+              >
+                {tab}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// =============================================================================
+// MAIN COMPONENT
+// =============================================================================
+
+export function MockJobBoard({ phase, userProject, onSwipeComplete }: MockJobBoardProps) {
   const isDashboardView = DASHBOARD_PHASES.includes(phase)
   const isListView = LIST_PHASES.includes(phase)
 
@@ -55,7 +134,7 @@ export function MockJobBoard({ phase, userProject }: MockJobBoardProps) {
       {viewMode === 'dashboard' ? (
         <DashboardView phase={phase} userProject={userProject} />
       ) : (
-        <ListView phase={phase} userProject={userProject} />
+        <ListView phase={phase} userProject={userProject} onSwipeComplete={onSwipeComplete} />
       )}
     </div>
   )
@@ -162,13 +241,18 @@ function DashboardView({
 
   return (
     <>
+      {/* App Header */}
+      <MockAppHeader />
+      {/* Section Selector - DASHBOARD selected */}
+      <MockSectionSelector selected="DASHBOARD" />
+
       {/* Paging container */}
       <div
         ref={containerRef}
         className="flex-1 relative overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        style={{ paddingTop: 12 }}
+        style={{ paddingTop: 4 }}
       >
         <div
           className="flex h-full transition-transform duration-300 ease-out"
@@ -314,16 +398,31 @@ function DashboardView({
 function ListView({
   phase,
   userProject,
+  onSwipeComplete,
 }: {
   phase: TutorialPhase
   userProject: DemoProject | null
+  onSwipeComplete?: () => void
 }) {
-  const [swipeOffset, setSwipeOffset] = useState(0)
   const [scrollOffset, setScrollOffset] = useState(0)
-  const [showSwipeAnimation, setShowSwipeAnimation] = useState(false)
+  const activeSectionRef = useRef<HTMLDivElement>(null)
+  const [measuredScrollTarget, setMeasuredScrollTarget] = useState(0)
 
-  // Build ordered project list:
-  // Active statuses on top, closed/completed at bottom
+  // --- Interactive swipe state ---
+  const swipeTouchStartX = useRef<number | null>(null)
+  const [userSwipeOffset, setUserSwipeOffset] = useState(0)
+  const [swipeDismissed, setSwipeDismissed] = useState(false)
+  const [showClosedFeedback, setShowClosedFeedback] = useState(false)
+  const swipeCompleted = useRef(false)
+
+  // Hint animation: plays while user hasn't started swiping yet
+  const [showHintAnimation, setShowHintAnimation] = useState(true)
+  const [hintOffset, setHintOffset] = useState(0)
+
+  // Swipe threshold for completion
+  const SWIPE_THRESHOLD = 120
+
+  // Build ordered project list
   const getOrderedProjects = useCallback((): {
     active: DemoProject[]
     closed: DemoProject[]
@@ -333,14 +432,12 @@ function ListView({
     const closed: DemoProject[] = []
     let userStatus = 'inProgress'
 
-    // Determine user project status based on phase
     if (phase === 'projectListSwipe') {
       userStatus = 'inProgress'
     } else if (phase === 'closedProjectsScroll') {
       userStatus = 'closed'
     }
 
-    // Sort demo projects into active vs closed
     DEMO_PROJECTS.forEach(p => {
       if (p.status === 'closed' || p.status === 'completed') {
         closed.push(p)
@@ -349,7 +446,6 @@ function ListView({
       }
     })
 
-    // Insert user project
     if (userProject) {
       const userP = { ...userProject, status: userStatus as DemoProject['status'] }
       if (userStatus === 'closed' || userStatus === 'completed') {
@@ -362,15 +458,23 @@ function ListView({
     return { active, closed, userStatus }
   }, [phase, userProject])
 
-  // Swipe animation loop for projectListSwipe phase
+  // Measure active section height for scroll target
   useEffect(() => {
-    if (phase !== 'projectListSwipe') {
-      setShowSwipeAnimation(false)
-      setSwipeOffset(0)
+    if (phase === 'closedProjectsScroll' && activeSectionRef.current) {
+      const height = activeSectionRef.current.getBoundingClientRect().height
+      setMeasuredScrollTarget(height + 20)
+    }
+  }, [phase])
+
+  // Hint swipe animation loop — shows a gentle swipe hint until user interacts
+  useEffect(() => {
+    if (phase !== 'projectListSwipe' || swipeDismissed) {
+      setShowHintAnimation(false)
+      setHintOffset(0)
       return
     }
 
-    setShowSwipeAnimation(true)
+    setShowHintAnimation(true)
     let frame: number
     let start: number | null = null
     const duration = 1500
@@ -383,22 +487,69 @@ function ListView({
           ? 2 * progress * progress
           : 1 - Math.pow(-2 * progress + 2, 2) / 2
 
-      setSwipeOffset(eased * 200)
+      setHintOffset(eased * 80) // Subtle hint — only 80px
 
       if (progress < 1) {
         frame = requestAnimationFrame(animate)
       } else {
         setTimeout(() => {
-          setSwipeOffset(0)
+          setHintOffset(0)
           start = null
           frame = requestAnimationFrame(animate)
-        }, 800)
+        }, 1000)
       }
     }
 
     frame = requestAnimationFrame(animate)
     return () => cancelAnimationFrame(frame)
-  }, [phase])
+  }, [phase, swipeDismissed])
+
+  // --- Touch handlers for the user's swipeable card ---
+  const handleCardTouchStart = (e: React.TouchEvent) => {
+    if (swipeDismissed || swipeCompleted.current) return
+    swipeTouchStartX.current = e.touches[0].clientX
+    // Stop the hint animation once user touches
+    setShowHintAnimation(false)
+    setHintOffset(0)
+  }
+
+  const handleCardTouchMove = (e: React.TouchEvent) => {
+    if (swipeTouchStartX.current === null || swipeDismissed) return
+    const diff = e.touches[0].clientX - swipeTouchStartX.current
+    // Only allow right-swipe (positive), with resistance after threshold
+    if (diff > 0) {
+      const resisted = diff > SWIPE_THRESHOLD
+        ? SWIPE_THRESHOLD + (diff - SWIPE_THRESHOLD) * 0.3
+        : diff
+      setUserSwipeOffset(resisted)
+    } else {
+      // Small leftward resistance
+      setUserSwipeOffset(diff * 0.2)
+    }
+  }
+
+  const handleCardTouchEnd = () => {
+    if (swipeTouchStartX.current === null || swipeDismissed) return
+    swipeTouchStartX.current = null
+
+    if (userSwipeOffset >= SWIPE_THRESHOLD) {
+      // Swipe succeeded — animate card off screen
+      swipeCompleted.current = true
+      setSwipeDismissed(true)
+      setUserSwipeOffset(400) // Fly off right
+
+      // Show "CLOSED" feedback briefly, then advance
+      setTimeout(() => {
+        setShowClosedFeedback(true)
+      }, 200)
+      setTimeout(() => {
+        onSwipeComplete?.()
+      }, 1200)
+    } else {
+      // Snap back
+      setUserSwipeOffset(0)
+    }
+  }
 
   // Scroll animation for closedProjectsScroll phase
   useEffect(() => {
@@ -407,15 +558,18 @@ function ListView({
       return
     }
 
+    if (measuredScrollTarget === 0) return
+
     let frame: number
     let start: number | null = null
     const duration = 2000
+    const target = measuredScrollTarget
 
     function animate(timestamp: number) {
       if (!start) start = timestamp
       const progress = Math.min((timestamp - start) / duration, 1)
       const eased = 1 - Math.pow(1 - progress, 3)
-      setScrollOffset(eased * 120)
+      setScrollOffset(eased * target)
 
       if (progress < 1) {
         frame = requestAnimationFrame(animate)
@@ -430,22 +584,30 @@ function ListView({
       clearTimeout(timeout)
       if (frame) cancelAnimationFrame(frame)
     }
-  }, [phase])
+  }, [phase, measuredScrollTarget])
 
   const { active, closed, userStatus } = getOrderedProjects()
-  const allProjects = [...active, ...closed]
+
+  // Calculate the visual offset for the user card
+  const getUserCardOffset = () => {
+    if (swipeDismissed) return userSwipeOffset
+    if (userSwipeOffset !== 0) return userSwipeOffset
+    if (showHintAnimation) return hintOffset
+    return 0
+  }
+
+  const cardOffset = getUserCardOffset()
+  // Swipe progress for visual feedback (0 to 1)
+  const swipeProgress = Math.min(Math.max(cardOffset, 0) / SWIPE_THRESHOLD, 1)
 
   return (
     <>
-      {/* List header */}
-      <div className="px-4 py-3 flex items-center justify-between">
-        <h2 className="font-mohave font-bold text-white" style={{ fontSize: 18 }}>
-          Job Board
-        </h2>
-        <span className="font-kosugi text-ops-text-tertiary" style={{ fontSize: 11 }}>
-          {allProjects.length} projects
-        </span>
-      </div>
+      {/* App Header */}
+      <MockAppHeader />
+      <MockSectionSelector
+        selected="PROJECTS"
+        animateToProjects={phase === 'projectListSwipe'}
+      />
 
       {/* Scrollable project list */}
       <div
@@ -457,8 +619,7 @@ function ListView({
       >
         {/* Active section */}
         {active.length > 0 && (
-          <div className="mb-3">
-            {/* Section label */}
+          <div className="mb-3" ref={activeSectionRef}>
             <div className="flex items-center mb-2" style={{ gap: 8 }}>
               <span
                 className="font-kosugi text-ops-text-secondary uppercase tracking-wider"
@@ -475,27 +636,91 @@ function ListView({
             <div className="flex flex-col" style={{ gap: 8 }}>
               {active.map(project => {
                 const isUserCard = userProject && project.id === userProject.id
-                const swipeStyle =
-                  isUserCard && phase === 'projectListSwipe' && showSwipeAnimation
-                    ? {
-                        transform: `translateX(${swipeOffset}px)`,
-                        opacity: 1 - swipeOffset / 250,
-                        transition: 'none',
-                      }
-                    : undefined
+
+                if (isUserCard && phase === 'projectListSwipe') {
+                  // Swipeable user card with background action revealed
+                  return (
+                    <div key={project.id} className="relative overflow-hidden" style={{ borderRadius: 5 }}>
+                      {/* Background revealed on swipe — green "CLOSED" indicator */}
+                      <div
+                        className="absolute inset-0 flex items-center rounded-[5px]"
+                        style={{
+                          background: `rgba(165, 179, 104, ${swipeProgress * 0.3})`,
+                          paddingLeft: 16,
+                        }}
+                      >
+                        <div className="flex items-center gap-2" style={{ opacity: swipeProgress }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M20 6L9 17l-5-5" stroke="#A5B368" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <span
+                            className="font-mohave font-bold uppercase tracking-wider"
+                            style={{ fontSize: 13, color: '#A5B368' }}
+                          >
+                            Close
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Swipeable card */}
+                      <div
+                        onTouchStart={handleCardTouchStart}
+                        onTouchMove={handleCardTouchMove}
+                        onTouchEnd={handleCardTouchEnd}
+                        style={{
+                          transform: `translateX(${cardOffset}px)`,
+                          opacity: swipeDismissed ? Math.max(1 - cardOffset / 300, 0) : 1,
+                          transition: swipeTouchStartX.current !== null
+                            ? 'none'
+                            : swipeDismissed
+                              ? 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease-out'
+                              : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                          position: 'relative',
+                          zIndex: 1,
+                        }}
+                      >
+                        <MockProjectCard
+                          project={project}
+                          variant="list"
+                          isHighlighted={!swipeDismissed}
+                          statusOverride={userStatus}
+                        />
+                      </div>
+                    </div>
+                  )
+                }
 
                 return (
-                  <div key={project.id} style={swipeStyle}>
+                  <div key={project.id}>
                     <MockProjectCard
                       project={project}
                       variant="list"
-                      isHighlighted={!!isUserCard && phase === 'projectListSwipe'}
-                      statusOverride={isUserCard ? userStatus : undefined}
+                      isHighlighted={false}
+                      statusOverride={undefined}
                     />
                   </div>
                 )
               })}
             </div>
+          </div>
+        )}
+
+        {/* "CLOSED" feedback toast after swipe completes */}
+        {showClosedFeedback && (
+          <div
+            className="flex items-center justify-center gap-2 py-3 mb-3 rounded-xl"
+            style={{
+              background: 'rgba(165, 179, 104, 0.15)',
+              border: '1px solid rgba(165, 179, 104, 0.3)',
+              animation: 'feedbackFadeIn 0.3s ease-out',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M20 6L9 17l-5-5" stroke="#A5B368" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="font-mohave font-bold uppercase tracking-wider" style={{ fontSize: 14, color: '#A5B368' }}>
+              Project Closed
+            </span>
           </div>
         )}
 
@@ -532,12 +757,11 @@ function ListView({
           </div>
         )}
 
-        {/* Bottom padding for tab bar clearance */}
         <div style={{ height: 120 }} />
       </div>
 
-      {/* Touch cursor for swipe animation hint */}
-      {phase === 'projectListSwipe' && userProject && (
+      {/* Touch cursor hint — only while hint animation is playing */}
+      {phase === 'projectListSwipe' && userProject && showHintAnimation && !swipeDismissed && (
         <TouchCursorAnimation
           type="swipe-right"
           startX={30}
@@ -555,6 +779,14 @@ function ListView({
           visible
         />
       )}
+
+      {/* Feedback animation keyframes */}
+      <style jsx>{`
+        @keyframes feedbackFadeIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </>
   )
 }

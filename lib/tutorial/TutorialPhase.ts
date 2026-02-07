@@ -117,8 +117,7 @@ export const PHASE_CONFIGS: Record<TutorialPhase, PhaseConfig> = {
   projectListSwipe: {
     tooltipText: 'SWIPE THE CARD RIGHT TO CLOSE',
     tooltipDescription: 'Swipe right to advance status, left to go back...',
-    showContinueButton: true,
-    continueLabel: 'CONTINUE',
+    showContinueButton: false,
   },
   closedProjectsScroll: {
     tooltipText: 'COMPLETE. SCROLL DOWN TO FIND IT.',

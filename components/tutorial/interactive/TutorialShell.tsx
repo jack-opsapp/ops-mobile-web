@@ -149,6 +149,11 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
     advance()
   }
 
+  const handleSwipeComplete = () => {
+    // projectListSwipe -> closedProjectsScroll
+    advance()
+  }
+
   const handleMonthTap = () => {
     // calendarMonthPrompt -> calendarMonth
     advance()
@@ -184,6 +189,7 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
                   ? userProject
                   : null
               }
+              onSwipeComplete={handleSwipeComplete}
             />
           )}
 
