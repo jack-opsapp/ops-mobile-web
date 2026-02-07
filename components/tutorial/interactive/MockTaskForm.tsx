@@ -81,8 +81,13 @@ export function MockTaskForm({
           maxHeight: '92vh',
         }}
       >
+        {/* Extra top spacing during taskFormDone to push nav bar below tooltip */}
+        {phase === 'taskFormDone' && (
+          <div style={{ height: 90, background: '#000000' }} />
+        )}
+
         {/* Header: CANCEL | CREATE TASK | DONE */}
-        <div className="relative flex items-center px-4 py-3" style={{ background: '#000000' }}>
+        <div className="relative flex items-center" style={{ background: '#000000', padding: '12px 16px' }}>
           {/* Cancel - left */}
           <span
             className="font-mohave font-medium text-[16px] uppercase"
@@ -102,16 +107,19 @@ export function MockTaskForm({
             disabled={!isFieldActive('done')}
             className={`ml-auto font-mohave font-medium text-[16px] uppercase transition-all duration-300 ${
               isFieldActive('done')
-                ? 'text-[#59779F]'
+                ? 'text-[#417394]'
                 : 'text-[#777777]'
             }`}
             style={{
               padding: '4px 8px',
               borderRadius: 6,
-              ...(isFieldActive('done') ? {
-                border: '2px solid #59779F',
-                animation: 'tutorialPulse 1.2s ease-in-out infinite',
-              } : {}),
+              border: isFieldActive('done')
+                ? '2px solid #417394'
+                : '2px solid transparent',
+              animation: isFieldActive('done')
+                ? 'tutorialPulse 2.4s ease-in-out infinite'
+                : 'none',
+              transition: 'border 0.3s ease',
             }}
           >
             Done
@@ -125,9 +133,6 @@ export function MockTaskForm({
         <div className="relative flex-1 overflow-y-auto">
           {/* Scrollable form content */}
           <div className="px-4 py-4 space-y-6">
-            {/* Step 9: Extra top padding to push header below tooltip */}
-            {phase === 'taskFormDone' && <div style={{ height: 90 }} />}
-
             {/* Preview Card (greyed out at 0.3 opacity) */}
             <div style={{ opacity: 0.3 }} className="pointer-events-none">
               <div
@@ -141,7 +146,7 @@ export function MockTaskForm({
                 {/* Left color bar */}
                 <div
                   className="w-1 flex-shrink-0"
-                  style={{ background: typeColor ?? '#AAAAAA' }}
+                  style={{ background: typeColor ?? '#A7A7A7' }}
                 />
 
                 {/* Content */}
@@ -153,7 +158,7 @@ export function MockTaskForm({
                         {selectedType ?? 'SELECT TASK TYPE'}
                       </div>
                       {/* Project subtitle */}
-                      <div className="font-kosugi text-[11px] text-[#AAAAAA] mt-0.5 truncate">
+                      <div className="font-kosugi text-[11px] text-[#A7A7A7] mt-0.5 truncate">
                         New Project
                       </div>
                       {/* Metadata row */}
@@ -187,9 +192,9 @@ export function MockTaskForm({
                       <span
                         className="font-kosugi text-[10px] px-2 py-0.5 rounded"
                         style={{
-                          color: '#59779F',
-                          background: 'rgba(89,119,159,0.1)',
-                          border: '1px solid #59779F',
+                          color: '#417394',
+                          background: 'rgba(65,115,148,0.1)',
+                          border: '1px solid #417394',
                         }}
                       >
                         BOOKED
@@ -215,10 +220,10 @@ export function MockTaskForm({
 
             {/* TASK DETAILS Section Header */}
             <div className="flex items-center gap-[2px]">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-[#AAAAAA]">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-[#A7A7A7]">
                 <path d="M9 5h11M9 12h11M9 19h11M5 5h.01M5 12h.01M5 19h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
-              <span className="font-kosugi font-normal text-[14px] text-[#AAAAAA] uppercase tracking-wider">
+              <span className="font-kosugi font-normal text-[14px] text-[#A7A7A7] uppercase tracking-wider">
                 TASK DETAILS
               </span>
             </div>
@@ -232,10 +237,10 @@ export function MockTaskForm({
               <div className="flex items-center justify-between mb-2">
                 <span
                   className={`font-kosugi font-normal text-[14px] uppercase tracking-wider transition-colors duration-300 ${
-                    isFieldActive('type') ? 'text-[#59779F]' : 'text-[#AAAAAA]'
+                    isFieldActive('type') ? 'text-[#417394]' : 'text-[#A7A7A7]'
                   }`}
                   style={isFieldActive('type') ? {
-                    animation: 'tutorialPulse 1.2s ease-in-out infinite',
+                    animation: 'tutorialPulse 2.4s ease-in-out infinite',
                   } : undefined}
                 >
                   TASK TYPE
@@ -262,10 +267,10 @@ export function MockTaskForm({
                   style={{
                     borderRadius: '5px',
                     border: isFieldActive('type')
-                      ? '2px solid #59779F'
+                      ? '2px solid #417394'
                       : '1px solid rgba(255,255,255,0.1)',
                     ...(isFieldActive('type') ? {
-                      animation: 'tutorialPulse 1.2s ease-in-out infinite',
+                      animation: 'tutorialPulse 2.4s ease-in-out infinite',
                     } : {}),
                   }}
                 >
@@ -281,7 +286,7 @@ export function MockTaskForm({
                     </span>
                     <svg
                       width="14" height="14" viewBox="0 0 24 24" fill="none"
-                      className={`text-[#AAAAAA] transition-transform duration-200 ${showTypeDropdown ? 'rotate-180' : ''}`}
+                      className={`text-[#A7A7A7] transition-transform duration-200 ${showTypeDropdown ? 'rotate-180' : ''}`}
                     >
                       <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
@@ -317,7 +322,7 @@ export function MockTaskForm({
                         {type.name}
                       </span>
                       {selectedType === type.name && (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-[#59779F] ml-auto">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-[#417394] ml-auto">
                           <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       )}
@@ -329,7 +334,7 @@ export function MockTaskForm({
 
             {/* 2. Status Field (always disabled at 0.5 opacity in tutorial) */}
             <div style={{ opacity: 0.5 }} className="pointer-events-none">
-              <span className="font-kosugi font-normal text-[14px] text-[#AAAAAA] uppercase tracking-wider mb-2 block">
+              <span className="font-kosugi font-normal text-[14px] text-[#A7A7A7] uppercase tracking-wider mb-2 block">
                 STATUS
               </span>
               <div
@@ -340,7 +345,7 @@ export function MockTaskForm({
                 }}
               >
                 <span className="font-mohave text-[16px] text-white">Booked</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-[#AAAAAA]">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-[#A7A7A7]">
                   <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
@@ -353,10 +358,10 @@ export function MockTaskForm({
             >
               <span
                 className={`font-kosugi font-normal text-[14px] uppercase tracking-wider mb-2 block transition-colors duration-300 ${
-                  isFieldActive('crew') ? 'text-[#59779F]' : 'text-[#AAAAAA]'
+                  isFieldActive('crew') ? 'text-[#417394]' : 'text-[#A7A7A7]'
                 }`}
                 style={isFieldActive('crew') ? {
-                  animation: 'tutorialPulse 1.2s ease-in-out infinite',
+                  animation: 'tutorialPulse 2.4s ease-in-out infinite',
                 } : undefined}
               >
                 ASSIGN TEAM
@@ -372,10 +377,10 @@ export function MockTaskForm({
                   style={{
                     borderRadius: '5px',
                     border: isFieldActive('crew')
-                      ? '2px solid #59779F'
+                      ? '2px solid #417394'
                       : '1px solid rgba(255,255,255,0.1)',
                     ...(isFieldActive('crew') ? {
-                      animation: 'tutorialPulse 1.2s ease-in-out infinite',
+                      animation: 'tutorialPulse 2.4s ease-in-out infinite',
                     } : {}),
                   }}
                 >
@@ -391,8 +396,8 @@ export function MockTaskForm({
                           <div
                             className="w-6 h-6 rounded-full flex items-center justify-center font-mohave font-bold"
                             style={{
-                              border: '2px solid #59779F',
-                              color: '#59779F',
+                              border: '2px solid #417394',
+                              color: '#417394',
                               fontSize: 24 * 0.4,
                             }}
                           >
@@ -409,7 +414,7 @@ export function MockTaskForm({
                       Select team members
                     </span>
                   )}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-[#AAAAAA]">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-[#A7A7A7]">
                     <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
@@ -438,7 +443,7 @@ export function MockTaskForm({
                       <div
                         className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                           selectedCrew === crew.short
-                            ? 'border-[#59779F] bg-[#59779F]'
+                            ? 'border-[#417394] bg-[#417394]'
                             : 'border-[#777777]'
                         }`}
                       >
@@ -455,8 +460,8 @@ export function MockTaskForm({
                         style={{
                           width: 40,
                           height: 40,
-                          border: '2px solid #59779F',
-                          color: '#59779F',
+                          border: '2px solid #417394',
+                          color: '#417394',
                           fontSize: 40 * 0.4,
                         }}
                       >
@@ -485,10 +490,10 @@ export function MockTaskForm({
             >
               <span
                 className={`font-kosugi font-normal text-[14px] uppercase tracking-wider mb-2 block transition-colors duration-300 ${
-                  isFieldActive('date') ? 'text-[#59779F]' : 'text-[#AAAAAA]'
+                  isFieldActive('date') ? 'text-[#417394]' : 'text-[#A7A7A7]'
                 }`}
                 style={isFieldActive('date') ? {
-                  animation: 'tutorialPulse 1.2s ease-in-out infinite',
+                  animation: 'tutorialPulse 2.4s ease-in-out infinite',
                 } : undefined}
               >
                 DATES
@@ -505,10 +510,10 @@ export function MockTaskForm({
                   style={{
                     borderRadius: '5px',
                     border: isFieldActive('date')
-                      ? '2px solid #59779F'
+                      ? '2px solid #417394'
                       : '1px solid rgba(255,255,255,0.1)',
                     ...(isFieldActive('date') ? {
-                      animation: 'tutorialPulse 1.2s ease-in-out infinite',
+                      animation: 'tutorialPulse 2.4s ease-in-out infinite',
                     } : {}),
                   }}
                 >
@@ -517,11 +522,11 @@ export function MockTaskForm({
                       <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
                       <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                     </svg>
-                    <span className={`font-mohave text-[16px] ${selectedDate ? 'text-white' : 'text-[#AAAAAA]'}`}>
+                    <span className={`font-mohave text-[16px] ${selectedDate ? 'text-white' : 'text-[#A7A7A7]'}`}>
                       {selectedDate ?? 'Tap to Schedule'}
                     </span>
                   </div>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-[#AAAAAA]">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-[#A7A7A7]">
                     <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
@@ -530,7 +535,7 @@ export function MockTaskForm({
 
             {/* 5. Notes Field (always disabled at 0.5 opacity in tutorial) */}
             <div style={{ opacity: 0.5 }} className="pointer-events-none">
-              <span className="font-kosugi font-normal text-[14px] text-[#AAAAAA] uppercase tracking-wider mb-2 block">
+              <span className="font-kosugi font-normal text-[14px] text-[#A7A7A7] uppercase tracking-wider mb-2 block">
                 NOTES
               </span>
               <div
@@ -704,13 +709,13 @@ function MockCalendarSchedulerSheet({
             background: '#0D0D0D',
             borderRadius: 8,
             border: hasDates
-              ? '1px solid rgba(89,119,159,0.4)'
+              ? '1px solid rgba(65,115,148,0.4)'
               : '1px solid rgba(255,255,255,0.1)',
           }}
         >
           {/* START */}
           <div className="flex flex-col items-start">
-            <span className="font-kosugi text-[10px] text-[#AAAAAA] uppercase tracking-wider">
+            <span className="font-kosugi text-[10px] text-[#A7A7A7] uppercase tracking-wider">
               Start
             </span>
             <span className={`font-mohave font-medium text-[14px] mt-0.5 ${hasDates ? 'text-white' : 'text-[#777777]'}`}>
@@ -719,13 +724,13 @@ function MockCalendarSchedulerSheet({
           </div>
 
           {/* Arrow */}
-          <span className="font-mohave text-[14px] mx-2" style={{ color: '#59779F' }}>
+          <span className="font-mohave text-[14px] mx-2" style={{ color: '#417394' }}>
             →
           </span>
 
           {/* END */}
           <div className="flex flex-col items-center">
-            <span className="font-kosugi text-[10px] text-[#AAAAAA] uppercase tracking-wider">
+            <span className="font-kosugi text-[10px] text-[#A7A7A7] uppercase tracking-wider">
               End
             </span>
             <span className={`font-mohave font-medium text-[14px] mt-0.5 ${hasRange ? 'text-white' : 'text-[#777777]'}`}>
@@ -735,10 +740,10 @@ function MockCalendarSchedulerSheet({
 
           {/* DURATION */}
           <div className="flex flex-col items-end">
-            <span className="font-kosugi text-[10px] text-[#AAAAAA] uppercase tracking-wider">
+            <span className="font-kosugi text-[10px] text-[#A7A7A7] uppercase tracking-wider">
               Duration
             </span>
-            <span className={`font-mohave font-medium text-[14px] mt-0.5 ${duration > 0 ? 'text-[#59779F]' : 'text-[#777777]'}`}>
+            <span className={`font-mohave font-medium text-[14px] mt-0.5 ${duration > 0 ? 'text-[#417394]' : 'text-[#777777]'}`}>
               {duration > 0 ? `${duration} day${duration > 1 ? 's' : ''}` : '—'}
             </span>
           </div>
@@ -749,13 +754,13 @@ function MockCalendarSchedulerSheet({
       <div className="flex-1 overflow-y-auto px-4">
         {/* Month navigation header */}
         <div className="flex items-center justify-between px-2 pb-3">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-[#59779F]">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-[#417394]">
             <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           <span className="font-mohave font-medium text-[16px] text-white">
             {monthNames[month]} {year}
           </span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-[#59779F]">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-[#417394]">
             <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
@@ -763,7 +768,7 @@ function MockCalendarSchedulerSheet({
         {/* Weekday headers */}
         <div className="grid grid-cols-7 mb-1">
           {dayAbbreviations.map((abbr, i) => (
-            <div key={i} className="text-center font-kosugi text-[12px] text-[#AAAAAA] py-1" style={{ height: 30 }}>
+            <div key={i} className="text-center font-kosugi text-[12px] text-[#A7A7A7] py-1" style={{ height: 30 }}>
               {abbr}
             </div>
           ))}

@@ -23,7 +23,7 @@ export interface DemoProject {
   id: string
   name: string
   clientName: string
-  status: 'new' | 'accepted' | 'inProgress' | 'completed' | 'closed'
+  status: 'rfq' | 'estimated' | 'accepted' | 'inProgress' | 'completed' | 'closed'
   taskType: string
   taskTypeColor: string
   crew?: string
@@ -65,8 +65,8 @@ export const DEMO_PROJECTS: DemoProject[] = [
   { id: 'proj-2', name: "O'Club Patio Resurface", clientName: "O'Club Bar & Grill", status: 'inProgress', taskType: 'Paving', taskTypeColor: '#B088D4', crew: 'Goose' },
   { id: 'proj-3', name: 'Hangar Siding Repair', clientName: 'Fightertown Hangars LLC', status: 'accepted', taskType: 'Installation', taskTypeColor: '#D47B9F', crew: 'Iceman' },
   { id: 'proj-4', name: "Charlie's Driveway", clientName: 'Charlie Blackwood', status: 'accepted', taskType: 'Sealing', taskTypeColor: '#8EC8E8', crew: 'Viper' },
-  { id: 'proj-5', name: 'Runway Crack Repair', clientName: 'Miramar Flight Academy', status: 'new', taskType: 'Diagnostic', taskTypeColor: '#5AC8D4' },
-  { id: 'proj-6', name: 'Briefing Room Install', clientName: 'Miramar Flight Academy', status: 'new', taskType: 'Installation', taskTypeColor: '#D47B9F' },
+  { id: 'proj-5', name: 'Runway Crack Repair', clientName: 'Miramar Flight Academy', status: 'rfq', taskType: 'Diagnostic', taskTypeColor: '#5AC8D4' },
+  { id: 'proj-6', name: 'Briefing Room Install', clientName: 'Miramar Flight Academy', status: 'estimated', taskType: 'Installation', taskTypeColor: '#D47B9F' },
   { id: 'proj-7', name: 'MIG Detailing', clientName: 'Fightertown Hangars LLC', status: 'completed', taskType: 'Cleaning', taskTypeColor: '#A5D4A0', crew: 'Jester' },
   { id: 'proj-8', name: 'Locker Room Reno', clientName: 'Miramar Flight Academy', status: 'completed', taskType: 'Demolition', taskTypeColor: '#E8945A', crew: 'Maverick' },
 ]

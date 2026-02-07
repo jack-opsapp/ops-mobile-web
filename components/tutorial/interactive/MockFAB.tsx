@@ -184,8 +184,8 @@ export function MockFAB({ phase, onFABTap, onCreateProject }: MockFABProps) {
                     style={{
                       width: '48px',
                       height: '48px',
-                      color: '#AAAAAA',
-                      border: '1px solid #AAAAAA',
+                      color: '#A7A7A7',
+                      border: '1px solid #A7A7A7',
                       boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
                     }}
                   >
@@ -212,11 +212,11 @@ export function MockFAB({ phase, onFABTap, onCreateProject }: MockFABProps) {
               backdropFilter: isFABDisabled ? 'none' : 'blur(20px)',
               WebkitBackdropFilter: isFABDisabled ? 'none' : 'blur(20px)',
               boxShadow: pulsing
-                ? '0 4px 12px rgba(0,0,0,0.3), 0 0 20px rgba(89,119,159,0.4)'
+                ? '0 4px 12px rgba(0,0,0,0.3), 0 0 20px rgba(65,115,148,0.4)'
                 : '0 4px 12px rgba(0,0,0,0.3)',
               border: isFABDisabled
                 ? '2px solid #777777'
-                : '2px solid #59779F',
+                : '2px solid #417394',
               transform: menuOpen ? 'rotate(225deg)' : 'rotate(0deg)',
             }}
           >
@@ -243,7 +243,7 @@ export function MockFAB({ phase, onFABTap, onCreateProject }: MockFABProps) {
               <div
                 className="absolute inset-0 rounded-full"
                 style={{
-                  border: '2px solid #59779F',
+                  border: '2px solid #417394',
                   animation: 'fab-pulse-ring 1.5s ease-in-out infinite',
                 }}
               />
@@ -255,7 +255,7 @@ export function MockFAB({ phase, onFABTap, onCreateProject }: MockFABProps) {
                 className="absolute rounded-full"
                 style={{
                   inset: '-4px',
-                  border: '2px solid rgba(89,119,159,0.5)',
+                  border: '2px solid rgba(65,115,148,0.5)',
                   animation: 'fab-glow 1.5s ease-in-out infinite',
                 }}
               />

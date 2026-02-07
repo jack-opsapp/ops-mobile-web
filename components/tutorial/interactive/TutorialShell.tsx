@@ -52,9 +52,9 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
       id: 'user-project',
       name: projectName || 'New Project',
       clientName: selectedClient || 'Client',
-      status: 'new' as const,
+      status: 'estimated' as const,
       taskType: selectedTaskType || 'General',
-      taskTypeColor: '#59779F',
+      taskTypeColor: '#417394',
       crew: selectedCrew || undefined,
     }
   }, [selectedClient, projectName, selectedTaskType, selectedCrew])
@@ -71,7 +71,7 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
   // Build the added task object for project form display
   const addedTask = hasTask ? {
     type: selectedTaskType!,
-    typeColor: DEMO_TASK_TYPES.find(t => t.name === selectedTaskType)?.color || '#59779F',
+    typeColor: DEMO_TASK_TYPES.find(t => t.name === selectedTaskType)?.color || '#417394',
     crew: selectedCrew!,
     date: selectedDate!,
   } : null

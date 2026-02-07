@@ -2,24 +2,26 @@
 
 import type { DemoProject } from '@/lib/constants/demo-data'
 
-// Status color mapping matching iOS Status.color
+// Status color mapping matching iOS Status.color (from xcassets)
 const STATUS_COLORS: Record<string, string> = {
-  new: '#59779F',
-  estimated: '#C4A868',
-  accepted: '#A5B368',
-  inProgress: '#59779F',
-  completed: '#A5B368',
-  closed: '#777777',
+  rfq: '#BCBCBC',
+  estimated: '#B5A381',
+  accepted: '#9DB582',
+  inProgress: '#8195B5',
+  completed: '#B58289',
+  closed: '#E9E9E9',
+  archived: '#A182B5',
 }
 
 // Status display names matching iOS Status.displayName
 const STATUS_LABELS: Record<string, string> = {
-  new: 'NEW',
+  rfq: 'RFQ',
   estimated: 'ESTIMATED',
   accepted: 'ACCEPTED',
   inProgress: 'IN PROGRESS',
   completed: 'COMPLETED',
   closed: 'CLOSED',
+  archived: 'ARCHIVED',
 }
 
 interface MockProjectCardProps {
@@ -42,7 +44,7 @@ export function MockProjectCard({
   style,
 }: MockProjectCardProps) {
   const effectiveStatus = statusOverride || project.status
-  const statusColor = STATUS_COLORS[effectiveStatus] || '#59779F'
+  const statusColor = STATUS_COLORS[effectiveStatus] || '#417394'
 
   if (variant === 'dashboard') {
     return (
@@ -96,10 +98,10 @@ function DashboardCard({
         background: '#000000',
         borderRadius: 6,
         border: isHighlighted
-          ? '2px solid rgba(89, 119, 159, 0.8)'
+          ? '2px solid rgba(65, 115, 148, 0.8)'
           : '1px solid rgba(255,255,255,0.08)',
         boxShadow: isHighlighted
-          ? '0 0 16px rgba(89, 119, 159, 0.25)'
+          ? '0 0 16px rgba(65, 115, 148, 0.25)'
           : 'none',
         ...style,
       }}
@@ -237,12 +239,12 @@ function ListCard({
         background: '#0D0D0D',
         borderRadius: 5,
         border: showShimmer
-          ? '2px solid #59779F'
+          ? '2px solid #417394'
           : isHighlighted
-            ? '2px solid rgba(89, 119, 159, 0.8)'
+            ? '2px solid rgba(65, 115, 148, 0.8)'
             : '1px solid rgba(255,255,255,0.2)',
         boxShadow: isHighlighted
-          ? '0 0 16px rgba(89, 119, 159, 0.25)'
+          ? '0 0 16px rgba(65, 115, 148, 0.25)'
           : 'none',
         position: 'relative',
         overflow: 'hidden',
@@ -261,7 +263,7 @@ function ListCard({
               top: 0,
               bottom: 0,
               width: 80,
-              background: 'linear-gradient(to right, transparent, rgba(89,119,159,0.15), rgba(89,119,159,0.25), rgba(89,119,159,0.15), transparent)',
+              background: 'linear-gradient(to right, transparent, rgba(65,115,148,0.15), rgba(65,115,148,0.25), rgba(65,115,148,0.15), transparent)',
               animation: 'cardShimmer 1.5s linear infinite',
             }}
           />
@@ -354,7 +356,7 @@ function ListCard({
             style={{
               fontSize: 10,
               lineHeight: 1,
-              color: '#AAAAAA',
+              color: '#A7A7A7',
               padding: '4px 8px',
               borderRadius: 4,
               background: '#0D0D0D',

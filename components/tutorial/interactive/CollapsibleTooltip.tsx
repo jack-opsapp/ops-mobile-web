@@ -75,7 +75,7 @@ export function CollapsibleTooltip({ text, description, phase }: CollapsibleTool
       style={{
         borderRadius: '12px',
         background: '#0D0D0D',
-        border: '1px solid rgba(89, 119, 159, 0.3)',
+        border: '1px solid rgba(65, 115, 148, 0.3)',
         boxShadow: '0 0 20px rgba(0,0,0,0.8), 0 8px 40px rgba(0,0,0,0.6), 0 12px 60px rgba(0,0,0,0.4)',
       }}
       onClick={() => setCollapsed(!collapsed)}
@@ -85,7 +85,7 @@ export function CollapsibleTooltip({ text, description, phase }: CollapsibleTool
         <div className="flex items-center gap-3 px-4 py-2.5">
           {/* Lightbulb icon */}
           <div className="flex-shrink-0">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="#59779F">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#417394">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17a1 1 0 001 1h6a1 1 0 001-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zM9 21a1 1 0 001 1h4a1 1 0 001-1v-1H9v1z" />
             </svg>
           </div>
@@ -107,7 +107,7 @@ export function CollapsibleTooltip({ text, description, phase }: CollapsibleTool
         <div className="flex items-start gap-3 px-4 py-3.5">
           {/* Lightbulb icon */}
           <div className="flex-shrink-0 mt-0.5">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="#59779F">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#417394">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17a1 1 0 001 1h6a1 1 0 001-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zM9 21a1 1 0 001 1h4a1 1 0 001-1v-1H9v1z" />
             </svg>
           </div>

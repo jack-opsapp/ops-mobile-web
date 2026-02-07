@@ -125,17 +125,19 @@ export function MockProjectForm({
               disabled={!isFieldActive('create')}
               className="font-mohave font-bold text-[16px] text-right"
               style={{
-                color: isFormValid && isFieldActive('create') ? '#59779F' : '#777777',
+                color: isFormValid && isFieldActive('create') ? '#417394' : '#777777',
                 minWidth: 70,
                 background: 'none',
-                border: 'none',
                 cursor: isFieldActive('create') ? 'pointer' : 'default',
                 padding: '4px 8px',
                 borderRadius: 6,
-                ...(isFieldActive('create') ? {
-                  boxShadow: '0 0 12px rgba(89, 119, 159, 0.4)',
-                  border: '1.5px solid rgba(89, 119, 159, 0.6)',
-                } : {}),
+                border: isFieldActive('create')
+                  ? '1.5px solid rgba(65, 115, 148, 0.6)'
+                  : '1.5px solid transparent',
+                boxShadow: isFieldActive('create')
+                  ? '0 0 12px rgba(65, 115, 148, 0.4)'
+                  : 'none',
+                transition: 'border 0.3s ease, box-shadow 0.3s ease',
               }}
             >
               CREATE
@@ -179,12 +181,12 @@ export function MockProjectForm({
               className="flex items-center gap-1 mb-4"
               style={{ paddingBottom: 4 }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: '#AAAAAA' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: '#A7A7A7' }}>
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M14 2v6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="font-kosugi text-[14px] font-normal uppercase tracking-wider" style={{ color: '#AAAAAA' }}>
+              <span className="font-kosugi text-[14px] font-normal uppercase tracking-wider" style={{ color: '#A7A7A7' }}>
                 PROJECT DETAILS
               </span>
             </div>
@@ -209,19 +211,24 @@ export function MockProjectForm({
                   <label
                     className="font-kosugi text-[14px] font-normal uppercase tracking-wider block"
                     style={{
-                      color: isFieldActive('client') ? '#59779F' : '#AAAAAA',
+                      color: isFieldActive('client') ? '#417394' : '#A7A7A7',
                       marginBottom: 12,
                       transition: 'color 0.3s ease',
+                      ...(isFieldActive('client') ? {
+                        animation: 'tutorialPulse 2.4s ease-in-out infinite',
+                      } : {}),
                     }}
                   >
                     CLIENT
                   </label>
 
                   {selectedClient ? (
-                    /* Selected client card - matches iOS: no border, name + email */
+                    /* Selected client card - matches iOS: border when filled */
                     <div
                       style={{
                         padding: '12px 16px',
+                        borderRadius: 5,
+                        border: '1px solid rgba(255,255,255,0.2)',
                       }}
                     >
                       <span className="font-mohave font-bold text-[16px] text-white block">
@@ -243,16 +250,16 @@ export function MockProjectForm({
                           padding: '12px 16px',
                           borderRadius: 5,
                           border: isFieldActive('client')
-                            ? '2px solid rgba(89, 119, 159, 0.6)'
+                            ? '2px solid rgba(65, 115, 148, 0.6)'
                             : '1px solid rgba(255,255,255,0.15)',
                           transition: 'border 0.3s ease, box-shadow 0.3s ease',
                           ...(isFieldActive('client') ? {
-                            boxShadow: '0 0 8px rgba(89, 119, 159, 0.2)',
-                            animation: 'tutorialPulse 1.2s ease-in-out infinite',
+                            boxShadow: '0 0 8px rgba(65, 115, 148, 0.2)',
+                            animation: 'tutorialPulse 2.4s ease-in-out infinite',
                           } : {}),
                         }}
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ color: '#AAAAAA', flexShrink: 0 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ color: '#A7A7A7', flexShrink: 0 }}>
                           <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" />
                           <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                         </svg>
@@ -303,7 +310,7 @@ export function MockProjectForm({
                   <label
                     className="font-kosugi text-[14px] font-normal uppercase tracking-wider block"
                     style={{
-                      color: isFieldActive('name') ? '#59779F' : '#AAAAAA',
+                      color: isFieldActive('name') ? '#417394' : '#A7A7A7',
                       marginBottom: 12,
                       transition: 'color 0.3s ease',
                     }}
@@ -314,12 +321,12 @@ export function MockProjectForm({
                     style={{
                       borderRadius: 5,
                       border: isFieldActive('name')
-                        ? '2px solid rgba(89, 119, 159, 0.6)'
+                        ? '2px solid rgba(65, 115, 148, 0.6)'
                         : '1px solid rgba(255,255,255,0.15)',
                       transition: 'border 0.3s ease, box-shadow 0.3s ease',
                       ...(isFieldActive('name') ? {
-                        boxShadow: '0 0 8px rgba(89, 119, 159, 0.2)',
-                        animation: 'tutorialPulse 1.2s ease-in-out infinite',
+                        boxShadow: '0 0 8px rgba(65, 115, 148, 0.2)',
+                        animation: 'tutorialPulse 2.4s ease-in-out infinite',
                       } : {}),
                     }}
                   >
@@ -345,7 +352,7 @@ export function MockProjectForm({
                 <div style={{ opacity: 0.5 }}>
                   <label
                     className="font-kosugi text-[14px] font-normal uppercase tracking-wider block"
-                    style={{ color: '#AAAAAA', marginBottom: 12 }}
+                    style={{ color: '#A7A7A7', marginBottom: 12 }}
                   >
                     JOB STATUS
                   </label>
@@ -402,16 +409,16 @@ export function MockProjectForm({
                   padding: '8px 12px',
                   borderRadius: 5,
                   border: isFieldActive('addTask')
-                    ? '2px solid rgba(89, 119, 159, 0.6)'
+                    ? '2px solid rgba(65, 115, 148, 0.6)'
                     : '1px solid rgba(255,255,255,0.1)',
-                  color: isFieldActive('addTask') ? '#59779F' : '#777777',
+                  color: isFieldActive('addTask') ? '#417394' : '#777777',
                   opacity: isFieldActive('addTask') || addedTask ? 1 : 0.5,
                   background: isFieldActive('addTask') ? 'rgba(13,13,13,0.5)' : 'rgba(13,13,13,0.5)',
                   cursor: isFieldActive('addTask') ? 'pointer' : 'default',
                   transition: 'all 0.3s ease',
                   ...(isFieldActive('addTask') ? {
-                    boxShadow: '0 0 8px rgba(89, 119, 159, 0.2)',
-                    animation: 'tutorialPulse 1.2s ease-in-out infinite',
+                    boxShadow: '0 0 8px rgba(65, 115, 148, 0.2)',
+                    animation: 'tutorialPulse 2.4s ease-in-out infinite',
                   } : {}),
                 }}
               >
@@ -428,11 +435,11 @@ export function MockProjectForm({
               <div style={{ marginTop: 16 }}>
                 {/* Section header */}
                 <div className="flex items-center gap-1" style={{ marginBottom: 12 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: '#AAAAAA' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: '#A7A7A7' }}>
                     <path d="M9 11l3 3L22 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <span className="font-kosugi text-[14px] font-normal uppercase tracking-wider" style={{ color: '#AAAAAA' }}>
+                  <span className="font-kosugi text-[14px] font-normal uppercase tracking-wider" style={{ color: '#A7A7A7' }}>
                     TASKS
                   </span>
                 </div>
@@ -474,13 +481,13 @@ export function MockProjectForm({
                             {addedTask.type}
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="font-kosugi text-[11px]" style={{ color: '#AAAAAA' }}>
+                            <span className="font-kosugi text-[11px]" style={{ color: '#A7A7A7' }}>
                               {addedTask.crew}
                             </span>
                             <span className="font-kosugi text-[11px]" style={{ color: '#777777' }}>
                               &middot;
                             </span>
-                            <span className="font-kosugi text-[11px]" style={{ color: '#AAAAAA' }}>
+                            <span className="font-kosugi text-[11px]" style={{ color: '#A7A7A7' }}>
                               {addedTask.date}
                             </span>
                           </div>
@@ -503,22 +510,22 @@ export function MockProjectForm({
                       borderRadius: 5,
                       background: isFieldActive('addTask') ? 'rgba(13,13,13,1)' : 'rgba(13,13,13,1)',
                       border: isFieldActive('addTask')
-                        ? '2px solid rgba(89, 119, 159, 0.5)'
-                        : '2px dashed rgba(89, 119, 159, 0.3)',
+                        ? '2px solid rgba(65, 115, 148, 0.5)'
+                        : '2px dashed rgba(65, 115, 148, 0.3)',
                       cursor: isFieldActive('addTask') ? 'pointer' : 'default',
                       opacity: isFieldActive('addTask') ? 1 : 0.5,
                       transition: 'all 0.3s ease',
                       ...(isFieldActive('addTask') ? {
-                        boxShadow: '0 0 8px rgba(89, 119, 159, 0.2)',
-                        animation: 'tutorialPulse 1.2s ease-in-out infinite',
+                        boxShadow: '0 0 8px rgba(65, 115, 148, 0.2)',
+                        animation: 'tutorialPulse 2.4s ease-in-out infinite',
                       } : {}),
                     }}
                   >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: '#59779F' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: '#417394' }}>
                       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
                       <path d="M12 8v8M8 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                     </svg>
-                    <span className="font-mohave text-[16px]" style={{ color: '#59779F' }}>
+                    <span className="font-mohave text-[16px]" style={{ color: '#417394' }}>
                       {addedTask ? 'Add Another Task' : 'Add Task'}
                     </span>
                   </button>

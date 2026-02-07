@@ -12,22 +12,22 @@ interface MockJobBoardProps {
   onSwipeComplete?: () => void
 }
 
-type StatusColumn = 'new' | 'accepted' | 'inProgress' | 'completed' | 'closed'
+type StatusColumn = 'rfq' | 'estimated' | 'accepted' | 'inProgress' | 'completed'
 
 const STATUS_LABELS: Record<StatusColumn, string> = {
-  new: 'New',
+  rfq: 'RFQ',
+  estimated: 'Estimated',
   accepted: 'Accepted',
   inProgress: 'In Progress',
   completed: 'Completed',
-  closed: 'Closed',
 }
 
 const STATUS_COLORS: Record<StatusColumn, string> = {
-  new: '#59779F',
-  accepted: '#A5B368',
-  inProgress: '#59779F',
-  completed: '#A5B368',
-  closed: '#777777',
+  rfq: '#BCBCBC',
+  estimated: '#B5A381',
+  accepted: '#9DB582',
+  inProgress: '#8195B5',
+  completed: '#B58289',
 }
 
 // Phases that show the dashboard (paging columns) view
@@ -50,18 +50,18 @@ const LIST_PHASES: TutorialPhase[] = [
 
 type SectionTab = 'DASHBOARD' | 'CLIENTS' | 'PROJECTS' | 'TASKS'
 
-function MockAppHeader() {
+function MockAppHeader({ title = 'Job Board' }: { title?: string }) {
   return (
-    <div className="px-4 pt-3 pb-1 flex items-center justify-between">
-      <h2 className="font-mohave font-bold text-[20px] uppercase tracking-wider text-white">
-        Job Board
+    <div className="flex items-center justify-between" style={{ padding: '12px 20px' }}>
+      <h2 className="font-mohave font-semibold text-[28px] uppercase tracking-wider" style={{ color: '#E5E5E5' }}>
+        {title}
       </h2>
       <div className="flex items-center gap-3">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-ops-text-secondary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: '#A7A7A7' }}>
           <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5" />
           <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-ops-text-secondary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: '#A7A7A7' }}>
           <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
@@ -85,10 +85,10 @@ function MockSectionSelector({ selected, animateToProjects }: { selected: Sectio
   }, [selected, animateToProjects])
 
   return (
-    <div className="px-4 pb-2">
+    <div style={{ padding: '0 20px 8px' }}>
       <div
-        className="flex rounded-xl overflow-hidden"
-        style={{ background: '#0D0D0D', padding: 3 }}
+        className="flex overflow-hidden"
+        style={{ background: '#0D0D0D', padding: 3, borderRadius: 9 }}
       >
         {tabs.map(tab => {
           const isActive = activeTab === tab
@@ -98,14 +98,15 @@ function MockSectionSelector({ selected, animateToProjects }: { selected: Sectio
               className="flex-1 flex items-center justify-center transition-all duration-300"
               style={{
                 padding: '7px 0',
-                borderRadius: 10,
+                borderRadius: 9,
                 background: isActive ? '#FFFFFF' : 'transparent',
               }}
             >
               <span
-                className="font-mohave text-[11px] uppercase tracking-wider font-bold transition-colors duration-300"
+                className="font-mohave text-[14px] uppercase tracking-wider transition-colors duration-300"
                 style={{
                   color: isActive ? '#0D0D0D' : '#777777',
+                  fontWeight: 400,
                 }}
               >
                 {tab}
@@ -151,7 +152,7 @@ function DashboardView({
   phase: TutorialPhase
   userProject: DemoProject | null
 }) {
-  const columns: StatusColumn[] = ['new', 'accepted', 'inProgress', 'completed', 'closed']
+  const columns: StatusColumn[] = ['rfq', 'estimated', 'accepted', 'inProgress', 'completed']
   const [currentPage, setCurrentPage] = useState(0)
   const [animatingStatus, setAnimatingStatus] = useState<StatusColumn | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -161,25 +162,27 @@ function DashboardView({
   // Group projects by status
   const getProjectsByStatus = useCallback((): Record<StatusColumn, DemoProject[]> => {
     const groups: Record<StatusColumn, DemoProject[]> = {
-      new: [],
+      rfq: [],
+      estimated: [],
       accepted: [],
       inProgress: [],
       completed: [],
-      closed: [],
     }
 
     DEMO_PROJECTS.forEach(p => {
-      groups[p.status].push(p)
+      if (p.status in groups) {
+        groups[p.status as StatusColumn].push(p)
+      }
     })
 
     if (userProject) {
       if (phase === 'dragToAccepted') {
-        groups.new.unshift(userProject)
+        groups.estimated.unshift(userProject)
       } else if (phase === 'projectListStatusDemo') {
         const targetStatus = animatingStatus || 'accepted'
         groups[targetStatus].unshift(userProject)
       } else {
-        groups.new.unshift(userProject)
+        groups.estimated.unshift(userProject)
       }
     }
 
@@ -211,11 +214,11 @@ function DashboardView({
     return () => clearInterval(interval)
   }, [phase, userProject])
 
-  // Navigate to the "new" column for dragToAccepted
+  // Navigate to the "estimated" column for dragToAccepted
   useEffect(() => {
     if (phase === 'dragToAccepted') {
-      const newIdx = columns.indexOf('new')
-      if (newIdx >= 0) setCurrentPage(newIdx)
+      const estimatedIdx = columns.indexOf('estimated')
+      if (estimatedIdx >= 0) setCurrentPage(estimatedIdx)
     }
   }, [phase])
 
@@ -445,7 +448,7 @@ function ListView({
     }
 
     DEMO_PROJECTS.forEach(p => {
-      if (p.status === 'closed' || p.status === 'completed') {
+      if (p.status === 'completed' || p.status === 'closed') {
         closed.push(p)
       } else {
         active.push(p)

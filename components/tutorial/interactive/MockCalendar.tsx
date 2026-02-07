@@ -242,29 +242,29 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* App Header - matches iOS ScheduleView */}
-      <div className="px-4 pt-3 pb-0 flex items-center justify-between">
+      {/* App Header - matches iOS ScheduleView / CalendarHeaderView */}
+      <div className="flex items-center justify-between" style={{ padding: '12px 20px 0' }}>
         <div>
-          <h2 className="font-mohave font-bold text-[20px] uppercase tracking-wider text-white">
+          <h2 className="font-mohave font-semibold text-[28px] uppercase tracking-wider" style={{ color: '#E5E5E5' }}>
             Schedule
           </h2>
           {/* TODAY | Date subtitle */}
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="font-mohave text-[11px] uppercase tracking-wider text-ops-accent font-bold">
+            <span className="font-mohave text-[12px] uppercase tracking-wider text-ops-accent font-bold">
               Today
             </span>
             <div style={{ width: 1, height: 10, background: 'rgba(255,255,255,0.2)' }} />
-            <span className="font-mohave text-[11px] text-ops-text-secondary">
+            <span className="font-mohave text-[12px] text-ops-text-secondary">
               {monthNames[today.getMonth()]} {today.getDate()}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-ops-text-secondary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: '#A7A7A7' }}>
             <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5" />
             <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-ops-text-secondary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: '#A7A7A7' }}>
             <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
@@ -290,7 +290,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
             style={{
               ...(isMonthView ? { background: '#1A1A1A' } : {}),
               ...(isMonthPrompt ? {
-                border: '1px solid rgba(89, 119, 159, 0.5)',
+                border: '1px solid rgba(65, 115, 148, 0.5)',
                 borderRadius: '8px',
               } : {}),
             }}
@@ -300,8 +300,8 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
               <span
                 className="absolute inset-0 rounded-lg pointer-events-none"
                 style={{
-                  border: '1px solid rgba(89, 119, 159, 0.6)',
-                  animation: 'calendarPulse 1.2s ease-in-out infinite',
+                  border: '1px solid rgba(65, 115, 148, 0.6)',
+                  animation: 'calendarPulse 2.4s ease-in-out infinite',
                 }}
               />
             )}
@@ -470,7 +470,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                       onClick={() => setSelectedDayIndex(i)}
                       style={{
                         // Today: accent bg at 50% opacity
-                        background: isToday ? 'rgba(89, 119, 159, 0.5)' : 'transparent',
+                        background: isToday ? 'rgba(65, 115, 148, 0.5)' : 'transparent',
                         // Selected: white 1px border outline
                         border: isSelected && !isToday ? '1px solid rgba(255,255,255,0.8)' : isSelected && isToday ? '1px solid rgba(255,255,255,0.8)' : '1px solid transparent',
                         borderRadius: 12,

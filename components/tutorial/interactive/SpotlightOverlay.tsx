@@ -75,8 +75,8 @@ export function SpotlightOverlay({ target, visible }: SpotlightOverlayProps) {
             width: animatedTarget.width + (padding + 1) * 2,
             height: animatedTarget.height + (padding + 1) * 2,
             borderRadius: r + padding,
-            border: '1px solid rgba(89, 119, 159, 0.5)',
-            boxShadow: '0 0 12px rgba(89, 119, 159, 0.3)',
+            border: '1px solid rgba(65, 115, 148, 0.5)',
+            boxShadow: '0 0 12px rgba(65, 115, 148, 0.3)',
           }}
         />
       )}
