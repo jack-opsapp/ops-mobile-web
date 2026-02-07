@@ -84,11 +84,11 @@ export function MockProjectForm({
       <div
         className="absolute inset-x-0 bottom-0 flex flex-col"
         style={{
-          maxHeight: '88%',
+          maxHeight: '92%',
           transform: sheetVisible ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
-          borderTopLeftRadius: 12,
-          borderTopRightRadius: 12,
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
           overflow: 'hidden',
         }}
       >
@@ -99,7 +99,7 @@ export function MockProjectForm({
         >
           {/* Extra top spacing during projectFormComplete to push below tooltip */}
           {phase === 'projectFormComplete' && (
-            <div style={{ height: 48 }} />
+            <div style={{ height: 90 }} />
           )}
 
           <div
@@ -153,20 +153,30 @@ export function MockProjectForm({
         >
           {/* Dark overlay during projectFormComplete phase */}
           {phase === 'projectFormComplete' && (
-            <div
-              className="absolute inset-0"
-              style={{
-                background: 'rgba(0,0,0,0.6)',
-                zIndex: 10,
-                pointerEvents: 'auto',
-              }}
-            />
+            <>
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: 'rgba(0,0,0,0.6)',
+                  zIndex: 10,
+                  pointerEvents: 'auto',
+                }}
+              />
+              {/* Radial gradient spotlight on CREATE button */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at 85% 12%, transparent 60px, rgba(0,0,0,0.6) 350px)',
+                  zIndex: 11,
+                }}
+              />
+            </>
           )}
 
           <div style={{ padding: 16 }}>
             {/* Section Header: PROJECT DETAILS */}
             <div
-              className="flex items-center gap-2 mb-4"
+              className="flex items-center gap-1 mb-4"
               style={{ paddingBottom: 4 }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: '#AAAAAA' }}>
@@ -174,8 +184,8 @@ export function MockProjectForm({
                 <path d="M14 2v6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="font-kosugi text-[14px] font-bold uppercase tracking-wider" style={{ color: '#AAAAAA' }}>
-                Project Details
+              <span className="font-kosugi text-[14px] font-normal uppercase tracking-wider" style={{ color: '#AAAAAA' }}>
+                PROJECT DETAILS
               </span>
             </div>
 
@@ -197,27 +207,28 @@ export function MockProjectForm({
                   }}
                 >
                   <label
-                    className="font-kosugi text-[14px] font-bold uppercase tracking-wider block"
+                    className="font-kosugi text-[14px] font-normal uppercase tracking-wider block"
                     style={{
                       color: isFieldActive('client') ? '#59779F' : '#AAAAAA',
                       marginBottom: 12,
                       transition: 'color 0.3s ease',
                     }}
                   >
-                    Client
+                    CLIENT
                   </label>
 
                   {selectedClient ? (
-                    /* Selected client card */
+                    /* Selected client card - matches iOS: no border, name + email */
                     <div
                       style={{
                         padding: '12px 16px',
-                        borderRadius: 12,
-                        border: '1px solid rgba(255,255,255,0.15)',
                       }}
                     >
-                      <span className="font-mohave font-bold text-[16px] text-white">
+                      <span className="font-mohave font-bold text-[16px] text-white block">
                         {selectedClient}
+                      </span>
+                      <span className="font-kosugi text-[12px] block mt-0.5" style={{ color: '#777777' }}>
+                        {selectedClient.toLowerCase().replace(/\s+/g, '.')}@email.com
                       </span>
                     </div>
                   ) : (
@@ -230,14 +241,14 @@ export function MockProjectForm({
                           alignItems: 'center',
                           gap: 8,
                           padding: '12px 16px',
-                          borderRadius: 12,
+                          borderRadius: 5,
                           border: isFieldActive('client')
                             ? '2px solid rgba(89, 119, 159, 0.6)'
                             : '1px solid rgba(255,255,255,0.15)',
                           transition: 'border 0.3s ease, box-shadow 0.3s ease',
                           ...(isFieldActive('client') ? {
                             boxShadow: '0 0 8px rgba(89, 119, 159, 0.2)',
-                            animation: 'tutorialPulse 2s ease-in-out infinite',
+                            animation: 'tutorialPulse 1.2s ease-in-out infinite',
                           } : {}),
                         }}
                       >
@@ -255,8 +266,8 @@ export function MockProjectForm({
                         <div
                           style={{
                             marginTop: 8,
-                            borderRadius: 12,
-                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: 5,
+                            border: '1px solid rgba(255,255,255,0.2)',
                             background: 'rgba(13,13,13,0.8)',
                             overflow: 'hidden',
                           }}
@@ -269,7 +280,7 @@ export function MockProjectForm({
                               style={{
                                 padding: '12px 16px',
                                 borderBottom: index < DEMO_CLIENTS.length - 1
-                                  ? '1px solid rgba(255,255,255,0.05)'
+                                  ? '1px solid rgba(255,255,255,0.2)'
                                   : 'none',
                               }}
                             >
@@ -290,25 +301,25 @@ export function MockProjectForm({
                   }}
                 >
                   <label
-                    className="font-kosugi text-[14px] font-bold uppercase tracking-wider block"
+                    className="font-kosugi text-[14px] font-normal uppercase tracking-wider block"
                     style={{
                       color: isFieldActive('name') ? '#59779F' : '#AAAAAA',
                       marginBottom: 12,
                       transition: 'color 0.3s ease',
                     }}
                   >
-                    Project Name
+                    PROJECT NAME
                   </label>
                   <div
                     style={{
-                      borderRadius: 12,
+                      borderRadius: 5,
                       border: isFieldActive('name')
                         ? '2px solid rgba(89, 119, 159, 0.6)'
                         : '1px solid rgba(255,255,255,0.15)',
                       transition: 'border 0.3s ease, box-shadow 0.3s ease',
                       ...(isFieldActive('name') ? {
                         boxShadow: '0 0 8px rgba(89, 119, 159, 0.2)',
-                        animation: 'tutorialPulse 2s ease-in-out infinite',
+                        animation: 'tutorialPulse 1.2s ease-in-out infinite',
                       } : {}),
                     }}
                   >
@@ -324,7 +335,7 @@ export function MockProjectForm({
                         background: 'transparent',
                         padding: '12px 16px',
                         height: 44,
-                        borderRadius: 12,
+                        borderRadius: 5,
                       }}
                     />
                   </div>
@@ -333,16 +344,16 @@ export function MockProjectForm({
                 {/* --- JOB STATUS (always dimmed in tutorial) --- */}
                 <div style={{ opacity: 0.5 }}>
                   <label
-                    className="font-kosugi text-[14px] font-bold uppercase tracking-wider block"
+                    className="font-kosugi text-[14px] font-normal uppercase tracking-wider block"
                     style={{ color: '#AAAAAA', marginBottom: 12 }}
                   >
-                    Job Status
+                    JOB STATUS
                   </label>
                   <div
                     className="flex items-center justify-between"
                     style={{
                       padding: '12px 16px',
-                      borderRadius: 12,
+                      borderRadius: 5,
                       border: '1px solid rgba(255,255,255,0.15)',
                     }}
                   >
@@ -368,10 +379,10 @@ export function MockProjectForm({
               ].map((pill) => (
                 <div
                   key={pill.title}
-                  className="font-kosugi text-[11px] uppercase tracking-wider"
+                  className="font-kosugi text-[14px] uppercase tracking-wider"
                   style={{
-                    padding: '6px 12px',
-                    borderRadius: 20,
+                    padding: '8px 12px',
+                    borderRadius: 5,
                     border: '1px solid rgba(255,255,255,0.1)',
                     color: '#777777',
                     opacity: 0.5,
@@ -386,24 +397,28 @@ export function MockProjectForm({
               <button
                 onClick={onAddTask}
                 disabled={!isFieldActive('addTask') && !addedTask}
-                className="font-kosugi text-[11px] uppercase tracking-wider"
+                className="font-kosugi text-[14px] uppercase tracking-wider flex items-center gap-1.5"
                 style={{
-                  padding: '6px 12px',
-                  borderRadius: 20,
+                  padding: '8px 12px',
+                  borderRadius: 5,
                   border: isFieldActive('addTask')
                     ? '2px solid rgba(89, 119, 159, 0.6)'
                     : '1px solid rgba(255,255,255,0.1)',
                   color: isFieldActive('addTask') ? '#59779F' : '#777777',
                   opacity: isFieldActive('addTask') || addedTask ? 1 : 0.5,
-                  background: isFieldActive('addTask') ? 'rgba(89,119,159,0.08)' : 'rgba(13,13,13,0.5)',
+                  background: isFieldActive('addTask') ? 'rgba(13,13,13,0.5)' : 'rgba(13,13,13,0.5)',
                   cursor: isFieldActive('addTask') ? 'pointer' : 'default',
                   transition: 'all 0.3s ease',
                   ...(isFieldActive('addTask') ? {
                     boxShadow: '0 0 8px rgba(89, 119, 159, 0.2)',
-                    animation: 'tutorialPulse 2s ease-in-out infinite',
+                    animation: 'tutorialPulse 1.2s ease-in-out infinite',
                   } : {}),
                 }}
               >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 11l3 3L22 4" />
+                  <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+                </svg>
                 ADD TASKS
               </button>
             </div>
@@ -412,13 +427,13 @@ export function MockProjectForm({
             {(addedTask || isFieldActive('addTask')) && (
               <div style={{ marginTop: 16 }}>
                 {/* Section header */}
-                <div className="flex items-center gap-2" style={{ marginBottom: 12 }}>
+                <div className="flex items-center gap-1" style={{ marginBottom: 12 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: '#AAAAAA' }}>
                     <path d="M9 11l3 3L22 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <span className="font-kosugi text-[14px] font-bold uppercase tracking-wider" style={{ color: '#AAAAAA' }}>
-                    Add Tasks
+                  <span className="font-kosugi text-[14px] font-normal uppercase tracking-wider" style={{ color: '#AAAAAA' }}>
+                    TASKS
                   </span>
                 </div>
 
@@ -485,7 +500,7 @@ export function MockProjectForm({
                     className="w-full flex items-center justify-center gap-2"
                     style={{
                       padding: '12px 16px',
-                      borderRadius: 12,
+                      borderRadius: 5,
                       background: isFieldActive('addTask') ? 'rgba(13,13,13,1)' : 'rgba(13,13,13,1)',
                       border: isFieldActive('addTask')
                         ? '2px solid rgba(89, 119, 159, 0.5)'
@@ -495,7 +510,7 @@ export function MockProjectForm({
                       transition: 'all 0.3s ease',
                       ...(isFieldActive('addTask') ? {
                         boxShadow: '0 0 8px rgba(89, 119, 159, 0.2)',
-                        animation: 'tutorialPulse 2s ease-in-out infinite',
+                        animation: 'tutorialPulse 1.2s ease-in-out infinite',
                       } : {}),
                     }}
                   >
@@ -520,12 +535,8 @@ export function MockProjectForm({
       {/* Pulsing border animation keyframes (injected via style tag) */}
       <style jsx>{`
         @keyframes tutorialPulse {
-          0%, 100% {
-            box-shadow: 0 0 4px rgba(89, 119, 159, 0.15);
-          }
-          50% {
-            box-shadow: 0 0 12px rgba(89, 119, 159, 0.35);
-          }
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
         }
       `}</style>
     </div>

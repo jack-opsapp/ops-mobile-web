@@ -70,26 +70,26 @@ export function MockTaskForm({
       style={{ zIndex: 52 }}
     >
       <div
-        className="rounded-t-[12px] overflow-hidden flex flex-col"
+        className="overflow-hidden flex flex-col"
         style={{
           background: '#000000',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderBottom: 'none',
-          maxHeight: '80vh',
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
+          maxHeight: '92vh',
         }}
       >
         {/* Header: CANCEL | CREATE TASK | DONE */}
         <div className="relative flex items-center px-4 py-3" style={{ background: '#000000' }}>
           {/* Cancel - left */}
           <span
-            className="font-mohave font-bold text-[14px] uppercase"
+            className="font-mohave font-medium text-[16px] uppercase"
             style={{ color: '#777777', opacity: 0.5 }}
           >
             Cancel
           </span>
 
           {/* CREATE TASK - center */}
-          <span className="absolute left-1/2 -translate-x-1/2 font-mohave font-bold text-[16px] text-white uppercase">
+          <span className="absolute left-1/2 -translate-x-1/2 font-mohave font-medium text-[16px] text-white uppercase">
             Create Task
           </span>
 
@@ -97,15 +97,19 @@ export function MockTaskForm({
           <button
             onClick={onDone}
             disabled={!isFieldActive('done')}
-            className={`ml-auto font-mohave font-bold text-[14px] uppercase px-2 py-1 rounded-md transition-all duration-300 ${
+            className={`ml-auto font-mohave font-medium text-[16px] uppercase transition-all duration-300 ${
               isFieldActive('done')
                 ? 'text-[#59779F]'
                 : 'text-[#777777]'
             }`}
-            style={isFieldActive('done') ? {
-              border: '2px solid #59779F',
-              animation: 'tutorialPulse 2s ease-in-out infinite',
-            } : undefined}
+            style={{
+              padding: '4px 8px',
+              borderRadius: 6,
+              ...(isFieldActive('done') ? {
+                border: '2px solid #59779F',
+                animation: 'tutorialPulse 1.2s ease-in-out infinite',
+              } : {}),
+            }}
           >
             Done
           </button>
@@ -118,6 +122,8 @@ export function MockTaskForm({
         <div className="relative flex-1 overflow-y-auto">
           {/* Scrollable form content */}
           <div className="px-4 py-4 space-y-6">
+            {/* Step 9: Extra top padding to push header below tooltip */}
+            {phase === 'taskFormDone' && <div style={{ height: 90 }} />}
 
             {/* Preview Card (greyed out at 0.3 opacity) */}
             <div style={{ opacity: 0.3 }} className="pointer-events-none">
@@ -205,12 +211,12 @@ export function MockTaskForm({
             </div>
 
             {/* TASK DETAILS Section Header */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-[2px]">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-[#AAAAAA]">
                 <path d="M9 5h11M9 12h11M9 19h11M5 5h.01M5 12h.01M5 19h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
-              <span className="font-kosugi font-bold text-[11px] text-[#AAAAAA] uppercase tracking-wider">
-                Task Details
+              <span className="font-kosugi font-normal text-[14px] text-[#AAAAAA] uppercase tracking-wider">
+                TASK DETAILS
               </span>
             </div>
 
@@ -222,14 +228,14 @@ export function MockTaskForm({
               {/* Label row */}
               <div className="flex items-center justify-between mb-2">
                 <span
-                  className={`font-kosugi font-bold text-[11px] uppercase tracking-wider transition-colors duration-300 ${
+                  className={`font-kosugi font-normal text-[14px] uppercase tracking-wider transition-colors duration-300 ${
                     isFieldActive('type') ? 'text-[#59779F]' : 'text-[#AAAAAA]'
                   }`}
                   style={isFieldActive('type') ? {
-                    animation: 'tutorialPulse 2s ease-in-out infinite',
+                    animation: 'tutorialPulse 1.2s ease-in-out infinite',
                   } : undefined}
                 >
-                  Task Type
+                  TASK TYPE
                 </span>
                 <span
                   className="font-kosugi text-[10px] text-[#777777] flex items-center gap-1"
@@ -256,7 +262,7 @@ export function MockTaskForm({
                       ? '2px solid #59779F'
                       : '1px solid rgba(255,255,255,0.1)',
                     ...(isFieldActive('type') ? {
-                      animation: 'tutorialPulse 2s ease-in-out infinite',
+                      animation: 'tutorialPulse 1.2s ease-in-out infinite',
                     } : {}),
                   }}
                 >
@@ -267,7 +273,7 @@ export function MockTaskForm({
                   />
 
                   <div className="flex items-center justify-between flex-1 px-4 py-3">
-                    <span className={`font-mohave text-[14px] ${selectedType ? 'text-white' : 'text-[#777777]'}`}>
+                    <span className={`font-mohave text-[16px] ${selectedType ? 'text-white' : 'text-[#777777]'}`}>
                       {selectedType ? selectedType.toUpperCase() : 'Select Task Type'}
                     </span>
                     <svg
@@ -304,7 +310,7 @@ export function MockTaskForm({
                         className="w-3 h-3 rounded-full flex-shrink-0"
                         style={{ background: type.color }}
                       />
-                      <span className="font-mohave text-[13px] text-white uppercase">
+                      <span className="font-mohave text-[16px] text-white uppercase">
                         {type.name}
                       </span>
                       {selectedType === type.name && (
@@ -320,8 +326,8 @@ export function MockTaskForm({
 
             {/* 2. Status Field (always disabled at 0.5 opacity in tutorial) */}
             <div style={{ opacity: 0.5 }} className="pointer-events-none">
-              <span className="font-kosugi font-bold text-[11px] text-[#AAAAAA] uppercase tracking-wider mb-2 block">
-                Status
+              <span className="font-kosugi font-normal text-[14px] text-[#AAAAAA] uppercase tracking-wider mb-2 block">
+                STATUS
               </span>
               <div
                 className="flex items-center justify-between px-4 py-3"
@@ -330,7 +336,7 @@ export function MockTaskForm({
                   border: '1px solid rgba(255,255,255,0.1)',
                 }}
               >
-                <span className="font-mohave text-[14px] text-white">Booked</span>
+                <span className="font-mohave text-[16px] text-white">Booked</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-[#AAAAAA]">
                   <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
@@ -343,14 +349,14 @@ export function MockTaskForm({
               className="transition-opacity duration-200"
             >
               <span
-                className={`font-kosugi font-bold text-[11px] uppercase tracking-wider mb-2 block transition-colors duration-300 ${
+                className={`font-kosugi font-normal text-[14px] uppercase tracking-wider mb-2 block transition-colors duration-300 ${
                   isFieldActive('crew') ? 'text-[#59779F]' : 'text-[#AAAAAA]'
                 }`}
                 style={isFieldActive('crew') ? {
-                  animation: 'tutorialPulse 2s ease-in-out infinite',
+                  animation: 'tutorialPulse 1.2s ease-in-out infinite',
                 } : undefined}
               >
-                Assign Team
+                ASSIGN TEAM
               </span>
 
               <button
@@ -366,7 +372,7 @@ export function MockTaskForm({
                       ? '2px solid #59779F'
                       : '1px solid rgba(255,255,255,0.1)',
                     ...(isFieldActive('crew') ? {
-                      animation: 'tutorialPulse 2s ease-in-out infinite',
+                      animation: 'tutorialPulse 1.2s ease-in-out infinite',
                     } : {}),
                   }}
                 >
@@ -379,12 +385,12 @@ export function MockTaskForm({
                       >
                         {selectedCrew.charAt(0)}
                       </div>
-                      <span className="font-mohave text-[14px] text-white">
+                      <span className="font-mohave text-[16px] text-white">
                         {selectedCrew}
                       </span>
                     </div>
                   ) : (
-                    <span className="font-mohave text-[14px] text-[#777777]">
+                    <span className="font-mohave text-[16px] text-[#777777]">
                       Select team members
                     </span>
                   )}
@@ -430,18 +436,18 @@ export function MockTaskForm({
 
                       {/* Avatar */}
                       <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-mohave font-bold text-white flex-shrink-0"
-                        style={{ background: '#59779F' }}
+                        className="rounded-full flex items-center justify-center text-[13px] font-mohave font-bold text-white flex-shrink-0"
+                        style={{ background: '#59779F', width: 40, height: 40 }}
                       >
                         {crew.short.charAt(0)}
                       </div>
 
                       {/* Name */}
-                      <div className="flex flex-col">
-                        <span className="font-mohave font-bold text-[13px] text-white">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-mohave font-medium text-[16px] text-white">
                           {crew.name}
                         </span>
-                        <span className="font-kosugi text-[10px] text-[#777777]">
+                        <span className="font-kosugi text-[14px] text-[#777777]">
                           Field Crew
                         </span>
                       </div>
@@ -457,14 +463,14 @@ export function MockTaskForm({
               className="transition-opacity duration-200"
             >
               <span
-                className={`font-kosugi font-bold text-[11px] uppercase tracking-wider mb-2 block transition-colors duration-300 ${
+                className={`font-kosugi font-normal text-[14px] uppercase tracking-wider mb-2 block transition-colors duration-300 ${
                   isFieldActive('date') ? 'text-[#59779F]' : 'text-[#AAAAAA]'
                 }`}
                 style={isFieldActive('date') ? {
-                  animation: 'tutorialPulse 2s ease-in-out infinite',
+                  animation: 'tutorialPulse 1.2s ease-in-out infinite',
                 } : undefined}
               >
-                Dates
+                DATES
               </span>
 
               {/* Date display / tap target */}
@@ -476,7 +482,7 @@ export function MockTaskForm({
                     ? '2px solid #59779F'
                     : '1px solid rgba(255,255,255,0.1)',
                   ...(isFieldActive('date') ? {
-                    animation: 'tutorialPulse 2s ease-in-out infinite',
+                    animation: 'tutorialPulse 1.2s ease-in-out infinite',
                   } : {}),
                 }}
               >
@@ -485,7 +491,7 @@ export function MockTaskForm({
                     <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
                     <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                   </svg>
-                  <span className={`font-mohave text-[14px] ${selectedDate ? 'text-white' : 'text-[#AAAAAA]'}`}>
+                  <span className={`font-mohave text-[16px] ${selectedDate ? 'text-white' : 'text-[#AAAAAA]'}`}>
                     {selectedDate ?? 'Tap to Schedule'}
                   </span>
                 </div>
@@ -519,18 +525,18 @@ export function MockTaskForm({
 
             {/* 5. Notes Field (always disabled at 0.5 opacity in tutorial) */}
             <div style={{ opacity: 0.5 }} className="pointer-events-none">
-              <span className="font-kosugi font-bold text-[11px] text-[#AAAAAA] uppercase tracking-wider mb-2 block">
-                Notes
+              <span className="font-kosugi font-normal text-[14px] text-[#AAAAAA] uppercase tracking-wider mb-2 block">
+                NOTES
               </span>
               <div
                 className="px-4 py-3"
                 style={{
                   borderRadius: '5px',
                   border: '1px solid rgba(255,255,255,0.1)',
-                  minHeight: '80px',
+                  minHeight: '100px',
                 }}
               >
-                <span className="font-mohave text-[14px] text-[#777777]">Add notes...</span>
+                <span className="font-mohave text-[16px] text-[#777777]">Add notes...</span>
               </div>
             </div>
 
@@ -555,7 +561,7 @@ export function MockTaskForm({
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              background: 'radial-gradient(circle at 85% 40px, transparent 60px, rgba(0,0,0,0.6) 350px)',
+              background: 'radial-gradient(circle at 85% 12%, transparent 60px, rgba(0,0,0,0.6) 350px)',
               zIndex: 11,
             }}
           />
@@ -566,7 +572,7 @@ export function MockTaskForm({
       <style jsx>{`
         @keyframes tutorialPulse {
           0%, 100% { opacity: 1; }
-          50% { opacity: 0.6; }
+          50% { opacity: 0.3; }
         }
       `}</style>
     </div>

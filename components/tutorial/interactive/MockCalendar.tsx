@@ -282,7 +282,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                 className="absolute inset-0 rounded-lg pointer-events-none"
                 style={{
                   border: '1px solid rgba(89, 119, 159, 0.6)',
-                  animation: 'calendarPulse 2s ease-in-out infinite',
+                  animation: 'calendarPulse 1.2s ease-in-out infinite',
                 }}
               />
             )}
@@ -317,7 +317,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
             {/* Day of week headers (Mon-Sun) */}
             <div className="grid grid-cols-7 mb-1">
               {dayAbbreviations.map((abbr, i) => (
-                <div key={i} className="text-center font-kosugi text-[10px] text-ops-text-tertiary py-1">
+                <div key={i} className="text-center font-kosugi text-[14px] text-ops-text-secondary py-1">
                   {abbr}
                 </div>
               ))}
@@ -350,7 +350,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                   >
                     {/* Today highlight circle */}
                     {isToday && (
-                      <div className="absolute w-7 h-7 rounded-full bg-ops-accent opacity-90" />
+                      <div className="absolute rounded-full bg-ops-accent opacity-50" style={{ width: 24, height: 24 }} />
                     )}
                     <span
                       className={`font-mohave text-[12px] relative z-10 ${
@@ -365,12 +365,13 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                         {displayBars.map((color, j) => (
                           <div
                             key={j}
-                            className="rounded-full"
+                            className="rounded-sm"
                             style={{
                               backgroundColor: color,
-                              height: 3,
+                              height: 10,
                               width: '80%',
                               minWidth: 8,
+                              opacity: 0.5,
                             }}
                           />
                         ))}
@@ -394,8 +395,8 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
           {/* Day selector row (CalendarDaySelector) - wrapped in card */}
           <div className="px-4 pb-3">
             <div
-              className="rounded-xl overflow-hidden"
-              style={{ background: '#0D0D0D' }}
+              className="overflow-hidden"
+              style={{ background: '#0D0D0D', borderRadius: 8 }}
               onTouchStart={handleDayRowTouchStart}
               onTouchMove={handleDayRowTouchMove}
               onTouchEnd={handleDayRowTouchEnd}
@@ -528,7 +529,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                 <div className="flex-1 min-w-0 p-3 flex justify-between items-start">
                   <div className="flex-1 min-w-0">
                     {/* Title - bodyBold uppercase */}
-                    <span className="font-mohave text-[13px] font-bold text-white uppercase tracking-wide block truncate">
+                    <span className="font-mohave text-[16px] font-medium text-white uppercase tracking-wide block truncate">
                       {item.name}
                     </span>
                     {/* Client name - caption */}
@@ -575,8 +576,8 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
       {/* Pulsing animation keyframes */}
       <style jsx>{`
         @keyframes calendarPulse {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 1; }
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
         }
       `}</style>
     </div>

@@ -35,11 +35,11 @@ const DASHBOARD_PHASES: TutorialPhase[] = [
   'jobBoardIntro',
   'fabTap',
   'dragToAccepted',
-  'projectListStatusDemo',
 ]
 
 // Phases that show the list (scrollable cards) view
 const LIST_PHASES: TutorialPhase[] = [
+  'projectListStatusDemo',
   'projectListSwipe',
   'closedProjectsScroll',
 ]
@@ -408,6 +408,10 @@ function ListView({
   const activeSectionRef = useRef<HTMLDivElement>(null)
   const [measuredScrollTarget, setMeasuredScrollTarget] = useState(0)
 
+  // Status animation for projectListStatusDemo
+  const [animatingStatus, setAnimatingStatus] = useState<string | null>(null)
+  const [showActiveOverlay, setShowActiveOverlay] = useState(false)
+
   // --- Interactive swipe state ---
   const swipeTouchStartX = useRef<number | null>(null)
   const [userSwipeOffset, setUserSwipeOffset] = useState(0)
@@ -432,7 +436,9 @@ function ListView({
     const closed: DemoProject[] = []
     let userStatus = 'inProgress'
 
-    if (phase === 'projectListSwipe') {
+    if (phase === 'projectListStatusDemo') {
+      userStatus = animatingStatus || 'accepted'
+    } else if (phase === 'projectListSwipe') {
       userStatus = 'inProgress'
     } else if (phase === 'closedProjectsScroll') {
       userStatus = 'closed'
@@ -456,6 +462,24 @@ function ListView({
     }
 
     return { active, closed, userStatus }
+  }, [phase, userProject, animatingStatus])
+
+  // Status demo animation: accepted -> inProgress -> completed
+  useEffect(() => {
+    if (phase !== 'projectListStatusDemo' || !userProject) return
+
+    const steps = ['accepted', 'inProgress', 'completed']
+    let stepIdx = 0
+    setAnimatingStatus(steps[0])
+
+    const interval = setInterval(() => {
+      stepIdx++
+      if (stepIdx < steps.length) {
+        setAnimatingStatus(steps[stepIdx])
+      }
+    }, 1200)
+
+    return () => clearInterval(interval)
   }, [phase, userProject])
 
   // Measure active section height for scroll target
@@ -463,6 +487,17 @@ function ListView({
     if (phase === 'closedProjectsScroll' && activeSectionRef.current) {
       const height = activeSectionRef.current.getBoundingClientRect().height
       setMeasuredScrollTarget(height + 20)
+    }
+  }, [phase])
+
+  // Dark overlay on active cards during closedProjectsScroll
+  useEffect(() => {
+    if (phase === 'closedProjectsScroll') {
+      // Show overlay 1.1s after phase starts (matches iOS 0.3s delay + 0.8s scroll)
+      const timer = setTimeout(() => setShowActiveOverlay(true), 1100)
+      return () => clearTimeout(timer)
+    } else {
+      setShowActiveOverlay(false)
     }
   }, [phase])
 
@@ -562,7 +597,7 @@ function ListView({
 
     let frame: number
     let start: number | null = null
-    const duration = 2000
+    const duration = 800
     const target = measuredScrollTarget
 
     function animate(timestamp: number) {
@@ -578,7 +613,7 @@ function ListView({
 
     const timeout = setTimeout(() => {
       frame = requestAnimationFrame(animate)
-    }, 500)
+    }, 300)
 
     return () => {
       clearTimeout(timeout)
@@ -606,7 +641,7 @@ function ListView({
       <MockAppHeader />
       <MockSectionSelector
         selected="PROJECTS"
-        animateToProjects={phase === 'projectListSwipe'}
+        animateToProjects={phase === 'projectListStatusDemo' || phase === 'projectListSwipe'}
       />
 
       {/* Scrollable project list */}
@@ -619,7 +654,10 @@ function ListView({
       >
         {/* Active section */}
         {active.length > 0 && (
-          <div className="mb-3" ref={activeSectionRef}>
+          <div className="mb-3 relative" ref={activeSectionRef} style={{
+            opacity: showActiveOverlay ? 0.3 : 1,
+            transition: 'opacity 0.3s ease-in-out',
+          }}>
             <div className="flex items-center mb-2" style={{ gap: 8 }}>
               <span
                 className="font-kosugi text-ops-text-secondary uppercase tracking-wider"
@@ -636,6 +674,20 @@ function ListView({
             <div className="flex flex-col" style={{ gap: 8 }}>
               {active.map(project => {
                 const isUserCard = userProject && project.id === userProject.id
+
+                if (isUserCard && phase === 'projectListStatusDemo') {
+                  // Status animation card - highlighted with animating status
+                  return (
+                    <div key={project.id}>
+                      <MockProjectCard
+                        project={project}
+                        variant="list"
+                        isHighlighted={true}
+                        statusOverride={animatingStatus || userStatus}
+                      />
+                    </div>
+                  )
+                }
 
                 if (isUserCard && phase === 'projectListSwipe') {
                   // Swipeable user card with background action revealed
@@ -691,7 +743,10 @@ function ListView({
                 }
 
                 return (
-                  <div key={project.id}>
+                  <div key={project.id} style={{
+                    opacity: phase === 'projectListStatusDemo' ? 0.3 : 1,
+                    transition: 'opacity 0.3s ease',
+                  }}>
                     <MockProjectCard
                       project={project}
                       variant="list"

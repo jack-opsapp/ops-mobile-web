@@ -24,7 +24,7 @@ const MENU_ITEMS = [
       </svg>
     ),
     dimmedInTutorial: true,
-    delay: 0.6,
+    delay: 0.8,
   },
   {
     id: 'createTask',
@@ -36,7 +36,7 @@ const MENU_ITEMS = [
       </svg>
     ),
     dimmedInTutorial: true,
-    delay: 0.4,
+    delay: 0.6,
   },
   {
     id: 'createProject',
@@ -47,7 +47,7 @@ const MENU_ITEMS = [
       </svg>
     ),
     dimmedInTutorial: false,
-    delay: 0.2,
+    delay: 0.4,
   },
   {
     id: 'createClient',
@@ -61,7 +61,7 @@ const MENU_ITEMS = [
       </svg>
     ),
     dimmedInTutorial: true,
-    delay: 0.0,
+    delay: 0.2,
   },
 ]
 
@@ -93,7 +93,7 @@ export function MockFAB({ phase, onFABTap, onCreateProject }: MockFABProps) {
             next[actualIdx] = true
             return next
           })
-        }, reverseIdx * 150) // 150ms stagger between each
+        }, reverseIdx * 200) // 200ms stagger matching iOS delays
         staggerTimeouts.current.push(timeout)
       })
     } else {
@@ -172,7 +172,7 @@ export function MockFAB({ phase, onFABTap, onCreateProject }: MockFABProps) {
                 >
                   {/* Label */}
                   <span
-                    className="font-mohave font-medium text-white whitespace-nowrap"
+                    className="font-mohave font-bold text-white whitespace-nowrap"
                     style={{ fontSize: '16px', letterSpacing: '0.5px' }}
                   >
                     {item.label}
@@ -186,6 +186,7 @@ export function MockFAB({ phase, onFABTap, onCreateProject }: MockFABProps) {
                       height: '48px',
                       color: '#AAAAAA',
                       border: '1px solid #AAAAAA',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
                     }}
                   >
                     {item.icon}
@@ -215,7 +216,7 @@ export function MockFAB({ phase, onFABTap, onCreateProject }: MockFABProps) {
                 : '0 4px 12px rgba(0,0,0,0.3)',
               border: isFABDisabled
                 ? '2px solid #777777'
-                : '2px solid #FFFFFF',
+                : '2px solid #59779F',
               transform: menuOpen ? 'rotate(225deg)' : 'rotate(0deg)',
             }}
           >
