@@ -114,16 +114,16 @@ export function MockProjectForm({
               CANCEL
             </span>
 
-            {/* CREATE PROJECT - center title */}
-            <span className="font-mohave font-bold text-[16px] text-white whitespace-nowrap">
+            {/* CREATE PROJECT - center title — bodyBold = Mohave Medium 16pt */}
+            <span className="font-mohave font-medium text-[16px] text-white whitespace-nowrap">
               CREATE PROJECT
             </span>
 
-            {/* CREATE - right, accent when valid + in create phase */}
+            {/* CREATE - right — bodyBold = Mohave Medium 16pt, pulsing border in create phase */}
             <button
               onClick={onCreate}
               disabled={!isFieldActive('create')}
-              className="font-mohave font-bold text-[16px] text-right"
+              className="font-mohave font-medium text-[16px] text-right"
               style={{
                 color: isFormValid && isFieldActive('create') ? '#417394' : '#777777',
                 minWidth: 70,
@@ -132,10 +132,13 @@ export function MockProjectForm({
                 padding: '4px 8px',
                 borderRadius: 6,
                 border: isFieldActive('create')
-                  ? '1.5px solid rgba(65, 115, 148, 0.6)'
-                  : '1.5px solid transparent',
+                  ? '2px solid #417394'
+                  : '2px solid transparent',
                 boxShadow: isFieldActive('create')
                   ? '0 0 12px rgba(65, 115, 148, 0.4)'
+                  : 'none',
+                animation: isFieldActive('create')
+                  ? 'tutorialPulse 2.4s ease-in-out infinite'
                   : 'none',
                 transition: 'border 0.3s ease, box-shadow 0.3s ease',
               }}

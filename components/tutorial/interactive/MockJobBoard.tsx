@@ -220,9 +220,16 @@ function DashboardView({
     return () => clearInterval(interval)
   }, [phase, userProject])
 
-  // Navigate to the "estimated" column for dragToAccepted
+  // Pre-navigate to the "estimated" column during form phases so it's ready
+  // when the form closes for dragToAccepted. iOS does this via .onAppear and .onChange.
   useEffect(() => {
     if (phase === 'dragToAccepted') {
+      const estimatedIdx = columns.indexOf('estimated')
+      if (estimatedIdx >= 0) setCurrentPage(estimatedIdx)
+    }
+    // Also pre-navigate during late form phases so the dashboard is already
+    // showing the right column behind the form sheet
+    if (phase === 'projectFormComplete' || phase === 'projectFormAddTask') {
       const estimatedIdx = columns.indexOf('estimated')
       if (estimatedIdx >= 0) setCurrentPage(estimatedIdx)
     }
@@ -419,6 +426,7 @@ function ListView({
 
   // Status animation for projectListStatusDemo
   const [animatingStatus, setAnimatingStatus] = useState<string | null>(null)
+  const [cardDimmed, setCardDimmed] = useState(false) // dim/restore sub-animation
   const [showActiveOverlay, setShowActiveOverlay] = useState(false)
 
   // --- Interactive swipe state ---
@@ -474,22 +482,39 @@ function ListView({
   }, [phase, userProject, animatingStatus])
 
   // Status demo animation: accepted -> inProgress -> completed
-  // Per iOS: 0.7s per transition (0.2s dim + 0.3s change + 0.2s restore), 1.2s between starts
+  // Per iOS: 0.2s dim to 0.5 opacity → status change → 0.2s restore, 1.2s between starts
   useEffect(() => {
     if (phase !== 'projectListStatusDemo' || !userProject) return
 
     const steps = ['accepted', 'inProgress', 'completed']
     let stepIdx = 0
+    const timers: NodeJS.Timeout[] = []
+
+    // Set initial status immediately (no dim for first)
     setAnimatingStatus(steps[0])
+    setCardDimmed(false)
 
-    const interval = setInterval(() => {
-      stepIdx++
-      if (stepIdx < steps.length) {
-        setAnimatingStatus(steps[stepIdx])
-      }
-    }, 1200) // 1.2s between each status change
+    // Schedule subsequent transitions at 1.2s intervals
+    for (let i = 1; i < steps.length; i++) {
+      const baseDelay = i * 1200
 
-    return () => clearInterval(interval)
+      // T+0: Start dim (0.2s transition to 0.5 opacity)
+      timers.push(setTimeout(() => {
+        setCardDimmed(true)
+      }, baseDelay))
+
+      // T+200ms: Change status (while dimmed)
+      timers.push(setTimeout(() => {
+        setAnimatingStatus(steps[i])
+      }, baseDelay + 200))
+
+      // T+500ms: Restore opacity (0.2s transition back to 1.0)
+      timers.push(setTimeout(() => {
+        setCardDimmed(false)
+      }, baseDelay + 500))
+    }
+
+    return () => timers.forEach(t => clearTimeout(t))
   }, [phase, userProject])
 
   // Measure active section height for scroll target
@@ -653,9 +678,10 @@ function ListView({
     <>
       {/* App Header */}
       <MockAppHeader />
+      {/* Section selector: starts on DASHBOARD, animates to PROJECTS per iOS */}
       <MockSectionSelector
-        selected="PROJECTS"
-        animateToProjects={phase === 'projectListStatusDemo' || phase === 'projectListSwipe'}
+        selected="DASHBOARD"
+        animateToProjects={true}
       />
 
       {/* Scrollable project list — LazyVStack with 12pt spacing, matching iOS */}
@@ -680,7 +706,13 @@ function ListView({
 
               if (isUserCard && phase === 'projectListStatusDemo') {
                 return (
-                  <div key={project.id}>
+                  <div
+                    key={project.id}
+                    style={{
+                      opacity: cardDimmed ? 0.5 : 1,
+                      transition: 'opacity 0.2s ease-in-out',
+                    }}
+                  >
                     <MockProjectCard
                       project={project}
                       variant="list"
