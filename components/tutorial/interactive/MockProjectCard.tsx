@@ -270,6 +270,15 @@ function ListCard({
         </div>
       )}
       <div className="flex h-full" style={{ position: 'relative', zIndex: 2 }}>
+        {/* Left status bar - 4px wide with transition for status animation */}
+        <div
+          className="flex-shrink-0"
+          style={{
+            width: 4,
+            background: statusColor,
+            transition: 'background 0.3s ease',
+          }}
+        />
         {/* Left content area */}
         <div className="flex-1 flex flex-col justify-end min-w-0" style={{ padding: 14 }}>
           {/* Title + subtitle block */}
@@ -334,7 +343,7 @@ function ListCard({
 
         {/* Right badges column */}
         <div className="flex flex-col items-end justify-between flex-shrink-0" style={{ padding: '8px 14px 8px 0', minWidth: 80 }}>
-          {/* Top: Status badge */}
+          {/* Top: Status badge — with transitions for status animation */}
           <span
             className="font-kosugi uppercase whitespace-nowrap"
             style={{
@@ -345,6 +354,7 @@ function ListCard({
               borderRadius: 4,
               background: `${statusColor}1A`,
               border: `1px solid ${statusColor}`,
+              transition: 'color 0.3s ease, background 0.3s ease, border-color 0.3s ease',
             }}
           >
             {statusLabel}

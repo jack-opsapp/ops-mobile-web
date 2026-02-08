@@ -168,10 +168,14 @@ function DashboardView({
 }) {
   const columns: StatusColumn[] = ['rfq', 'estimated', 'accepted', 'inProgress', 'completed']
   const [currentPage, setCurrentPage] = useState(0)
-  const [animatingStatus, setAnimatingStatus] = useState<StatusColumn | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const touchStartX = useRef<number | null>(null)
   const touchStartOffset = useRef<number>(0)
+
+  // Drag animation state for dragToAccepted
+  const [dragAnimPhase, setDragAnimPhase] = useState<'idle' | 'arrows' | 'sliding' | 'landed'>('idle')
+  const [arrowLit, setArrowLit] = useState(0) // 0-3 chevrons lit
+  const [acceptedGlow, setAcceptedGlow] = useState(false)
 
   // Group projects by status
   const getProjectsByStatus = useCallback((): Record<StatusColumn, DemoProject[]> => {
@@ -191,57 +195,66 @@ function DashboardView({
 
     if (userProject) {
       if (phase === 'dragToAccepted') {
-        groups.estimated.unshift(userProject)
-      } else if (phase === 'projectListStatusDemo') {
-        const targetStatus = animatingStatus || 'accepted'
-        groups[targetStatus].unshift(userProject)
+        // After slide animation, card appears in accepted column
+        if (dragAnimPhase === 'landed') {
+          groups.accepted.unshift(userProject)
+        } else {
+          groups.estimated.unshift(userProject)
+        }
       } else {
         groups.estimated.unshift(userProject)
       }
     }
 
     return groups
-  }, [phase, userProject, animatingStatus])
-
-  // Status demo animation: accepted -> inProgress -> completed
-  useEffect(() => {
-    if (phase !== 'projectListStatusDemo' || !userProject) return
-
-    const steps: StatusColumn[] = ['accepted', 'inProgress', 'completed']
-    let stepIdx = 0
-    setAnimatingStatus(steps[0])
-
-    const interval = setInterval(() => {
-      stepIdx++
-      if (stepIdx < steps.length) {
-        setAnimatingStatus(steps[stepIdx])
-        // Auto-scroll to the relevant column
-        const colIndex = columns.indexOf(steps[stepIdx])
-        if (colIndex >= 0) setCurrentPage(colIndex)
-      }
-    }, 1200)
-
-    // Start on accepted column
-    const acceptedIdx = columns.indexOf('accepted')
-    if (acceptedIdx >= 0) setCurrentPage(acceptedIdx)
-
-    return () => clearInterval(interval)
-  }, [phase, userProject])
+  }, [phase, userProject, dragAnimPhase])
 
   // Pre-navigate to the "estimated" column during form phases so it's ready
-  // when the form closes for dragToAccepted. iOS does this via .onAppear and .onChange.
   useEffect(() => {
     if (phase === 'dragToAccepted') {
       const estimatedIdx = columns.indexOf('estimated')
       if (estimatedIdx >= 0) setCurrentPage(estimatedIdx)
     }
-    // Also pre-navigate during late form phases so the dashboard is already
-    // showing the right column behind the form sheet
     if (phase === 'projectFormComplete' || phase === 'projectFormAddTask') {
       const estimatedIdx = columns.indexOf('estimated')
       if (estimatedIdx >= 0) setCurrentPage(estimatedIdx)
     }
   }, [phase])
+
+  // Drag animation sequence for dragToAccepted
+  useEffect(() => {
+    if (phase !== 'dragToAccepted' || !userProject) return
+    const timers: NodeJS.Timeout[] = []
+
+    // T+0: Show arrows phase
+    setDragAnimPhase('arrows')
+    setArrowLit(0)
+
+    // T+400, T+800, T+1200: Light up chevrons one by one
+    timers.push(setTimeout(() => setArrowLit(1), 400))
+    timers.push(setTimeout(() => setArrowLit(2), 800))
+    timers.push(setTimeout(() => setArrowLit(3), 1200))
+
+    // T+1600: Slide page from estimated to accepted
+    timers.push(setTimeout(() => {
+      setDragAnimPhase('sliding')
+      const acceptedIdx = columns.indexOf('accepted')
+      if (acceptedIdx >= 0) setCurrentPage(acceptedIdx)
+    }, 1600))
+
+    // T+2100: Card has landed in accepted column, glow
+    timers.push(setTimeout(() => {
+      setDragAnimPhase('landed')
+      setAcceptedGlow(true)
+    }, 2100))
+
+    // T+2800: Remove glow
+    timers.push(setTimeout(() => {
+      setAcceptedGlow(false)
+    }, 2800))
+
+    return () => timers.forEach(t => clearTimeout(t))
+  }, [phase, userProject])
 
   // Simple swipe handling for page navigation
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -285,8 +298,9 @@ function DashboardView({
             width: `${columns.length * 100}%`,
           }}
         >
-          {columns.map((status, colIndex) => {
+          {columns.map((status) => {
             const colProjects = groups[status]
+            const isAcceptedCol = status === 'accepted'
             return (
               <div
                 key={status}
@@ -308,8 +322,20 @@ function DashboardView({
                   style={{ width: 1, background: 'rgba(255,255,255,0.15)' }}
                 />
 
+                {/* Accepted column glow overlay */}
+                {isAcceptedCol && acceptedGlow && (
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: `radial-gradient(ellipse at center, ${STATUS_COLORS.accepted}30 0%, transparent 70%)`,
+                      transition: 'opacity 0.3s ease',
+                      zIndex: 1,
+                    }}
+                  />
+                )}
+
                 {/* Column header matching iOS StatusColumn header */}
-                <div className="flex items-center px-3" style={{ gap: 8, paddingTop: 14, paddingBottom: 14 }}>
+                <div className="flex items-center px-3" style={{ gap: 8, paddingTop: 14, paddingBottom: 14, position: 'relative', zIndex: 2 }}>
                   {/* Colored 2px bar */}
                   <div
                     style={{
@@ -340,7 +366,7 @@ function DashboardView({
                 {/* Project cards list */}
                 <div
                   className="flex-1 overflow-y-auto px-3 pb-28"
-                  style={{ gap: 10, display: 'flex', flexDirection: 'column' }}
+                  style={{ gap: 10, display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 2 }}
                 >
                   {colProjects.map(project => {
                     const isUserCard = userProject && project.id === userProject.id
@@ -350,9 +376,6 @@ function DashboardView({
                         project={project}
                         variant="dashboard"
                         isHighlighted={!!isUserCard && phase === 'dragToAccepted'}
-                        statusOverride={
-                          isUserCard && animatingStatus ? animatingStatus : undefined
-                        }
                       />
                     )
                   })}
@@ -384,6 +407,41 @@ function DashboardView({
             )
           })}
         </div>
+
+        {/* Chevron arrows overlay — centered on estimated column during drag animation */}
+        {phase === 'dragToAccepted' && dragAnimPhase === 'arrows' && (
+          <div
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            style={{ zIndex: 10 }}
+          >
+            <div className="flex flex-col items-center" style={{ gap: 8 }}>
+              <div className="flex items-center" style={{ gap: 6 }}>
+                {[1, 2, 3].map(n => (
+                  <svg
+                    key={n}
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    style={{
+                      opacity: arrowLit >= n ? 1 : 0.2,
+                      transition: 'opacity 0.3s ease',
+                      color: arrowLit >= n ? '#FF7733' : '#AAAAAA',
+                    }}
+                  >
+                    <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                ))}
+              </div>
+              <span
+                className="font-mohave font-bold text-[14px] uppercase tracking-wider"
+                style={{ color: '#FF7733' }}
+              >
+                Drag to Accepted
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Page indicator - small rectangles matching iOS (20x2) */}
@@ -401,16 +459,6 @@ function DashboardView({
           />
         ))}
       </div>
-
-      {/* Touch cursor for drag animation hint */}
-      {phase === 'dragToAccepted' && userProject && (
-        <TouchCursorAnimation
-          type="drag-right"
-          startX={30}
-          startY={100}
-          visible
-        />
-      )}
     </>
   )
 }
@@ -442,12 +490,7 @@ function ListView({
   const [userSwipeOffset, setUserSwipeOffset] = useState(0)
   const [swipeDismissed, setSwipeDismissed] = useState(false)
   const [cardFading, setCardFading] = useState(false) // fade-out after snap-back
-  const [showClosedFeedback, setShowClosedFeedback] = useState(false)
   const swipeCompleted = useRef(false)
-
-  // Hint animation: plays while user hasn't started swiping yet
-  const [showHintAnimation, setShowHintAnimation] = useState(true)
-  const [hintOffset, setHintOffset] = useState(0)
 
   // Swipe threshold: 40% of card width (iOS: geometry.size.width * 0.4)
   const cardContainerRef = useRef<HTMLDivElement>(null)
@@ -494,36 +537,35 @@ function ListView({
   }, [phase, userProject, animatingStatus])
 
   // Status demo animation: accepted -> inProgress -> completed
-  // Per iOS: 0.2s dim to 0.5 opacity → status change → 0.2s restore, 1.2s between starts
+  // Per iOS: 0.3s dim to 0.3 opacity → status change → 0.3s restore, 1.8s between starts
   useEffect(() => {
     if (phase !== 'projectListStatusDemo' || !userProject) return
 
     const steps = ['accepted', 'inProgress', 'completed']
-    let stepIdx = 0
     const timers: NodeJS.Timeout[] = []
 
     // Set initial status immediately (no dim for first)
     setAnimatingStatus(steps[0])
     setCardDimmed(false)
 
-    // Schedule subsequent transitions at 1.2s intervals
+    // Schedule subsequent transitions at 1.8s intervals
     for (let i = 1; i < steps.length; i++) {
-      const baseDelay = i * 1200
+      const baseDelay = i * 1800
 
-      // T+0: Start dim (0.2s transition to 0.5 opacity)
+      // T+0: Start dim (0.3s transition to 0.3 opacity)
       timers.push(setTimeout(() => {
         setCardDimmed(true)
       }, baseDelay))
 
-      // T+200ms: Change status (while dimmed)
+      // T+300ms: Change status (while dimmed)
       timers.push(setTimeout(() => {
         setAnimatingStatus(steps[i])
-      }, baseDelay + 200))
+      }, baseDelay + 300))
 
-      // T+500ms: Restore opacity (0.2s transition back to 1.0)
+      // T+600ms: Restore opacity (0.3s transition back to 1.0)
       timers.push(setTimeout(() => {
         setCardDimmed(false)
-      }, baseDelay + 500))
+      }, baseDelay + 600))
     }
 
     return () => timers.forEach(t => clearTimeout(t))
@@ -548,44 +590,6 @@ function ListView({
     }
   }, [phase])
 
-  // Hint swipe animation loop — shows a gentle swipe hint until user interacts
-  useEffect(() => {
-    if (phase !== 'projectListSwipe' || swipeDismissed) {
-      setShowHintAnimation(false)
-      setHintOffset(0)
-      return
-    }
-
-    setShowHintAnimation(true)
-    let frame: number
-    let start: number | null = null
-    const duration = 1500
-
-    function animate(timestamp: number) {
-      if (!start) start = timestamp
-      const progress = Math.min((timestamp - start) / duration, 1)
-      const eased =
-        progress < 0.5
-          ? 2 * progress * progress
-          : 1 - Math.pow(-2 * progress + 2, 2) / 2
-
-      setHintOffset(eased * 80) // Subtle hint — only 80px
-
-      if (progress < 1) {
-        frame = requestAnimationFrame(animate)
-      } else {
-        setTimeout(() => {
-          setHintOffset(0)
-          start = null
-          frame = requestAnimationFrame(animate)
-        }, 1000)
-      }
-    }
-
-    frame = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(frame)
-  }, [phase, swipeDismissed])
-
   // Measure card width for 40% threshold calculation
   useEffect(() => {
     if (phase === 'projectListSwipe' && cardContainerRef.current) {
@@ -598,9 +602,6 @@ function ListView({
   const handleCardTouchStart = (e: React.TouchEvent) => {
     if (swipeDismissed || swipeCompleted.current) return
     swipeTouchStartX.current = e.touches[0].clientX
-    // Stop the hint animation once user touches
-    setShowHintAnimation(false)
-    setHintOffset(0)
   }
 
   const handleCardTouchMove = (e: React.TouchEvent) => {
@@ -640,15 +641,10 @@ function ListView({
         setCardFading(true)
       }, 300)
 
-      // Show "Closed" feedback after fade starts
-      setTimeout(() => {
-        setShowClosedFeedback(true)
-      }, 600)
-
-      // Advance tutorial after all animations
+      // Advance tutorial after fade animation
       setTimeout(() => {
         onSwipeComplete?.()
-      }, 1200)
+      }, 800)
     } else {
       // Below threshold: snap back with spring
       setUserSwipeOffset(0)
@@ -700,7 +696,6 @@ function ListView({
   const getUserCardOffset = () => {
     if (swipeDismissed) return userSwipeOffset
     if (userSwipeOffset !== 0) return userSwipeOffset
-    if (showHintAnimation) return hintOffset
     return 0
   }
 
@@ -744,8 +739,8 @@ function ListView({
                   <div
                     key={project.id}
                     style={{
-                      opacity: cardDimmed ? 0.5 : 1,
-                      transition: 'opacity 0.2s ease-in-out',
+                      opacity: cardDimmed ? 0.3 : 1,
+                      transition: 'opacity 0.3s ease-in-out',
                     }}
                   >
                     <MockProjectCard
@@ -853,38 +848,25 @@ function ListView({
           </div>
         </div>
 
-        {/* "CLOSED" feedback toast after swipe completes */}
-        {showClosedFeedback && (
-          <div
-            className="flex items-center justify-center gap-2 py-3 mx-5 mt-3 rounded-xl"
-            style={{
-              background: 'rgba(165, 179, 104, 0.15)',
-              border: '1px solid rgba(165, 179, 104, 0.3)',
-              animation: 'feedbackFadeIn 0.3s ease-out',
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M20 6L9 17l-5-5" stroke="#A5B368" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className="font-mohave font-bold uppercase tracking-wider" style={{ fontSize: 14, color: '#A5B368' }}>
-              Project Closed
-            </span>
-          </div>
-        )}
-
         {/* Section buttons at bottom — matching iOS SectionButton pattern */}
         {/* HStack(spacing: 12) with CLOSED and ARCHIVED buttons */}
         <div className="flex px-5" style={{ gap: 12, paddingTop: 8 }}>
-          {/* CLOSED section button */}
+          {/* CLOSED section button — highlighted with pulsing border during closedProjectsScroll */}
           {closed.length > 0 && (
             <div
-              className="flex items-center flex-1"
+              className="flex items-center flex-1 relative"
               style={{
                 gap: 8,
                 padding: '12px 16px',
                 background: '#0D0D0D',
                 borderRadius: 5,
-                border: '1px solid rgba(255,255,255,0.08)',
+                border: phase === 'closedProjectsScroll'
+                  ? '2px solid rgba(65, 115, 148, 0.8)'
+                  : '1px solid rgba(255,255,255,0.08)',
+                boxShadow: phase === 'closedProjectsScroll'
+                  ? '0 0 16px rgba(65, 115, 148, 0.25)'
+                  : 'none',
+                transition: 'border 0.3s ease, box-shadow 0.3s ease',
               }}
             >
               {/* Status color circle */}
@@ -905,37 +887,7 @@ function ListView({
             </div>
           )}
         </div>
-
-        {/* Expanded closed section — only visible during closedProjectsScroll */}
-        {phase === 'closedProjectsScroll' && closed.length > 0 && (
-          <div className="px-5 pt-3">
-            <div className="flex flex-col" style={{ gap: 12 }}>
-              {closed.map(project => {
-                const isUserCard = userProject && project.id === userProject.id
-                return (
-                  <MockProjectCard
-                    key={project.id}
-                    project={project}
-                    variant="list"
-                    isHighlighted={!!isUserCard}
-                    statusOverride={isUserCard ? 'closed' : undefined}
-                  />
-                )
-              })}
-            </div>
-          </div>
-        )}
       </div>
-
-      {/* Touch cursor hint — only while hint animation is playing */}
-      {phase === 'projectListSwipe' && userProject && showHintAnimation && !swipeDismissed && (
-        <TouchCursorAnimation
-          type="swipe-right"
-          startX={30}
-          startY={80}
-          visible
-        />
-      )}
 
       {/* Touch cursor for scroll animation hint */}
       {phase === 'closedProjectsScroll' && (
@@ -947,12 +899,8 @@ function ListView({
         />
       )}
 
-      {/* Feedback animation keyframes */}
+      {/* Animation keyframes */}
       <style jsx>{`
-        @keyframes feedbackFadeIn {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
-        }
         @keyframes leftSwipeError {
           0% { opacity: 0; transform: scale(0.98); }
           30% { opacity: 1; transform: scale(1); }

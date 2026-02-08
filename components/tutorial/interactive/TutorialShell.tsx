@@ -60,7 +60,7 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
   }, [selectedClient, projectName, selectedTaskType, selectedCrew])
 
   // Determine visibility of each layer
-  const showJobBoard = !isCalendarPhase(phase) && phase !== 'tutorialSummary' && phase !== 'completed'
+  const showJobBoard = !isCalendarPhase(phase) && phase !== 'completed'
   const showCalendar = isCalendarPhase(phase)
   const showBlockingOverlay = isBlockingOverlayPhase(phase)
   const showFAB = isFABVisiblePhase(phase)
@@ -76,7 +76,6 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
     date: selectedDate!,
   } : null
 
-  const showSummary = phase === 'tutorialSummary'
   const showCompleted = phase === 'completed'
 
   // Active tab for tab bar
@@ -163,8 +162,8 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
     advance()
   }
 
-  // Determine continue/done button variant
-  const continueVariant = phase === 'tutorialSummary' ? 'fullWidth' as const : 'inline' as const
+  // Continue button always uses inline variant now (no more tutorialSummary fullWidth)
+  const continueVariant = 'inline' as const
 
   return (
     <div
@@ -212,17 +211,6 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
             />
           )}
 
-          {showSummary && (
-            <div className="flex-1 flex items-center justify-center px-6 h-full">
-              <div className="text-center">
-                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-ops-accent/10 border border-ops-accent/30 flex items-center justify-center">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-ops-accent">
-                    <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

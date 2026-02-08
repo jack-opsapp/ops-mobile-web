@@ -18,7 +18,6 @@ export type TutorialPhase =
   | 'calendarWeek'
   | 'calendarMonthPrompt'
   | 'calendarMonth'
-  | 'tutorialSummary'
   | 'completed'
 
 export interface PhaseConfig {
@@ -47,7 +46,6 @@ export const PHASE_ORDER: TutorialPhase[] = [
   'calendarWeek',
   'calendarMonthPrompt',
   'calendarMonth',
-  'tutorialSummary',
   'completed',
 ]
 
@@ -103,16 +101,16 @@ export const PHASE_CONFIGS: Record<TutorialPhase, PhaseConfig> = {
     showContinueButton: false,
   },
   dragToAccepted: {
-    tooltipText: 'PRESS AND HOLD, THEN DRAG RIGHT',
+    tooltipText: 'DRAG RIGHT TO ACCEPTED',
     tooltipDescription: 'Drag it to the "Accepted" column. This is how you move jobs between stages.',
-    showContinueButton: true,
-    continueLabel: 'CONTINUE',
+    showContinueButton: false,
+    autoAdvanceMs: 3500,
   },
   projectListStatusDemo: {
     tooltipText: 'WATCH THE STATUS UPDATE',
     tooltipDescription: 'As your crew starts work and completes tasks, the status updates automatically...',
     showContinueButton: false,
-    autoAdvanceMs: 4000,
+    autoAdvanceMs: 6000,
   },
   projectListSwipe: {
     tooltipText: 'SWIPE THE CARD RIGHT TO CLOSE',
@@ -139,12 +137,6 @@ export const PHASE_CONFIGS: Record<TutorialPhase, PhaseConfig> = {
   calendarMonth: {
     tooltipText: 'PINCH OUTWARD TO EXPAND',
     tooltipDescription: 'This shows more detail for each day. Pinch inward to shrink it back.',
-    showContinueButton: true,
-    continueLabel: 'CONTINUE',
-  },
-  tutorialSummary: {
-    tooltipText: "THAT'S THE BASICS.",
-    tooltipDescription: 'You now know how to create projects, assign your crew, track progress, and check your schedule.',
     showContinueButton: true,
     continueLabel: 'DONE',
   },

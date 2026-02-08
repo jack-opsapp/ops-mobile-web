@@ -199,8 +199,8 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
     }
   }, [phase, isMonthView])
 
-  // Cell height: collapsed ~80px (iOS min), expanded ~180px (iOS Level 2-3 range)
-  const monthCellHeight = monthExpanded ? 180 : 44
+  // Cell height: collapsed 80px (iOS min), expanded 180px (iOS Level 2-3 range)
+  const monthCellHeight = monthExpanded ? 180 : 80
 
   // =========================================================================
   // SWIPE GESTURE for week day row
@@ -410,6 +410,18 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
         )}
       </div>
 
+      {/* Dark overlay on all content below toggle during calendarMonthPrompt */}
+      {isMonthPrompt && (
+        <div
+          className="absolute left-0 right-0 bottom-0 pointer-events-none"
+          style={{
+            top: TOOLTIP_TOP_INSET + 140, // below header + toggle row
+            background: 'rgba(0, 0, 0, 0.6)',
+            zIndex: 5,
+          }}
+        />
+      )}
+
       {isMonthView ? (
         /* ===== MONTH VIEW ===== */
         <div className="flex-1 overflow-hidden" style={{ padding: '0 20px' }}>
@@ -464,60 +476,64 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                 ]
 
                 // Determine display level based on cell height
-                // Level 1 (<120pt): 10pt bars, 0.5 opacity, no text
+                // Level 1 (<120pt): 10pt bars, no text
                 // Level 2 (120-180pt): 14pt bars, 0.2 opacity bg, single-line title
                 // Level 3 (≥180pt): 28pt bars, multi-line titles
                 const cellH = monthCellHeight
                 const barHeight = cellH >= 180 ? 28 : cellH >= 120 ? 14 : 10
-                const barOpacity = cellH >= 120 ? 0.7 : 0.5
                 const showBarText = cellH >= 120
 
                 return (
                   <div
                     key={dayNum}
-                    className="flex flex-col items-center relative px-0.5 justify-start pt-1"
+                    className="flex flex-col relative px-0.5 justify-start pt-1"
                     style={{
                       height: monthCellHeight,
                       transition: 'height 0.8s ease-in-out',
                     }}
                   >
-                    {/* Today highlight circle */}
+                    {/* Today highlight — collapsed: white circle behind number; expanded: accent fill at 50% */}
                     {isToday && (
                       <div
-                        className="absolute bg-ops-accent opacity-50"
+                        className="absolute"
                         style={{
                           width: monthExpanded ? '100%' : 24,
                           height: monthExpanded ? '100%' : 24,
                           borderRadius: monthExpanded ? 5 : 12,
-                          top: monthExpanded ? 0 : '50%',
+                          background: monthExpanded ? 'rgba(65, 115, 148, 0.5)' : 'white',
+                          top: monthExpanded ? 0 : 2,
                           left: monthExpanded ? 0 : '50%',
-                          transform: monthExpanded ? 'none' : 'translate(-50%, -50%)',
+                          transform: monthExpanded ? 'none' : 'translateX(-50%)',
                           transition: 'all 0.8s ease-in-out',
                         }}
                       />
                     )}
+                    {/* Day number — bodyBold (16pt Mohave Bold) */}
                     <span
-                      className={`font-mohave text-[12px] relative z-10 ${
-                        isToday ? 'text-white font-bold' : 'text-white/70'
-                      }`}
+                      className={`font-mohave font-bold relative z-10 self-center`}
+                      style={{
+                        fontSize: 16,
+                        color: isToday && !monthExpanded ? '#000000' : isToday ? '#FFFFFF' : 'rgba(255,255,255,0.7)',
+                        lineHeight: '24px',
+                      }}
                     >
                       {dayNum}
                     </span>
-                    {/* Event bars — level-based rendering */}
+                    {/* Event bars — level-based rendering with 0.2 opacity bg, full color text */}
                     {displayBars.length > 0 && (
                       <div
-                        className="flex flex-col gap-[2px] mt-[2px] relative z-10 w-full px-[4%]"
+                        className="flex flex-col gap-[2px] mt-[2px] relative z-10 w-full px-[2px]"
                         style={{ transition: 'all 0.8s ease-in-out' }}
                       >
                         {displayBars.map((color, j) => (
                           <div
                             key={j}
-                            className="rounded-sm w-full overflow-hidden"
+                            className="w-full overflow-hidden"
                             style={{
-                              backgroundColor: color,
+                              backgroundColor: `${color}33`, // 0.2 opacity
                               height: barHeight,
-                              opacity: barOpacity,
-                              transition: 'height 0.8s ease-in-out, opacity 0.8s ease-in-out',
+                              borderRadius: 3,
+                              transition: 'height 0.8s ease-in-out',
                               display: 'flex',
                               alignItems: 'center',
                               paddingLeft: showBarText ? 3 : 0,
@@ -525,8 +541,8 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                           >
                             {showBarText && (
                               <span
-                                className="font-kosugi text-white truncate leading-none"
-                                style={{ fontSize: cellH >= 180 ? 8 : 7, opacity: 1 }}
+                                className="font-kosugi truncate leading-none"
+                                style={{ fontSize: cellH >= 180 ? 8 : 7, color: color }}
                               >
                                 {userProject && isToday && j === 0
                                   ? userProject.name.slice(0, cellH >= 180 ? 12 : 8)
@@ -539,7 +555,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                     )}
                     {/* +N indicator */}
                     {extraCount > 0 && (
-                      <span className="font-kosugi text-[7px] text-ops-text-tertiary relative z-10 mt-[1px]">
+                      <span className="font-kosugi text-[7px] text-ops-text-tertiary relative z-10 mt-[1px] self-center">
                         +{extraCount}
                       </span>
                     )}
