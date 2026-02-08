@@ -50,20 +50,26 @@ const LIST_PHASES: TutorialPhase[] = [
 
 type SectionTab = 'DASHBOARD' | 'CLIENTS' | 'PROJECTS' | 'TASKS'
 
-function MockAppHeader({ title = 'Job Board' }: { title?: string }) {
+function MockAppHeader() {
   return (
     <div className="flex items-center justify-between" style={{ padding: '12px 20px' }}>
       <h2 className="font-mohave font-semibold text-[28px] uppercase tracking-wider" style={{ color: '#E5E5E5' }}>
-        {title}
+        Job Board
       </h2>
-      <div className="flex items-center gap-3">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: '#A7A7A7' }}>
-          <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: '#A7A7A7' }}>
-          <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+      {/* Right: user info (name | role, email) matching iOS .jobBoard header */}
+      <div className="flex flex-col items-end" style={{ gap: 2 }}>
+        <div className="flex items-center" style={{ gap: 8 }}>
+          <span className="font-mohave text-[16px] text-white">
+            Pete Mitchell
+          </span>
+          <span className="font-mohave text-[16px] text-ops-text-secondary">|</span>
+          <span className="font-mohave text-[16px] text-ops-text-secondary">
+            Owner
+          </span>
+        </div>
+        <span className="font-kosugi text-[12px] text-ops-text-secondary">
+          maverick@topgun.mil
+        </span>
       </div>
     </div>
   )
@@ -468,6 +474,7 @@ function ListView({
   }, [phase, userProject, animatingStatus])
 
   // Status demo animation: accepted -> inProgress -> completed
+  // Per iOS: 0.7s per transition (0.2s dim + 0.3s change + 0.2s restore), 1.2s between starts
   useEffect(() => {
     if (phase !== 'projectListStatusDemo' || !userProject) return
 
@@ -480,7 +487,7 @@ function ListView({
       if (stepIdx < steps.length) {
         setAnimatingStatus(steps[stepIdx])
       }
-    }, 1200)
+    }, 1200) // 1.2s between each status change
 
     return () => clearInterval(interval)
   }, [phase, userProject])
@@ -494,10 +501,10 @@ function ListView({
   }, [phase])
 
   // Dark overlay on active cards during closedProjectsScroll
+  // iOS: overlay appears at T=1.2s (0.3s delay + 0.8s scroll + 0.1s buffer)
   useEffect(() => {
     if (phase === 'closedProjectsScroll') {
-      // Show overlay 1.1s after phase starts (matches iOS 0.3s delay + 0.8s scroll)
-      const timer = setTimeout(() => setShowActiveOverlay(true), 1100)
+      const timer = setTimeout(() => setShowActiveOverlay(true), 1200)
       return () => clearTimeout(timer)
     } else {
       setShowActiveOverlay(false)
@@ -590,6 +597,7 @@ function ListView({
   }
 
   // Scroll animation for closedProjectsScroll phase
+  // iOS: 0.3s delay, 0.8s easeInOut scroll
   useEffect(() => {
     if (phase !== 'closedProjectsScroll') {
       setScrollOffset(0)
@@ -606,7 +614,10 @@ function ListView({
     function animate(timestamp: number) {
       if (!start) start = timestamp
       const progress = Math.min((timestamp - start) / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3)
+      // easeInOut cubic bezier approximation
+      const eased = progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2
       setScrollOffset(eased * target)
 
       if (progress < 1) {
@@ -616,7 +627,7 @@ function ListView({
 
     const timeout = setTimeout(() => {
       frame = requestAnimationFrame(animate)
-    }, 300)
+    }, 300) // 0.3s delay before scroll starts
 
     return () => {
       clearTimeout(timeout)
@@ -647,127 +658,113 @@ function ListView({
         animateToProjects={phase === 'projectListStatusDemo' || phase === 'projectListSwipe'}
       />
 
-      {/* Scrollable project list */}
+      {/* Scrollable project list — LazyVStack with 12pt spacing, matching iOS */}
       <div
-        className="flex-1 overflow-y-auto px-4"
+        className="flex-1 overflow-y-auto"
         style={{
           transform: `translateY(-${scrollOffset}px)`,
           transition: 'transform 0.1s linear',
+          paddingTop: 12,
+          paddingBottom: 120,
         }}
       >
-        {/* Active section */}
-        {active.length > 0 && (
-          <div className="mb-3 relative" ref={activeSectionRef} style={{
-            opacity: showActiveOverlay ? 0.3 : 1,
-            transition: 'opacity 0.3s ease-in-out',
-          }}>
-            <div className="flex items-center mb-2" style={{ gap: 8 }}>
-              <span
-                className="font-kosugi text-ops-text-secondary uppercase tracking-wider"
-                style={{ fontSize: 11, fontWeight: 700 }}
-              >
-                Active
-              </span>
-              <div className="flex-1" style={{ height: 1, background: 'rgba(255,255,255,0.08)' }} />
-              <span className="font-kosugi text-ops-text-tertiary" style={{ fontSize: 11 }}>
-                {active.length}
-              </span>
-            </div>
+        {/* Active projects — no section header, just cards with 12pt spacing */}
+        <div ref={activeSectionRef} style={{
+          opacity: showActiveOverlay ? 0.3 : 1,
+          transition: 'opacity 0.3s ease-in-out',
+          padding: '0 20px',
+        }}>
+          <div className="flex flex-col" style={{ gap: 12 }}>
+            {active.map(project => {
+              const isUserCard = userProject && project.id === userProject.id
 
-            <div className="flex flex-col" style={{ gap: 8 }}>
-              {active.map(project => {
-                const isUserCard = userProject && project.id === userProject.id
-
-                if (isUserCard && phase === 'projectListStatusDemo') {
-                  // Status animation card - highlighted with animating status
-                  return (
-                    <div key={project.id}>
-                      <MockProjectCard
-                        project={project}
-                        variant="list"
-                        isHighlighted={true}
-                        statusOverride={animatingStatus || userStatus}
-                      />
-                    </div>
-                  )
-                }
-
-                if (isUserCard && phase === 'projectListSwipe') {
-                  // Swipeable user card with background action revealed
-                  return (
-                    <div key={project.id} className="relative overflow-hidden" style={{ borderRadius: 5 }}>
-                      {/* Background revealed on swipe — green "CLOSED" indicator */}
-                      <div
-                        className="absolute inset-0 flex items-center rounded-[5px]"
-                        style={{
-                          background: `rgba(165, 179, 104, ${swipeProgress * 0.3})`,
-                          paddingLeft: 16,
-                        }}
-                      >
-                        <div className="flex items-center gap-2" style={{ opacity: swipeProgress }}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                            <path d="M20 6L9 17l-5-5" stroke="#A5B368" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          <span
-                            className="font-mohave font-bold uppercase tracking-wider"
-                            style={{ fontSize: 13, color: '#A5B368' }}
-                          >
-                            Close
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Swipeable card */}
-                      <div
-                        onTouchStart={handleCardTouchStart}
-                        onTouchMove={handleCardTouchMove}
-                        onTouchEnd={handleCardTouchEnd}
-                        style={{
-                          transform: `translateX(${cardOffset}px)`,
-                          opacity: swipeDismissed ? Math.max(1 - cardOffset / 300, 0) : 1,
-                          transition: swipeTouchStartX.current !== null
-                            ? 'none'
-                            : swipeDismissed
-                              ? 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease-out'
-                              : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
-                          position: 'relative',
-                          zIndex: 1,
-                        }}
-                      >
-                        <MockProjectCard
-                          project={project}
-                          variant="list"
-                          isHighlighted={!swipeDismissed}
-                          showShimmer={!swipeDismissed}
-                          statusOverride={userStatus}
-                        />
-                      </div>
-                    </div>
-                  )
-                }
-
+              if (isUserCard && phase === 'projectListStatusDemo') {
                 return (
-                  <div key={project.id} style={{
-                    opacity: phase === 'projectListStatusDemo' ? 0.3 : 1,
-                    transition: 'opacity 0.3s ease',
-                  }}>
+                  <div key={project.id}>
                     <MockProjectCard
                       project={project}
                       variant="list"
-                      isHighlighted={false}
-                      statusOverride={undefined}
+                      isHighlighted={true}
+                      statusOverride={animatingStatus || userStatus}
                     />
                   </div>
                 )
-              })}
-            </div>
+              }
+
+              if (isUserCard && phase === 'projectListSwipe') {
+                return (
+                  <div key={project.id} className="relative overflow-hidden" style={{ borderRadius: 5 }}>
+                    {/* Background revealed on swipe — green "CLOSED" indicator */}
+                    <div
+                      className="absolute inset-0 flex items-center rounded-[5px]"
+                      style={{
+                        background: `rgba(165, 179, 104, ${swipeProgress * 0.3})`,
+                        paddingLeft: 16,
+                      }}
+                    >
+                      <div className="flex items-center gap-2" style={{ opacity: swipeProgress }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <path d="M20 6L9 17l-5-5" stroke="#A5B368" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <span
+                          className="font-mohave font-bold uppercase tracking-wider"
+                          style={{ fontSize: 13, color: '#A5B368' }}
+                        >
+                          Close
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Swipeable card */}
+                    <div
+                      onTouchStart={handleCardTouchStart}
+                      onTouchMove={handleCardTouchMove}
+                      onTouchEnd={handleCardTouchEnd}
+                      style={{
+                        transform: `translateX(${cardOffset}px)`,
+                        opacity: swipeDismissed ? Math.max(1 - cardOffset / 300, 0) : 1,
+                        transition: swipeTouchStartX.current !== null
+                          ? 'none'
+                          : swipeDismissed
+                            ? 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease-out'
+                            : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                        position: 'relative',
+                        zIndex: 1,
+                      }}
+                    >
+                      <MockProjectCard
+                        project={project}
+                        variant="list"
+                        isHighlighted={!swipeDismissed}
+                        showShimmer={!swipeDismissed}
+                        statusOverride={userStatus}
+                      />
+                    </div>
+                  </div>
+                )
+              }
+
+              return (
+                <div key={project.id} style={{
+                  opacity: phase === 'projectListStatusDemo' ? 0.3 : 1,
+                  transition: 'opacity 0.3s ease',
+                }}>
+                  <MockProjectCard
+                    project={project}
+                    variant="list"
+                    isHighlighted={false}
+                    statusOverride={undefined}
+                  />
+                </div>
+              )
+            })}
           </div>
-        )}
+        </div>
 
         {/* "CLOSED" feedback toast after swipe completes */}
         {showClosedFeedback && (
           <div
-            className="flex items-center justify-center gap-2 py-3 mb-3 rounded-xl"
+            className="flex items-center justify-center gap-2 py-3 mx-5 mt-3 rounded-xl"
             style={{
               background: 'rgba(165, 179, 104, 0.15)',
               border: '1px solid rgba(165, 179, 104, 0.3)',
@@ -783,23 +780,44 @@ function ListView({
           </div>
         )}
 
-        {/* Closed/completed section */}
-        {closed.length > 0 && (
-          <div className="mb-3">
-            <div className="flex items-center mb-2" style={{ gap: 8 }}>
-              <span
-                className="font-kosugi text-ops-text-secondary uppercase tracking-wider"
-                style={{ fontSize: 11, fontWeight: 700 }}
-              >
+        {/* Section buttons at bottom — matching iOS SectionButton pattern */}
+        {/* HStack(spacing: 12) with CLOSED and ARCHIVED buttons */}
+        <div className="flex px-5" style={{ gap: 12, paddingTop: 8 }}>
+          {/* CLOSED section button */}
+          {closed.length > 0 && (
+            <div
+              className="flex items-center flex-1"
+              style={{
+                gap: 8,
+                padding: '12px 16px',
+                background: '#0D0D0D',
+                borderRadius: 5,
+                border: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              {/* Status color circle */}
+              <div style={{ width: 8, height: 8, borderRadius: 4, background: '#E9E9E9', flexShrink: 0 }} />
+              {/* Label — captionBold */}
+              <span className="font-kosugi text-[14px] font-bold text-ops-text-secondary uppercase">
                 Closed
               </span>
-              <div className="flex-1" style={{ height: 1, background: 'rgba(255,255,255,0.08)' }} />
-              <span className="font-kosugi text-ops-text-tertiary" style={{ fontSize: 11 }}>
-                {closed.length}
+              {/* Count — caption */}
+              <span className="font-kosugi text-[14px] text-ops-text-tertiary">
+                ({closed.length})
               </span>
+              <div className="flex-1" />
+              {/* Chevron */}
+              <svg width="10" height="10" viewBox="0 0 8 12" fill="none" style={{ color: '#777777' }}>
+                <path d="M1 1l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </div>
+          )}
+        </div>
 
-            <div className="flex flex-col" style={{ gap: 8 }}>
+        {/* Expanded closed section — only visible during closedProjectsScroll */}
+        {phase === 'closedProjectsScroll' && closed.length > 0 && (
+          <div className="px-5 pt-3">
+            <div className="flex flex-col" style={{ gap: 12 }}>
               {closed.map(project => {
                 const isUserCard = userProject && project.id === userProject.id
                 return (
@@ -807,7 +825,7 @@ function ListView({
                     key={project.id}
                     project={project}
                     variant="list"
-                    isHighlighted={!!isUserCard && phase === 'closedProjectsScroll'}
+                    isHighlighted={!!isUserCard}
                     statusOverride={isUserCard ? 'closed' : undefined}
                   />
                 )
@@ -815,8 +833,6 @@ function ListView({
             </div>
           </div>
         )}
-
-        <div style={{ height: 120 }} />
       </div>
 
       {/* Touch cursor hint — only while hint animation is playing */}

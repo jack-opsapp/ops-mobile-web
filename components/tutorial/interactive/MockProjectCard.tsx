@@ -332,13 +332,13 @@ function ListCard({
           </div>
         </div>
 
-        {/* Right badges column - padding 8 */}
-        <div className="flex flex-col items-end justify-between flex-shrink-0" style={{ padding: 8, minWidth: 80 }}>
+        {/* Right badges column */}
+        <div className="flex flex-col items-end justify-between flex-shrink-0" style={{ padding: '8px 14px 8px 0', minWidth: 80 }}>
           {/* Top: Status badge */}
           <span
             className="font-kosugi uppercase whitespace-nowrap"
             style={{
-              fontSize: 10,
+              fontSize: 12, // smallCaption (12pt Kosugi)
               lineHeight: 1,
               color: statusColor,
               padding: '4px 8px',
@@ -354,7 +354,7 @@ function ListCard({
           <span
             className="font-kosugi uppercase whitespace-nowrap"
             style={{
-              fontSize: 10,
+              fontSize: 12, // smallCaption (12pt Kosugi)
               lineHeight: 1,
               color: '#A7A7A7',
               padding: '4px 8px',

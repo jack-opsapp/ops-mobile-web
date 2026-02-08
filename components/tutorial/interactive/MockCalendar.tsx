@@ -59,8 +59,8 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
     return days
   }, [today, weekOffset])
 
-  // Day abbreviations (Mon-Sun)
-  const dayAbbreviations = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+  // Day abbreviations (Mon-Sun) — two-letter matching iOS
+  const dayAbbreviations = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
 
   // Find today's index in current week
   const todayIndex = useMemo(() => {
@@ -199,8 +199,8 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
     }
   }, [phase, isMonthView])
 
-  // Cell height: collapsed ~44px (aspect-square), expanded ~120px
-  const monthCellHeight = monthExpanded ? 120 : undefined // undefined = aspect-square
+  // Cell height: collapsed ~80px (iOS min), expanded ~180px (iOS Level 2-3 range)
+  const monthCellHeight = monthExpanded ? 180 : 44
 
   // =========================================================================
   // SWIPE GESTURE for week day row
@@ -248,74 +248,157 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
           <h2 className="font-mohave font-semibold text-[28px] uppercase tracking-wider" style={{ color: '#E5E5E5' }}>
             Schedule
           </h2>
-          {/* TODAY | Date subtitle */}
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="font-mohave text-[12px] uppercase tracking-wider text-ops-accent font-bold">
-              Today
+          {/* TODAY | Date subtitle — caption font, secondaryText */}
+          <div className="flex items-center" style={{ gap: 8 }}>
+            <span className="font-kosugi text-[14px] text-ops-text-secondary">
+              TODAY
             </span>
-            <div style={{ width: 1, height: 10, background: 'rgba(255,255,255,0.2)' }} />
-            <span className="font-mohave text-[12px] text-ops-text-secondary">
+            <span className="font-kosugi text-[14px] text-ops-text-secondary">|</span>
+            <span className="font-kosugi text-[14px] text-ops-text-secondary">
               {monthNames[today.getMonth()]} {today.getDate()}
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: '#A7A7A7' }}>
-            <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: '#A7A7A7' }}>
-            <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+        {/* Right: 3 circular action buttons (filter, refresh, search) — 44pt, cardBackground circle */}
+        <div className="flex items-center" style={{ gap: 8 }}>
+          {/* Filter button */}
+          <div
+            className="flex items-center justify-center rounded-full"
+            style={{ width: 44, height: 44, background: '#0D0D0D' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ color: '#E5E5E5' }}>
+              <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          {/* Refresh button */}
+          <div
+            className="flex items-center justify-center rounded-full"
+            style={{ width: 44, height: 44, background: '#0D0D0D' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ color: '#E5E5E5' }}>
+              <path d="M23 4v6h-6M1 20v-6h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          {/* Search button */}
+          <div
+            className="flex items-center justify-center rounded-full"
+            style={{ width: 44, height: 44, background: '#0D0D0D' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ color: '#E5E5E5' }}>
+              <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
         </div>
       </div>
 
-      {/* Toggle row: Week/Month segmented + period button */}
-      <div className="px-4 py-3 flex items-center gap-3">
-        {/* Week/Month Toggle (CalendarToggleView) */}
-        <div className="flex rounded-lg overflow-hidden flex-1" style={{ background: '#0D0D0D' }}>
+      {/* Toggle row: Week/Month segmented + period button — matching iOS CalendarToggleView */}
+      {/* HStack spacing: 16pt, padding vertical: 8pt */}
+      <div className="flex items-center" style={{ padding: '8px 20px', gap: 16 }}>
+        {/* Week/Month Toggle — bodyBold (16pt Mohave Bold), 12pt vertical padding, 5pt radius */}
+        <div className="flex flex-1 overflow-hidden relative" style={{ background: '#0D0D0D', borderRadius: 5 }}>
           <button
-            className={`flex-1 py-2 font-mohave text-[14px] uppercase tracking-wider transition-all ${
-              !isMonthView ? 'text-white' : 'text-ops-text-secondary'
-            }`}
-            style={!isMonthView ? { background: '#1A1A1A' } : undefined}
+            className="flex-1 font-mohave font-bold text-[16px] uppercase tracking-wider transition-all"
+            style={{
+              padding: '12px 0',
+              borderRadius: 5,
+              background: !isMonthView ? '#1A1A1A' : 'transparent',
+              color: !isMonthView ? '#FFFFFF' : '#A7A7A7',
+            }}
           >
             Week
           </button>
           <button
             onClick={() => isMonthPrompt && onToggleMonth()}
-            className={`flex-1 py-2 font-mohave text-[14px] uppercase tracking-wider transition-all relative ${
-              isMonthView ? 'text-white' : isMonthPrompt ? 'text-ops-accent' : 'text-ops-text-secondary'
-            }`}
+            className="flex-1 font-mohave font-bold text-[16px] uppercase tracking-wider transition-all relative"
             style={{
-              ...(isMonthView ? { background: '#1A1A1A' } : {}),
-              ...(isMonthPrompt ? {
-                border: '1px solid rgba(65, 115, 148, 0.5)',
-                borderRadius: '8px',
-              } : {}),
+              padding: '12px 0',
+              borderRadius: 5,
+              background: isMonthView ? '#1A1A1A' : 'transparent',
+              color: isMonthView ? '#FFFFFF' : isMonthPrompt ? '#417394' : '#A7A7A7',
             }}
           >
             Month
+            {/* Pulsing 3pt border highlight during calendarMonthPrompt */}
             {isMonthPrompt && (
               <span
-                className="absolute inset-0 rounded-lg pointer-events-none"
+                className="absolute inset-0 pointer-events-none"
                 style={{
-                  border: '1px solid rgba(65, 115, 148, 0.6)',
+                  borderRadius: 5,
+                  border: '3px solid rgba(65, 115, 148, 0.6)',
                   animation: 'calendarPulse 2.4s ease-in-out infinite',
                 }}
               />
             )}
           </button>
+
+          {/* Black overlay on Week half during calendarMonthPrompt */}
+          {isMonthPrompt && (
+            <div
+              className="absolute top-0 bottom-0 left-0 pointer-events-none"
+              style={{
+                width: '50%',
+                background: 'rgba(0, 0, 0, 0.7)',
+                borderRadius: '5px 0 0 5px',
+              }}
+            />
+          )}
+
+          {/* Black overlay on BOTH toggle + picker during calendarWeek (content is locked) */}
+          {phase === 'calendarWeek' && (
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: 'rgba(0, 0, 0, 0.7)',
+                borderRadius: 5,
+              }}
+            />
+          )}
         </div>
 
-        {/* Period button (week range) */}
+        {/* Period button — 100pt wide, white bg, black text, bodyBold, 5pt radius */}
         {!isMonthView && (
+          <div className="relative">
+            <div
+              className="flex items-center justify-center"
+              style={{
+                width: 100,
+                padding: '12px 0',
+                borderRadius: 5,
+                background: '#E5E5E5',
+              }}
+            >
+              <span className="font-mohave font-bold text-[16px] text-black whitespace-nowrap">
+                {weekRangeLabel}
+              </span>
+            </div>
+            {/* Black overlay during calendarWeek */}
+            {phase === 'calendarWeek' && (
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: 'rgba(0, 0, 0, 0.7)',
+                  borderRadius: 5,
+                }}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Period button for month mode */}
+        {isMonthView && (
           <div
-            className="px-3 py-1.5 rounded-lg flex items-center gap-1.5"
-            style={{ background: '#0D0D0D', border: '1px solid rgba(255,255,255,0.1)' }}
+            className="flex items-center justify-center"
+            style={{
+              width: 100,
+              padding: '12px 0',
+              borderRadius: 5,
+              background: '#E5E5E5',
+            }}
           >
-            <span className="font-mohave text-[12px] text-ops-text-secondary whitespace-nowrap">
-              {weekRangeLabel}
+            <span className="font-mohave font-bold text-[16px] text-black whitespace-nowrap">
+              {monthNames[today.getMonth()]}
             </span>
           </div>
         )}
@@ -323,20 +406,18 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
 
       {isMonthView ? (
         /* ===== MONTH VIEW ===== */
-        <div className="px-4 flex-1 overflow-hidden">
-          {/* Month/Year label */}
-          <div className="pb-2">
-            <span className="font-mohave text-[14px] text-ops-text-secondary">
-              {monthNames[today.getMonth()]} {today.getFullYear()}
-            </span>
-          </div>
-
-          {/* Card container for month grid — scrollable when expanded */}
+        <div className="flex-1 overflow-hidden" style={{ padding: '0 20px' }}>
+          {/* Card container for month grid — matching iOS #0D0D0D card */}
           <div
-            className="rounded-xl p-3"
-            style={{ background: '#0D0D0D', overflowY: monthExpanded ? 'auto' : 'hidden', maxHeight: monthExpanded ? 'calc(100vh - 220px)' : 'none' }}
+            className="p-3"
+            style={{
+              background: '#0D0D0D',
+              borderRadius: 5,
+              overflowY: monthExpanded ? 'auto' : 'hidden',
+              maxHeight: monthExpanded ? 'calc(100vh - 220px)' : 'none',
+            }}
           >
-            {/* Day of week headers (Mon-Sun) */}
+            {/* Day of week headers — "Mo", "Tu", "We" etc (caption font, secondaryText) */}
             <div className="grid grid-cols-7 mb-1">
               {dayAbbreviations.map((abbr, i) => (
                 <div key={i} className="text-center font-kosugi text-[14px] text-ops-text-secondary py-1">
@@ -352,10 +433,9 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                 <div
                   key={`empty-${i}`}
                   style={{
-                    height: monthExpanded ? monthCellHeight : undefined,
+                    height: monthCellHeight,
                     transition: 'height 0.8s ease-in-out',
                   }}
-                  className={monthExpanded ? '' : 'aspect-square'}
                 />
               ))}
 
@@ -377,18 +457,38 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                   'Coating', 'Paving', 'Cleaning', 'Sealing', 'Demolition', 'Installation', 'Diagnostic'
                 ]
 
+                // Determine display level based on cell height
+                // Level 1 (<120pt): 10pt bars, 0.5 opacity, no text
+                // Level 2 (120-180pt): 14pt bars, 0.2 opacity bg, single-line title
+                // Level 3 (≥180pt): 28pt bars, multi-line titles
+                const cellH = monthCellHeight
+                const barHeight = cellH >= 180 ? 28 : cellH >= 120 ? 14 : 10
+                const barOpacity = cellH >= 120 ? 0.7 : 0.5
+                const showBarText = cellH >= 120
+
                 return (
                   <div
                     key={dayNum}
-                    className={`flex flex-col items-center relative px-0.5 ${monthExpanded ? 'justify-start pt-1' : 'justify-center aspect-square'}`}
+                    className="flex flex-col items-center relative px-0.5 justify-start pt-1"
                     style={{
-                      height: monthExpanded ? monthCellHeight : undefined,
+                      height: monthCellHeight,
                       transition: 'height 0.8s ease-in-out',
                     }}
                   >
                     {/* Today highlight circle */}
                     {isToday && (
-                      <div className="absolute rounded-full bg-ops-accent opacity-50" style={{ width: 24, height: 24, top: monthExpanded ? 0 : '50%', left: '50%', transform: monthExpanded ? 'translateX(-50%)' : 'translate(-50%, -50%)', transition: 'top 0.8s ease-in-out' }} />
+                      <div
+                        className="absolute bg-ops-accent opacity-50"
+                        style={{
+                          width: monthExpanded ? '100%' : 24,
+                          height: monthExpanded ? '100%' : 24,
+                          borderRadius: monthExpanded ? 5 : 12,
+                          top: monthExpanded ? 0 : '50%',
+                          left: monthExpanded ? 0 : '50%',
+                          transform: monthExpanded ? 'none' : 'translate(-50%, -50%)',
+                          transition: 'all 0.8s ease-in-out',
+                        }}
+                      />
                     )}
                     <span
                       className={`font-mohave text-[12px] relative z-10 ${
@@ -397,26 +497,34 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                     >
                       {dayNum}
                     </span>
-                    {/* Event bars — expand to show titles when expanded */}
+                    {/* Event bars — level-based rendering */}
                     {displayBars.length > 0 && (
-                      <div className="flex flex-col items-center gap-[2px] mt-[2px] relative z-10 w-full px-[4%]" style={{ transition: 'all 0.8s ease-in-out' }}>
+                      <div
+                        className="flex flex-col gap-[2px] mt-[2px] relative z-10 w-full px-[4%]"
+                        style={{ transition: 'all 0.8s ease-in-out' }}
+                      >
                         {displayBars.map((color, j) => (
                           <div
                             key={j}
                             className="rounded-sm w-full overflow-hidden"
                             style={{
                               backgroundColor: color,
-                              height: monthExpanded ? 28 : 10,
-                              opacity: monthExpanded ? 0.7 : 0.5,
+                              height: barHeight,
+                              opacity: barOpacity,
                               transition: 'height 0.8s ease-in-out, opacity 0.8s ease-in-out',
                               display: 'flex',
                               alignItems: 'center',
-                              paddingLeft: monthExpanded ? 3 : 0,
+                              paddingLeft: showBarText ? 3 : 0,
                             }}
                           >
-                            {monthExpanded && (
-                              <span className="font-kosugi text-[7px] text-white truncate leading-none" style={{ opacity: 1 }}>
-                                {userProject && isToday && j === 0 ? userProject.name.slice(0, 8) : eventNames[(dayNum + j) % eventNames.length].slice(0, 8)}
+                            {showBarText && (
+                              <span
+                                className="font-kosugi text-white truncate leading-none"
+                                style={{ fontSize: cellH >= 180 ? 8 : 7, opacity: 1 }}
+                              >
+                                {userProject && isToday && j === 0
+                                  ? userProject.name.slice(0, cellH >= 180 ? 12 : 8)
+                                  : eventNames[(dayNum + j) % eventNames.length].slice(0, cellH >= 180 ? 12 : 8)}
                               </span>
                             )}
                           </div>
@@ -438,11 +546,11 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
       ) : (
         /* ===== WEEK VIEW ===== */
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Day selector row (CalendarDaySelector) - wrapped in card */}
-          <div className="px-4 pb-3">
+          {/* Day selector row (CalendarDaySelector) — wrapped in card container */}
+          <div style={{ padding: '0 20px 12px' }}>
             <div
               className="overflow-hidden"
-              style={{ background: '#0D0D0D', borderRadius: 8 }}
+              style={{ background: '#0D0D0D', borderRadius: 5 }}
               onTouchStart={handleDayRowTouchStart}
               onTouchMove={handleDayRowTouchMove}
               onTouchEnd={handleDayRowTouchEnd}
@@ -450,7 +558,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
               <div
                 className="grid grid-cols-7"
                 style={{
-                  height: 80,
+                  height: 60, // iOS: 60pt cell height
                   transform: `translateX(${dragOffset}px)`,
                   transition: dragOffset === 0 ? 'transform 0.3s ease-out' : 'none',
                 }}
@@ -469,59 +577,66 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                       className="flex flex-col items-center justify-center relative cursor-pointer"
                       onClick={() => setSelectedDayIndex(i)}
                       style={{
-                        // Today: accent bg at 50% opacity
+                        // Today: full cell accent fill at 50% opacity (NOT just a circle)
                         background: isToday ? 'rgba(65, 115, 148, 0.5)' : 'transparent',
                         // Selected: white 1px border outline
-                        border: isSelected && !isToday ? '1px solid rgba(255,255,255,0.8)' : isSelected && isToday ? '1px solid rgba(255,255,255,0.8)' : '1px solid transparent',
-                        borderRadius: 12,
-                        margin: 3,
+                        border: isSelected ? '1px solid rgba(255,255,255,0.8)' : '1px solid transparent',
+                        borderRadius: 5, // iOS cornerRadius = 5
+                        margin: 2,
                       }}
                     >
-                      {/* Day abbreviation */}
-                      <span className="font-kosugi text-[10px] text-ops-text-secondary">
+                      {/* Day abbreviation — caption font (14pt Kosugi) */}
+                      <span
+                        className="font-kosugi"
+                        style={{
+                          fontSize: 14,
+                          color: isToday ? '#FFFFFF' : '#A7A7A7',
+                        }}
+                      >
                         {dayAbbreviations[i]}
                       </span>
 
-                      {/* Date number */}
+                      {/* Date number — bodyBold (16pt Mohave Bold) */}
                       <span
-                        className={`font-mohave text-[16px] ${
-                          isToday ? 'text-white font-bold' : 'text-white/70'
-                        }`}
+                        className="font-mohave font-bold"
+                        style={{
+                          fontSize: 16,
+                          color: isToday ? '#FFFFFF' : isSelected ? '#E5E5E5' : 'rgba(229, 229, 229, 0.8)',
+                        }}
                       >
                         {day.getDate()}
                       </span>
 
-                      {/* Event count badges */}
-                      {/* Green circle top-right = new events */}
+                      {/* New event badge — top-right, white circle at 0.8 opacity, 16x16 */}
                       {newCount > 0 && (
                         <div
                           className="absolute flex items-center justify-center"
                           style={{
                             top: 4,
-                            right: 4,
-                            width: 14,
-                            height: 14,
-                            borderRadius: 7,
-                            background: '#A5B368',
+                            right: 2,
+                            width: 16,
+                            height: 16,
+                            borderRadius: 8,
+                            background: 'rgba(255, 255, 255, 0.8)',
                           }}
                         >
-                          <span className="font-kosugi text-[8px] text-white font-bold">{newCount}</span>
+                          <span className="font-kosugi text-[12px] text-black font-bold">{newCount}</span>
                         </div>
                       )}
-                      {/* Gray circle bottom-right = ongoing events */}
+                      {/* Ongoing event badge — bottom-right, gray at 0.3 opacity, 14x14 */}
                       {ongoingCount > 0 && (
                         <div
                           className="absolute flex items-center justify-center"
                           style={{
                             bottom: 4,
-                            right: 4,
+                            right: 2,
                             width: 14,
                             height: 14,
                             borderRadius: 7,
-                            background: '#555555',
+                            background: 'rgba(128, 128, 128, 0.3)',
                           }}
                         >
-                          <span className="font-kosugi text-[8px] text-white font-bold">{ongoingCount}</span>
+                          <span className="font-kosugi text-ops-text-secondary" style={{ fontSize: 9, fontWeight: 500 }}>{ongoingCount}</span>
                         </div>
                       )}
                     </div>
@@ -531,23 +646,23 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
             </div>
           </div>
 
-          {/* Day header below selector (sticky header style) */}
-          <div className="px-4 pb-2 flex items-center justify-between">
-            <div>
-              <span className="font-mohave text-[14px] uppercase tracking-wider text-white font-bold">
+          {/* Day header below selector — matching iOS ProjectListView sticky header */}
+          <div style={{ padding: '0 20px 8px' }} className="flex items-center justify-between">
+            <div className="flex items-baseline" style={{ gap: 8 }}>
+              <span className="font-mohave text-[16px] uppercase tracking-wider text-white font-bold">
                 {dayNames[activeDay.getDay()]}
               </span>
-              <span className="font-mohave text-[12px] text-ops-text-secondary ml-2">
+              <span className="font-kosugi text-[14px] text-ops-text-secondary">
                 {monthNames[activeDay.getMonth()]} {activeDay.getDate()}
               </span>
             </div>
             {/* Event count card */}
             {dayScheduleItems.length > 0 && (
               <div
-                className="px-2 py-1 rounded-lg"
-                style={{ background: '#0D0D0D', border: '1px solid rgba(255,255,255,0.1)' }}
+                className="px-2 py-1"
+                style={{ background: '#0D0D0D', borderRadius: 5, border: '1px solid rgba(255,255,255,0.08)' }}
               >
-                <span className="font-kosugi text-[10px] text-ops-text-secondary">
+                <span className="font-kosugi text-[12px] text-ops-text-secondary">
                   {dayScheduleItems.length} {dayScheduleItems.length === 1 ? 'event' : 'events'}
                 </span>
               </div>
@@ -555,58 +670,67 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
           </div>
 
           {/* Divider */}
-          <div className="h-px bg-white/10 mx-4" />
+          <div className="h-px bg-white/10 mx-5" />
 
-          {/* Schedule list for selected day - updated card structure */}
-          <div className="flex-1 overflow-y-auto px-4 pt-3 space-y-2">
-            {dayScheduleItems.map((item, i) => (
-              <div
-                key={i}
-                className="rounded-xl overflow-hidden flex"
-                style={{ background: '#0D0D0D', border: '1px solid rgba(255,255,255,0.1)' }}
-              >
-                {/* Left color bar (4px) */}
+          {/* Schedule list for selected day — matching iOS CalendarEventCard */}
+          <div className="flex-1 overflow-y-auto pt-3" style={{ padding: '12px 20px 0' }}>
+            <div className="flex flex-col" style={{ gap: 8 }}>
+              {dayScheduleItems.map((item, i) => (
                 <div
-                  className="flex-shrink-0"
-                  style={{ width: 4, backgroundColor: item.color }}
-                />
+                  key={i}
+                  className="overflow-hidden flex"
+                  style={{
+                    background: '#0D0D0D',
+                    borderRadius: 5, // iOS cornerRadius
+                    border: '1px solid rgba(255,255,255,0.08)',
+                  }}
+                >
+                  {/* Left color bar (4px) */}
+                  <div
+                    className="flex-shrink-0"
+                    style={{ width: 4, backgroundColor: item.color }}
+                  />
 
-                {/* Content */}
-                <div className="flex-1 min-w-0 p-3 flex justify-between items-start">
-                  <div className="flex-1 min-w-0">
-                    {/* Title - bodyBold uppercase */}
-                    <span className="font-mohave text-[16px] font-medium text-white uppercase tracking-wide block truncate">
-                      {item.name}
-                    </span>
-                    {/* Client name - caption */}
-                    <span className="font-kosugi text-[10px] text-ops-text-secondary block truncate mt-0.5">
-                      {item.clientName}
-                    </span>
-                    {/* Address - tertiary text */}
-                    {item.address && (
-                      <span className="font-kosugi text-[9px] text-ops-text-tertiary block truncate mt-0.5">
-                        {item.address}
+                  {/* Content */}
+                  <div className="flex-1 min-w-0 flex justify-between items-start" style={{ padding: 12 }}>
+                    <div className="flex-1 min-w-0">
+                      {/* Title — bodyBold (16pt Mohave Bold) uppercase */}
+                      <span className="font-mohave font-bold text-[16px] text-white uppercase tracking-wide block truncate">
+                        {item.name}
                       </span>
-                    )}
-                    {/* Time */}
-                    <span className="font-kosugi text-[9px] text-ops-text-tertiary mt-1 block">
-                      {item.time}
+                      {/* Client name — caption (14pt Kosugi) */}
+                      <span className="font-kosugi text-[14px] text-ops-text-secondary block truncate mt-0.5">
+                        {item.clientName}
+                      </span>
+                      {/* Address — tertiary text */}
+                      {item.address && (
+                        <span className="font-kosugi text-[12px] text-ops-text-tertiary block truncate mt-0.5">
+                          {item.address}
+                        </span>
+                      )}
+                      {/* Time */}
+                      <span className="font-kosugi text-[12px] text-ops-text-tertiary mt-1 block">
+                        {item.time}
+                      </span>
+                    </div>
+
+                    {/* Task type badge top-right — smallCaption (12pt Kosugi) */}
+                    <span
+                      className="font-kosugi flex-shrink-0 ml-2"
+                      style={{
+                        fontSize: 12,
+                        padding: '3px 8px',
+                        borderRadius: 4,
+                        backgroundColor: `${item.color}20`,
+                        color: item.color,
+                      }}
+                    >
+                      {item.taskType}
                     </span>
                   </div>
-
-                  {/* Task type badge top-right */}
-                  <span
-                    className="font-kosugi text-[9px] px-2 py-0.5 rounded-full flex-shrink-0 ml-2"
-                    style={{
-                      backgroundColor: `${item.color}20`,
-                      color: item.color,
-                    }}
-                  >
-                    {item.taskType}
-                  </span>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
 
             {dayScheduleItems.length === 0 && (
               <div className="flex items-center justify-center py-8">
