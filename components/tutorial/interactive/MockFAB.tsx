@@ -184,8 +184,8 @@ export function MockFAB({ phase, onFABTap, onCreateProject }: MockFABProps) {
                     style={{
                       width: '48px',
                       height: '48px',
-                      color: '#A7A7A7',
-                      border: '1px solid #A7A7A7',
+                      color: '#AAAAAA',
+                      border: '1px solid #AAAAAA',
                       boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
                     }}
                   >

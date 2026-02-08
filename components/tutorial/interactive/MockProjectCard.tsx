@@ -356,7 +356,7 @@ function ListCard({
             style={{
               fontSize: 12, // smallCaption (12pt Kosugi)
               lineHeight: 1,
-              color: '#A7A7A7',
+              color: '#AAAAAA',
               padding: '4px 8px',
               borderRadius: 4,
               background: '#0D0D0D',

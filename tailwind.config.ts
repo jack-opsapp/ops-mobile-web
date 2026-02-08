@@ -12,14 +12,18 @@ const config: Config = {
         ops: {
           background: '#000000',
           card: '#0D0D0D',
-          accent: '#417394',
+          'card-dark': '#0D0D0D',
+          accent: '#417394',           // secondaryAccent (tutorial accent)
+          'accent-primary': '#FF7733', // primaryAccent (orange)
           success: '#A5B368',
           warning: '#C4A868',
           error: '#931A32',
-          'text-primary': '#E5E5E5',
-          'text-secondary': '#A7A7A7',
-          'text-tertiary': '#777777',
-          border: 'rgba(255,255,255,0.1)',
+          'text-primary': '#FFFFFF',   // iOS primaryText = White
+          'text-secondary': '#AAAAAA', // iOS secondaryText = #AAAAAA
+          'text-tertiary': '#777777',  // iOS tertiaryText = #777777
+          border: 'rgba(255,255,255,0.2)', // iOS cardBorder
+          'border-subtle': 'rgba(255,255,255,0.05)',
+          separator: 'rgba(255,255,255,0.15)',
         },
       },
       fontFamily: {

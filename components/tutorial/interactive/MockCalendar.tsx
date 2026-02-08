@@ -240,12 +240,18 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
   // RENDER
   // =========================================================================
 
+  // Height reserved at top for the floating tooltip (no safe area on web)
+  const TOOLTIP_TOP_INSET = 100
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Spacer: push content below the floating tooltip */}
+      <div style={{ height: TOOLTIP_TOP_INSET, flexShrink: 0 }} />
+
       {/* App Header - matches iOS ScheduleView / CalendarHeaderView */}
       <div className="flex items-center justify-between" style={{ padding: '12px 20px 0' }}>
         <div>
-          <h2 className="font-mohave font-semibold text-[28px] uppercase tracking-wider" style={{ color: '#E5E5E5' }}>
+          <h2 className="font-mohave font-semibold text-[28px] uppercase tracking-wider text-white">
             Schedule
           </h2>
           {/* TODAY | Date subtitle — caption font, secondaryText */}
@@ -266,7 +272,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
             className="flex items-center justify-center rounded-full"
             style={{ width: 44, height: 44, background: '#0D0D0D' }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ color: '#E5E5E5' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-white">
               <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
@@ -275,7 +281,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
             className="flex items-center justify-center rounded-full"
             style={{ width: 44, height: 44, background: '#0D0D0D' }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ color: '#E5E5E5' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-white">
               <path d="M23 4v6h-6M1 20v-6h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -285,7 +291,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
             className="flex items-center justify-center rounded-full"
             style={{ width: 44, height: 44, background: '#0D0D0D' }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ color: '#E5E5E5' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-white">
               <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5" />
               <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
@@ -304,7 +310,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
               padding: '12px 0',
               borderRadius: 5,
               background: !isMonthView ? '#1A1A1A' : 'transparent',
-              color: !isMonthView ? '#FFFFFF' : '#A7A7A7',
+              color: !isMonthView ? '#FFFFFF' : '#AAAAAA',
             }}
           >
             Week
@@ -316,7 +322,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
               padding: '12px 0',
               borderRadius: 5,
               background: isMonthView ? '#1A1A1A' : 'transparent',
-              color: isMonthView ? '#FFFFFF' : isMonthPrompt ? '#417394' : '#A7A7A7',
+              color: isMonthView ? '#FFFFFF' : isMonthPrompt ? '#417394' : '#AAAAAA',
             }}
           >
             Month
@@ -590,7 +596,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                         className="font-kosugi"
                         style={{
                           fontSize: 14,
-                          color: isToday ? '#FFFFFF' : '#A7A7A7',
+                          color: isToday ? '#FFFFFF' : '#AAAAAA',
                         }}
                       >
                         {dayAbbreviations[i]}

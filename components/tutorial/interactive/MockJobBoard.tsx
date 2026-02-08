@@ -53,7 +53,7 @@ type SectionTab = 'DASHBOARD' | 'CLIENTS' | 'PROJECTS' | 'TASKS'
 function MockAppHeader() {
   return (
     <div className="flex items-center justify-between" style={{ padding: '12px 20px' }}>
-      <h2 className="font-mohave font-semibold text-[28px] uppercase tracking-wider" style={{ color: '#E5E5E5' }}>
+      <h2 className="font-mohave font-semibold text-[28px] uppercase tracking-wider text-white">
         Job Board
       </h2>
       {/* Right: user info (name | role, email) matching iOS .jobBoard header */}
@@ -129,6 +129,11 @@ function MockSectionSelector({ selected, animateToProjects }: { selected: Sectio
 // MAIN COMPONENT
 // =============================================================================
 
+// Height reserved at top for the floating tooltip (no safe area on web)
+// iOS has ~47px safe area that pushes content below the tooltip naturally.
+// On web we must add this padding explicitly.
+const TOOLTIP_TOP_INSET = 100
+
 export function MockJobBoard({ phase, userProject, onSwipeComplete }: MockJobBoardProps) {
   const isDashboardView = DASHBOARD_PHASES.includes(phase)
   const isListView = LIST_PHASES.includes(phase)
@@ -138,6 +143,9 @@ export function MockJobBoard({ phase, userProject, onSwipeComplete }: MockJobBoa
 
   return (
     <div className="flex-1 overflow-hidden relative flex flex-col">
+      {/* Spacer: push content below the floating tooltip */}
+      <div style={{ height: TOOLTIP_TOP_INSET, flexShrink: 0 }} />
+
       {viewMode === 'dashboard' ? (
         <DashboardView phase={phase} userProject={userProject} />
       ) : (
@@ -433,6 +441,7 @@ function ListView({
   const swipeTouchStartX = useRef<number | null>(null)
   const [userSwipeOffset, setUserSwipeOffset] = useState(0)
   const [swipeDismissed, setSwipeDismissed] = useState(false)
+  const [cardFading, setCardFading] = useState(false) // fade-out after snap-back
   const [showClosedFeedback, setShowClosedFeedback] = useState(false)
   const swipeCompleted = useRef(false)
 
@@ -440,8 +449,11 @@ function ListView({
   const [showHintAnimation, setShowHintAnimation] = useState(true)
   const [hintOffset, setHintOffset] = useState(0)
 
-  // Swipe threshold for completion
-  const SWIPE_THRESHOLD = 120
+  // Swipe threshold: 40% of card width (iOS: geometry.size.width * 0.4)
+  const cardContainerRef = useRef<HTMLDivElement>(null)
+  const [cardWidth, setCardWidth] = useState(300)
+  const [showLeftSwipeError, setShowLeftSwipeError] = useState(false)
+  const SWIPE_THRESHOLD_RATIO = 0.4
 
   // Build ordered project list
   const getOrderedProjects = useCallback((): {
@@ -574,7 +586,15 @@ function ListView({
     return () => cancelAnimationFrame(frame)
   }, [phase, swipeDismissed])
 
+  // Measure card width for 40% threshold calculation
+  useEffect(() => {
+    if (phase === 'projectListSwipe' && cardContainerRef.current) {
+      setCardWidth(cardContainerRef.current.offsetWidth)
+    }
+  }, [phase])
+
   // --- Touch handlers for the user's swipeable card ---
+  // iOS: DragGesture with 20pt minimum, spring(response:0.25, dampingFraction:0.8)
   const handleCardTouchStart = (e: React.TouchEvent) => {
     if (swipeDismissed || swipeCompleted.current) return
     swipeTouchStartX.current = e.touches[0].clientX
@@ -586,15 +606,20 @@ function ListView({
   const handleCardTouchMove = (e: React.TouchEvent) => {
     if (swipeTouchStartX.current === null || swipeDismissed) return
     const diff = e.touches[0].clientX - swipeTouchStartX.current
-    // Only allow right-swipe (positive), with resistance after threshold
+
     if (diff > 0) {
-      const resisted = diff > SWIPE_THRESHOLD
-        ? SWIPE_THRESHOLD + (diff - SWIPE_THRESHOLD) * 0.3
-        : diff
-      setUserSwipeOffset(resisted)
+      // Right swipe allowed — follow finger directly
+      setUserSwipeOffset(diff)
+      setShowLeftSwipeError(false)
     } else {
-      // Small leftward resistance
-      setUserSwipeOffset(diff * 0.2)
+      // LEFT SWIPE BLOCKED in tutorial (iOS: TutorialSwipeGestureBlocked)
+      // Show small resistance, then show error hint
+      setUserSwipeOffset(diff * 0.15) // minimal give
+      if (Math.abs(diff) > 30 && !showLeftSwipeError) {
+        setShowLeftSwipeError(true)
+        // Auto-hide error after 2s
+        setTimeout(() => setShowLeftSwipeError(false), 2000)
+      }
     }
   }
 
@@ -602,21 +627,30 @@ function ListView({
     if (swipeTouchStartX.current === null || swipeDismissed) return
     swipeTouchStartX.current = null
 
-    if (userSwipeOffset >= SWIPE_THRESHOLD) {
-      // Swipe succeeded — animate card off screen
+    const threshold = cardWidth * SWIPE_THRESHOLD_RATIO
+
+    if (userSwipeOffset >= threshold) {
+      // iOS: Card snaps back to 0, then fades out (does NOT fly off screen)
       swipeCompleted.current = true
       setSwipeDismissed(true)
-      setUserSwipeOffset(400) // Fly off right
+      setUserSwipeOffset(0) // Snap back to center
 
-      // Show "CLOSED" feedback briefly, then advance
+      // After snap-back animation completes (~300ms), start fade-out
+      setTimeout(() => {
+        setCardFading(true)
+      }, 300)
+
+      // Show "Closed" feedback after fade starts
       setTimeout(() => {
         setShowClosedFeedback(true)
-      }, 200)
+      }, 600)
+
+      // Advance tutorial after all animations
       setTimeout(() => {
         onSwipeComplete?.()
       }, 1200)
     } else {
-      // Snap back
+      // Below threshold: snap back with spring
       setUserSwipeOffset(0)
     }
   }
@@ -671,8 +705,9 @@ function ListView({
   }
 
   const cardOffset = getUserCardOffset()
-  // Swipe progress for visual feedback (0 to 1)
-  const swipeProgress = Math.min(Math.max(cardOffset, 0) / SWIPE_THRESHOLD, 1)
+  // Swipe progress for visual feedback (0 to 1) — reaches 1.0 at 40% card width
+  const swipeThreshold = cardWidth * SWIPE_THRESHOLD_RATIO
+  const swipeProgress = Math.min(Math.max(cardOffset, 0) / swipeThreshold, 1)
 
   return (
     <>
@@ -724,28 +759,53 @@ function ListView({
               }
 
               if (isUserCard && phase === 'projectListSwipe') {
+                // iOS RevealedStatusCard: status color bg at 0.1, 1px status color border, status label
+                const closedColor = '#E9E9E9' // iOS Status.closed.color
                 return (
-                  <div key={project.id} className="relative overflow-hidden" style={{ borderRadius: 5 }}>
-                    {/* Background revealed on swipe — green "CLOSED" indicator */}
+                  <div
+                    key={project.id}
+                    ref={cardContainerRef}
+                    className="relative overflow-hidden"
+                    style={{ borderRadius: 5 }}
+                  >
+                    {/* RevealedStatusCard — appears behind the swiped card (right swipe → label on left) */}
                     <div
                       className="absolute inset-0 flex items-center rounded-[5px]"
                       style={{
-                        background: `rgba(165, 179, 104, ${swipeProgress * 0.3})`,
-                        paddingLeft: 16,
+                        background: `rgba(233, 233, 233, ${swipeProgress * 0.1})`,
+                        border: `1px solid rgba(233, 233, 233, ${swipeProgress})`,
+                        paddingLeft: 20,
+                        opacity: swipeProgress,
+                        transition: swipeDismissed ? 'opacity 0.3s ease-out' : 'none',
                       }}
                     >
-                      <div className="flex items-center gap-2" style={{ opacity: swipeProgress }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                          <path d="M20 6L9 17l-5-5" stroke="#A5B368" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                      <span
+                        className="font-mohave font-medium uppercase"
+                        style={{ fontSize: 16, color: closedColor }}
+                      >
+                        CLOSED
+                      </span>
+                    </div>
+
+                    {/* Left-swipe error hint — red border flash + "SWIPE RIGHT" text */}
+                    {showLeftSwipeError && (
+                      <div
+                        className="absolute inset-0 flex items-center justify-center rounded-[5px]"
+                        style={{
+                          border: '1px solid rgba(255, 77, 77, 0.6)',
+                          background: 'rgba(255, 77, 77, 0.05)',
+                          zIndex: 5,
+                          animation: 'leftSwipeError 0.3s ease-out',
+                        }}
+                      >
                         <span
                           className="font-mohave font-bold uppercase tracking-wider"
-                          style={{ fontSize: 13, color: '#A5B368' }}
+                          style={{ fontSize: 14, color: 'rgba(255, 77, 77, 0.8)' }}
                         >
-                          Close
+                          Swipe Right →
                         </span>
                       </div>
-                    </div>
+                    )}
 
                     {/* Swipeable card */}
                     <div
@@ -754,14 +814,14 @@ function ListView({
                       onTouchEnd={handleCardTouchEnd}
                       style={{
                         transform: `translateX(${cardOffset}px)`,
-                        opacity: swipeDismissed ? Math.max(1 - cardOffset / 300, 0) : 1,
+                        opacity: cardFading ? 0 : 1,
                         transition: swipeTouchStartX.current !== null
                           ? 'none'
-                          : swipeDismissed
-                            ? 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease-out'
+                          : cardFading
+                            ? 'opacity 0.4s ease-out'
                             : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
                         position: 'relative',
-                        zIndex: 1,
+                        zIndex: 2,
                       }}
                     >
                       <MockProjectCard
@@ -778,7 +838,7 @@ function ListView({
 
               return (
                 <div key={project.id} style={{
-                  opacity: phase === 'projectListStatusDemo' ? 0.3 : 1,
+                  opacity: (phase === 'projectListStatusDemo' || phase === 'projectListSwipe') ? 0.3 : 1,
                   transition: 'opacity 0.3s ease',
                 }}>
                   <MockProjectCard
@@ -892,6 +952,11 @@ function ListView({
         @keyframes feedbackFadeIn {
           from { opacity: 0; transform: scale(0.95); }
           to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes leftSwipeError {
+          0% { opacity: 0; transform: scale(0.98); }
+          30% { opacity: 1; transform: scale(1); }
+          100% { opacity: 1; transform: scale(1); }
         }
       `}</style>
     </>
