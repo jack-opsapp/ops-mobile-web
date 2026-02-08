@@ -96,7 +96,7 @@ function DashboardCard({
       className={`overflow-hidden ${className}`}
       style={{
         background: '#000000',
-        borderRadius: 6,
+        borderRadius: 5,
         border: isHighlighted
           ? '2px solid rgba(65, 115, 148, 0.8)'
           : '1px solid rgba(255,255,255,0.08)',

@@ -73,7 +73,7 @@ export function CollapsibleTooltip({ text, description, phase }: CollapsibleTool
     <div
       className="mx-4 mt-4 cursor-pointer select-none transition-all duration-300"
       style={{
-        borderRadius: '12px',
+        borderRadius: '5px',
         background: '#0D0D0D',
         border: '1px solid rgba(65, 115, 148, 0.3)',
         boxShadow: '0 0 20px rgba(0,0,0,0.8), 0 8px 40px rgba(0,0,0,0.6), 0 12px 60px rgba(0,0,0,0.4)',

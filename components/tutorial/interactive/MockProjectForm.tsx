@@ -130,7 +130,7 @@ export function MockProjectForm({
                 background: 'none',
                 cursor: isFieldActive('create') ? 'pointer' : 'default',
                 padding: '4px 8px',
-                borderRadius: 6,
+                borderRadius: 5,
                 border: isFieldActive('create')
                   ? '2px solid #417394'
                   : '2px solid transparent',
@@ -198,7 +198,7 @@ export function MockProjectForm({
             <div
               style={{
                 background: 'rgba(13,13,13,0.8)',
-                borderRadius: 12,
+                borderRadius: 5,
                 border: '1px solid rgba(255,255,255,0.1)',
                 padding: '14px 16px',
               }}
@@ -451,7 +451,7 @@ export function MockProjectForm({
                 <div
                   style={{
                     background: 'rgba(13,13,13,0.8)',
-                    borderRadius: 12,
+                    borderRadius: 5,
                     border: '1px solid rgba(255,255,255,0.1)',
                     padding: '14px 16px',
                   }}
@@ -463,7 +463,7 @@ export function MockProjectForm({
                         className="flex items-center gap-3"
                         style={{
                           padding: '10px 12px',
-                          borderRadius: 8,
+                          borderRadius: 5,
                           border: '1px solid rgba(255,255,255,0.1)',
                           background: 'rgba(255,255,255,0.02)',
                         }}

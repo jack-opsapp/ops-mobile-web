@@ -102,6 +102,28 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
     return { year, month, daysInMonth, startDay }
   }, [today])
 
+  // Build 25 months of data for scrollable month view (iOS shows 25 months)
+  const multiMonthData = useMemo(() => {
+    const months: { year: number; month: number; daysInMonth: number; startDay: number; label: string }[] = []
+    // Start 2 months before current, go 22 months after
+    for (let offset = -2; offset <= 22; offset++) {
+      const d = new Date(today.getFullYear(), today.getMonth() + offset, 1)
+      const yr = d.getFullYear()
+      const mo = d.getMonth()
+      const dim = new Date(yr, mo + 1, 0).getDate()
+      let sd = d.getDay() - 1
+      if (sd < 0) sd = 6
+      months.push({
+        year: yr,
+        month: mo,
+        daysInMonth: dim,
+        startDay: sd,
+        label: `${monthNames[mo]} ${yr}`,
+      })
+    }
+    return months
+  }, [today])
+
   // =========================================================================
   // EVENT DATA (deterministic based on day)
   // =========================================================================
@@ -183,24 +205,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
     return items
   }, [activeDay, today, userProject, getEventsForDay])
 
-  // =========================================================================
-  // MONTH VIEW EXPANSION ANIMATION (simulates iOS pinch-to-expand)
-  // =========================================================================
-
-  const [monthExpanded, setMonthExpanded] = useState(false)
-
-  useEffect(() => {
-    if (phase === 'calendarMonth' && isMonthView) {
-      // Auto-animate expansion after a short delay
-      const timer = setTimeout(() => setMonthExpanded(true), 800)
-      return () => clearTimeout(timer)
-    } else {
-      setMonthExpanded(false)
-    }
-  }, [phase, isMonthView])
-
-  // Cell height: collapsed 80px (iOS min), expanded 180px (iOS Level 2-3 range)
-  const monthCellHeight = monthExpanded ? 180 : 80
+  // Month view no longer needs expansion animation — it's a scrollable multi-month grid
 
   // =========================================================================
   // SWIPE GESTURE for week day row
@@ -379,8 +384,8 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                 {weekRangeLabel}
               </span>
             </div>
-            {/* Black overlay during calendarWeek */}
-            {phase === 'calendarWeek' && (
+            {/* Black overlay during calendarWeek or calendarMonthPrompt */}
+            {(phase === 'calendarWeek' || isMonthPrompt) && (
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
@@ -423,147 +428,137 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
       )}
 
       {isMonthView ? (
-        /* ===== MONTH VIEW ===== */
-        <div className="flex-1 overflow-hidden" style={{ padding: '0 20px' }}>
-          {/* Card container for month grid — matching iOS #0D0D0D card */}
-          <div
-            className="p-3"
-            style={{
-              background: '#0D0D0D',
-              borderRadius: 5,
-              overflowY: monthExpanded ? 'auto' : 'hidden',
-              maxHeight: monthExpanded ? 'calc(100vh - 220px)' : 'none',
-            }}
-          >
-            {/* Day of week headers — "Mo", "Tu", "We" etc (caption font, secondaryText) */}
-            <div className="grid grid-cols-7 mb-1">
-              {dayAbbreviations.map((abbr, i) => (
-                <div key={i} className="text-center font-kosugi text-[14px] text-ops-text-secondary py-1">
-                  {abbr}
+        /* ===== MONTH VIEW — Scrollable multi-month grid ===== */
+        <div className="flex-1 overflow-y-auto" style={{ padding: '0 20px', paddingBottom: 120 }}>
+          {multiMonthData.map((md, mIdx) => {
+            const isCurrent = md.year === today.getFullYear() && md.month === today.getMonth()
+            return (
+              <div key={`${md.year}-${md.month}`} style={{ marginBottom: 24 }}>
+                {/* Month label header */}
+                <div className="flex items-center justify-between" style={{ padding: '8px 4px', marginBottom: 4 }}>
+                  <span className="font-mohave font-bold text-[16px] text-white uppercase tracking-wider">
+                    {md.label}
+                  </span>
+                  {isCurrent && (
+                    <span className="font-kosugi text-[12px] text-ops-text-secondary">Today</span>
+                  )}
                 </div>
-              ))}
-            </div>
 
-            {/* Calendar grid */}
-            <div className="grid grid-cols-7 gap-px">
-              {/* Empty cells for offset */}
-              {Array.from({ length: monthData.startDay }, (_, i) => (
+                {/* Card container for month grid — matching iOS #0D0D0D card */}
                 <div
-                  key={`empty-${i}`}
+                  className="p-3"
                   style={{
-                    height: monthCellHeight,
-                    transition: 'height 0.8s ease-in-out',
+                    background: '#0D0D0D',
+                    borderRadius: 5,
                   }}
-                />
-              ))}
+                >
+                  {/* Day of week headers */}
+                  <div className="grid grid-cols-7 mb-1">
+                    {dayAbbreviations.map((abbr, i) => (
+                      <div key={i} className="text-center font-kosugi text-[12px] text-ops-text-secondary py-1">
+                        {abbr}
+                      </div>
+                    ))}
+                  </div>
 
-              {/* Day cells */}
-              {Array.from({ length: monthData.daysInMonth }, (_, i) => {
-                const dayNum = i + 1
-                const isToday = dayNum === today.getDate()
-                const events = getEventsForDay(dayNum)
-                const allColors = [...events.map(e => e.color)]
+                  {/* Calendar grid */}
+                  <div className="grid grid-cols-7 gap-px">
+                    {/* Empty cells for offset */}
+                    {Array.from({ length: md.startDay }, (_, i) => (
+                      <div key={`empty-${i}`} style={{ height: 80 }} />
+                    ))}
 
-                if (userProject && isToday) {
-                  allColors.unshift(userProject.taskTypeColor)
-                }
-                const displayBars = allColors.slice(0, 3)
-                const extraCount = allColors.length - 3
+                    {/* Day cells */}
+                    {Array.from({ length: md.daysInMonth }, (_, i) => {
+                      const dayNum = i + 1
+                      const isToday = isCurrent && dayNum === today.getDate()
+                      const events = getEventsForDay(dayNum)
+                      const allColors = [...events.map(e => e.color)]
 
-                // Demo event names for expanded view
-                const eventNames = [
-                  'Coating', 'Paving', 'Cleaning', 'Sealing', 'Demolition', 'Installation', 'Diagnostic'
-                ]
+                      if (userProject && isToday) {
+                        allColors.unshift(userProject.taskTypeColor)
+                      }
+                      const displayBars = allColors.slice(0, 3)
+                      const extraCount = allColors.length - 3
 
-                // Determine display level based on cell height
-                // Level 1 (<120pt): 10pt bars, no text
-                // Level 2 (120-180pt): 14pt bars, 0.2 opacity bg, single-line title
-                // Level 3 (≥180pt): 28pt bars, multi-line titles
-                const cellH = monthCellHeight
-                const barHeight = cellH >= 180 ? 28 : cellH >= 120 ? 14 : 10
-                const showBarText = cellH >= 120
+                      const eventNames = [
+                        'Coating', 'Paving', 'Cleaning', 'Sealing', 'Demolition', 'Installation', 'Diagnostic'
+                      ]
 
-                return (
-                  <div
-                    key={dayNum}
-                    className="flex flex-col relative px-0.5 justify-start pt-1"
-                    style={{
-                      height: monthCellHeight,
-                      transition: 'height 0.8s ease-in-out',
-                    }}
-                  >
-                    {/* Today highlight — collapsed: white circle behind number; expanded: accent fill at 50% */}
-                    {isToday && (
-                      <div
-                        className="absolute"
-                        style={{
-                          width: monthExpanded ? '100%' : 24,
-                          height: monthExpanded ? '100%' : 24,
-                          borderRadius: monthExpanded ? 5 : 12,
-                          background: monthExpanded ? 'rgba(65, 115, 148, 0.5)' : 'white',
-                          top: monthExpanded ? 0 : 2,
-                          left: monthExpanded ? 0 : '50%',
-                          transform: monthExpanded ? 'none' : 'translateX(-50%)',
-                          transition: 'all 0.8s ease-in-out',
-                        }}
-                      />
-                    )}
-                    {/* Day number — bodyBold (16pt Mohave Bold) */}
-                    <span
-                      className={`font-mohave font-bold relative z-10 self-center`}
-                      style={{
-                        fontSize: 16,
-                        color: isToday && !monthExpanded ? '#000000' : isToday ? '#FFFFFF' : 'rgba(255,255,255,0.7)',
-                        lineHeight: '24px',
-                      }}
-                    >
-                      {dayNum}
-                    </span>
-                    {/* Event bars — level-based rendering with 0.2 opacity bg, full color text */}
-                    {displayBars.length > 0 && (
-                      <div
-                        className="flex flex-col gap-[2px] mt-[2px] relative z-10 w-full px-[2px]"
-                        style={{ transition: 'all 0.8s ease-in-out' }}
-                      >
-                        {displayBars.map((color, j) => (
-                          <div
-                            key={j}
-                            className="w-full overflow-hidden"
+                      return (
+                        <div
+                          key={dayNum}
+                          className="flex flex-col relative px-0.5 justify-start pt-1"
+                          style={{ height: 80 }}
+                        >
+                          {/* Today highlight — white circle behind number */}
+                          {isToday && (
+                            <div
+                              className="absolute"
+                              style={{
+                                width: 24,
+                                height: 24,
+                                borderRadius: 12,
+                                background: 'white',
+                                top: 2,
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                              }}
+                            />
+                          )}
+                          {/* Day number — bodyBold (16pt Mohave Bold) */}
+                          <span
+                            className="font-mohave font-bold relative z-10 self-center"
                             style={{
-                              backgroundColor: `${color}33`, // 0.2 opacity
-                              height: barHeight,
-                              borderRadius: 3,
-                              transition: 'height 0.8s ease-in-out',
-                              display: 'flex',
-                              alignItems: 'center',
-                              paddingLeft: showBarText ? 3 : 0,
+                              fontSize: 16,
+                              color: isToday ? '#000000' : 'rgba(255,255,255,0.7)',
+                              lineHeight: '24px',
                             }}
                           >
-                            {showBarText && (
-                              <span
-                                className="font-kosugi truncate leading-none"
-                                style={{ fontSize: cellH >= 180 ? 8 : 7, color: color }}
-                              >
-                                {userProject && isToday && j === 0
-                                  ? userProject.name.slice(0, cellH >= 180 ? 12 : 8)
-                                  : eventNames[(dayNum + j) % eventNames.length].slice(0, cellH >= 180 ? 12 : 8)}
-                              </span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {/* +N indicator */}
-                    {extraCount > 0 && (
-                      <span className="font-kosugi text-[7px] text-ops-text-tertiary relative z-10 mt-[1px] self-center">
-                        +{extraCount}
-                      </span>
-                    )}
+                            {dayNum}
+                          </span>
+                          {/* Event bars — 0.2 opacity bg, full color text */}
+                          {displayBars.length > 0 && (
+                            <div className="flex flex-col gap-[2px] mt-[2px] relative z-10 w-full px-[2px]">
+                              {displayBars.map((color, j) => (
+                                <div
+                                  key={j}
+                                  className="w-full overflow-hidden"
+                                  style={{
+                                    backgroundColor: `${color}33`,
+                                    height: 10,
+                                    borderRadius: 3,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    paddingLeft: 2,
+                                  }}
+                                >
+                                  <span
+                                    className="font-kosugi truncate leading-none"
+                                    style={{ fontSize: 7, color: color }}
+                                  >
+                                    {userProject && isToday && j === 0
+                                      ? userProject.name.slice(0, 6)
+                                      : eventNames[(dayNum + j) % eventNames.length].slice(0, 6)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {/* +N indicator */}
+                          {extraCount > 0 && (
+                            <span className="font-kosugi text-[7px] text-ops-text-tertiary relative z-10 mt-[1px] self-center">
+                              +{extraCount}
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
-                )
-              })}
-            </div>
-          </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
       ) : (
         /* ===== WEEK VIEW ===== */

@@ -7,7 +7,7 @@ interface ContinueButtonProps {
 }
 
 export function ContinueButton({ label, onClick }: ContinueButtonProps) {
-  // Full width at bottom, overlapping tab bar
+  // Full width at bottom, overlapping tab bar, OPSStyle cornerRadius (5px)
   return (
     <div className="absolute bottom-0 left-0 right-0 px-5 pb-5" style={{ zIndex: 60 }}>
       <button
@@ -17,6 +17,7 @@ export function ContinueButton({ label, onClick }: ContinueButtonProps) {
         style={{
           paddingTop: '14px',
           paddingBottom: '14px',
+          borderRadius: 5,
           boxShadow: '0 0 20px rgba(0,0,0,0.8), 0 8px 40px rgba(0,0,0,0.6), 0 12px 60px rgba(0,0,0,0.4)',
         }}
       >

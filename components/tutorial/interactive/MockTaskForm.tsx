@@ -112,7 +112,7 @@ export function MockTaskForm({
             }`}
             style={{
               padding: '4px 8px',
-              borderRadius: 6,
+              borderRadius: 5,
               border: isFieldActive('done')
                 ? '2px solid #417394'
                 : '2px solid transparent',
@@ -386,23 +386,16 @@ export function MockTaskForm({
                 >
                   {selectedCrew ? (
                     <div className="flex items-center gap-2">
-                      {/* Avatar circle - stroke only with 2-letter initials */}
+                      {/* Avatar photo */}
                       {(() => {
                         const crewMember = DEMO_CREW.find(c => c.short === selectedCrew)
-                        const initials = crewMember
-                          ? `${crewMember.firstName.charAt(0)}${crewMember.lastName.charAt(0)}`
-                          : selectedCrew.charAt(0)
                         return (
-                          <div
-                            className="w-6 h-6 rounded-full flex items-center justify-center font-mohave font-bold"
-                            style={{
-                              border: '2px solid #417394',
-                              color: '#417394',
-                              fontSize: 24 * 0.4,
-                            }}
-                          >
-                            {initials}
-                          </div>
+                          <img
+                            src={crewMember?.avatar || ''}
+                            alt={selectedCrew}
+                            className="w-7 h-7 rounded-full object-cover"
+                            style={{ border: '2px solid #417394' }}
+                          />
                         )
                       })()}
                       <span className="font-mohave text-[16px] text-white">
@@ -454,19 +447,17 @@ export function MockTaskForm({
                         )}
                       </div>
 
-                      {/* Avatar - stroke circle with 2-letter initials */}
-                      <div
-                        className="rounded-full flex items-center justify-center font-mohave font-bold flex-shrink-0"
+                      {/* Avatar photo */}
+                      <img
+                        src={crew.avatar}
+                        alt={crew.short}
+                        className="rounded-full object-cover flex-shrink-0"
                         style={{
                           width: 40,
                           height: 40,
                           border: '2px solid #417394',
-                          color: '#417394',
-                          fontSize: 40 * 0.4,
                         }}
-                      >
-                        {`${crew.firstName.charAt(0)}${crew.lastName.charAt(0)}`}
-                      </div>
+                      />
 
                       {/* Name */}
                       <div className="flex flex-col gap-1">
@@ -707,7 +698,7 @@ function MockCalendarSchedulerSheet({
           className="flex items-center justify-between px-4 py-3"
           style={{
             background: '#0D0D0D',
-            borderRadius: 8,
+            borderRadius: 5,
             border: hasDates
               ? '1px solid rgba(65,115,148,0.4)'
               : '1px solid rgba(255,255,255,0.1)',
@@ -793,16 +784,16 @@ function MockCalendarSchedulerSheet({
             // Border radius logic for range selection
             let borderStyle: React.CSSProperties = {}
             if (isSelected && !hasRange) {
-              borderStyle = { border: '2px solid white', borderRadius: 8 }
+              borderStyle = { border: '2px solid white', borderRadius: 5 }
             } else if (isStart && hasRange) {
               borderStyle = {
                 borderTop: '2px solid white', borderBottom: '2px solid white', borderLeft: '2px solid white',
-                borderTopLeftRadius: 8, borderBottomLeftRadius: 8,
+                borderTopLeftRadius: 5, borderBottomLeftRadius: 5,
               }
             } else if (isEnd && hasRange) {
               borderStyle = {
                 borderTop: '2px solid white', borderBottom: '2px solid white', borderRight: '2px solid white',
-                borderTopRightRadius: 8, borderBottomRightRadius: 8,
+                borderTopRightRadius: 5, borderBottomRightRadius: 5,
               }
             } else if (isInRange) {
               borderStyle = {
@@ -844,7 +835,7 @@ function MockCalendarSchedulerSheet({
           disabled={!hasDates}
           className="w-full py-3.5 font-kosugi font-normal text-[14px] uppercase tracking-wider transition-all duration-200"
           style={{
-            borderRadius: 8,
+            borderRadius: 5,
             background: hasDates ? '#FFFFFF' : '#0D0D0D',
             color: hasDates ? '#000000' : '#777777',
           }}

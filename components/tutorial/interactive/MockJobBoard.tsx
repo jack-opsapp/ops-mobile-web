@@ -94,7 +94,7 @@ function MockSectionSelector({ selected, animateToProjects }: { selected: Sectio
     <div style={{ padding: '0 20px 8px' }}>
       <div
         className="flex overflow-hidden"
-        style={{ background: '#0D0D0D', padding: 3, borderRadius: 9 }}
+        style={{ background: '#0D0D0D', padding: 3, borderRadius: 5 }}
       >
         {tabs.map(tab => {
           const isActive = activeTab === tab
@@ -104,7 +104,7 @@ function MockSectionSelector({ selected, animateToProjects }: { selected: Sectio
               className="flex-1 flex items-center justify-center transition-all duration-300"
               style={{
                 padding: '7px 0',
-                borderRadius: 9,
+                borderRadius: 5,
                 background: isActive ? '#FFFFFF' : 'transparent',
               }}
             >
@@ -426,7 +426,7 @@ function DashboardView({
                     style={{
                       opacity: arrowLit >= n ? 1 : 0.2,
                       transition: 'opacity 0.3s ease',
-                      color: arrowLit >= n ? '#FF7733' : '#AAAAAA',
+                      color: arrowLit >= n ? '#417394' : '#AAAAAA',
                     }}
                   >
                     <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -435,7 +435,7 @@ function DashboardView({
               </div>
               <span
                 className="font-mohave font-bold text-[14px] uppercase tracking-wider"
-                style={{ color: '#FF7733' }}
+                style={{ color: '#417394' }}
               >
                 Drag to Accepted
               </span>
@@ -490,6 +490,7 @@ function ListView({
   const [userSwipeOffset, setUserSwipeOffset] = useState(0)
   const [swipeDismissed, setSwipeDismissed] = useState(false)
   const [cardFading, setCardFading] = useState(false) // fade-out after snap-back
+  const [isTouching, setIsTouching] = useState(false) // track finger down for transition
   const swipeCompleted = useRef(false)
 
   // Swipe threshold: 40% of card width (iOS: geometry.size.width * 0.4)
@@ -526,7 +527,10 @@ function ListView({
 
     if (userProject) {
       const userP = { ...userProject, status: userStatus as DemoProject['status'] }
-      if (userStatus === 'closed' || userStatus === 'completed') {
+      // During status demo, always keep in active list so card doesn't disappear
+      if (phase === 'projectListStatusDemo') {
+        active.unshift(userP)
+      } else if (userStatus === 'closed' || userStatus === 'completed') {
         closed.unshift(userP)
       } else {
         active.unshift(userP)
@@ -597,11 +601,26 @@ function ListView({
     }
   }, [phase])
 
+  // Haptic feedback helpers (Web Vibration API)
+  const triggerHaptic = useCallback((style: 'light' | 'medium' | 'error') => {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      switch (style) {
+        case 'light': navigator.vibrate(10); break
+        case 'medium': navigator.vibrate(20); break
+        case 'error': navigator.vibrate([15, 50, 15]); break
+      }
+    }
+  }, [])
+
+  const hasTriggeredHaptic = useRef(false)
+
   // --- Touch handlers for the user's swipeable card ---
   // iOS: DragGesture with 20pt minimum, spring(response:0.25, dampingFraction:0.8)
   const handleCardTouchStart = (e: React.TouchEvent) => {
     if (swipeDismissed || swipeCompleted.current) return
     swipeTouchStartX.current = e.touches[0].clientX
+    hasTriggeredHaptic.current = false
+    setIsTouching(true)
   }
 
   const handleCardTouchMove = (e: React.TouchEvent) => {
@@ -612,13 +631,19 @@ function ListView({
       // Right swipe allowed — follow finger directly
       setUserSwipeOffset(diff)
       setShowLeftSwipeError(false)
+
+      // Haptic at 40% threshold (once per swipe)
+      const threshold = cardWidth * SWIPE_THRESHOLD_RATIO
+      if (diff >= threshold && !hasTriggeredHaptic.current) {
+        hasTriggeredHaptic.current = true
+        triggerHaptic('medium')
+      }
     } else {
       // LEFT SWIPE BLOCKED in tutorial (iOS: TutorialSwipeGestureBlocked)
-      // Show small resistance, then show error hint
-      setUserSwipeOffset(diff * 0.15) // minimal give
+      setUserSwipeOffset(diff * 0.15) // minimal resistance
       if (Math.abs(diff) > 30 && !showLeftSwipeError) {
         setShowLeftSwipeError(true)
-        // Auto-hide error after 2s
+        triggerHaptic('error')
         setTimeout(() => setShowLeftSwipeError(false), 2000)
       }
     }
@@ -627,26 +652,27 @@ function ListView({
   const handleCardTouchEnd = () => {
     if (swipeTouchStartX.current === null || swipeDismissed) return
     swipeTouchStartX.current = null
+    setIsTouching(false)
 
     const threshold = cardWidth * SWIPE_THRESHOLD_RATIO
 
     if (userSwipeOffset >= threshold) {
-      // iOS: Card snaps back to 0, then fades out (does NOT fly off screen)
+      // iOS: snap back to center, then show confirmation overlay, then fade
       swipeCompleted.current = true
       setSwipeDismissed(true)
       setUserSwipeOffset(0) // Snap back to center
 
-      // After snap-back animation completes (~300ms), start fade-out
+      // T+250ms: Start card fade-out
       setTimeout(() => {
         setCardFading(true)
-      }, 300)
+      }, 250)
 
-      // Advance tutorial after fade animation
+      // Advance tutorial
       setTimeout(() => {
         onSwipeComplete?.()
-      }, 800)
+      }, 700)
     } else {
-      // Below threshold: snap back with spring
+      // Below threshold: spring snap back
       setUserSwipeOffset(0)
     }
   }
@@ -810,11 +836,11 @@ function ListView({
                       style={{
                         transform: `translateX(${cardOffset}px)`,
                         opacity: cardFading ? 0 : 1,
-                        transition: swipeTouchStartX.current !== null
+                        transition: isTouching
                           ? 'none'
                           : cardFading
                             ? 'opacity 0.4s ease-out'
-                            : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                            : 'transform 0.25s cubic-bezier(0.2, 0.85, 0.2, 1)',
                         position: 'relative',
                         zIndex: 2,
                       }}

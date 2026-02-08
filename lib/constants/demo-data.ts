@@ -11,6 +11,7 @@ export interface DemoCrew {
   short: string
   firstName: string
   lastName: string
+  avatar: string
 }
 
 export interface DemoTaskType {
@@ -38,11 +39,11 @@ export const DEMO_CLIENTS: DemoClient[] = [
 ]
 
 export const DEMO_CREW: DemoCrew[] = [
-  { id: 'crew-1', name: 'Pete "Maverick" Mitchell', short: 'Maverick', firstName: 'Pete', lastName: 'Mitchell' },
-  { id: 'crew-2', name: 'Nick "Goose" Bradshaw', short: 'Goose', firstName: 'Nick', lastName: 'Bradshaw' },
-  { id: 'crew-3', name: 'Tom "Iceman" Kazansky', short: 'Iceman', firstName: 'Tom', lastName: 'Kazansky' },
-  { id: 'crew-4', name: 'Mike "Viper" Metcalf', short: 'Viper', firstName: 'Mike', lastName: 'Metcalf' },
-  { id: 'crew-5', name: 'Rick "Jester" Heatherly', short: 'Jester', firstName: 'Rick', lastName: 'Heatherly' },
+  { id: 'crew-1', name: 'Pete "Maverick" Mitchell', short: 'Maverick', firstName: 'Pete', lastName: 'Mitchell', avatar: '/avatars/pete.png' },
+  { id: 'crew-2', name: 'Nick "Goose" Bradshaw', short: 'Goose', firstName: 'Nick', lastName: 'Bradshaw', avatar: '/avatars/nick.png' },
+  { id: 'crew-3', name: 'Tom "Iceman" Kazansky', short: 'Iceman', firstName: 'Tom', lastName: 'Kazansky', avatar: '/avatars/tom.png' },
+  { id: 'crew-4', name: 'Mike "Viper" Metcalf', short: 'Viper', firstName: 'Mike', lastName: 'Metcalf', avatar: '/avatars/mike.png' },
+  { id: 'crew-5', name: 'Rick "Jester" Heatherly', short: 'Jester', firstName: 'Rick', lastName: 'Heatherly', avatar: '/avatars/rick.png' },
 ]
 
 export const DEMO_TASK_TYPES: DemoTaskType[] = [

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useTutorial } from '@/lib/tutorial/TutorialContext'
 import {
   isProjectFormPhase,
@@ -44,6 +44,20 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
     setSelectedDate,
     elapsedSeconds,
   } = tutorial
+
+  // Task form close animation state
+  const [taskFormClosing, setTaskFormClosing] = useState(false)
+  const prevPhaseRef = useRef(phase)
+
+  useEffect(() => {
+    // When transitioning from taskFormDone to projectFormComplete, trigger close animation
+    if (prevPhaseRef.current === 'taskFormDone' && phase === 'projectFormComplete') {
+      setTaskFormClosing(true)
+      const timer = setTimeout(() => setTaskFormClosing(false), 400) // match animation duration
+      return () => clearTimeout(timer)
+    }
+    prevPhaseRef.current = phase
+  }, [phase])
 
   // Build the user's project from selections
   const userProject: DemoProject | null = useMemo(() => {
@@ -258,13 +272,18 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
         </div>
       )}
 
-      {showTaskForm && (
+      {(showTaskForm || taskFormClosing) && (
         <div
           className="absolute inset-0"
-          style={{ zIndex: 45 }}
+          style={{
+            zIndex: 45,
+            opacity: taskFormClosing ? 0 : 1,
+            transform: taskFormClosing ? 'translateY(100%)' : 'translateY(0)',
+            transition: taskFormClosing ? 'opacity 0.35s ease-in, transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)' : 'none',
+          }}
         >
           <MockTaskForm
-            phase={phase}
+            phase={taskFormClosing ? 'taskFormDone' : phase}
             visible
             selectedType={selectedTaskType}
             selectedCrew={selectedCrew}
