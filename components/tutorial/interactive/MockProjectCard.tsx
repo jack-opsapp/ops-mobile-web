@@ -292,11 +292,11 @@ function ListCard({
              .frame(maxHeight: .infinity, alignment: .bottom) .padding(14) */}
         <div className="flex-1 flex flex-col justify-end min-w-0" style={{ padding: 14 }}>
           {/* iOS: VStack(alignment: .leading, spacing: 4) { titleText, subtitleText } */}
-          <div className="flex flex-col" style={{ gap: 4 }}>
+          <div className="flex flex-col" style={{ gap: 2 }}>
             {/* iOS: titleText — bodyBold = Mohave-Medium 16pt, primaryText (white), lineLimit 1 */}
             <p
               className="font-mohave font-medium text-white truncate"
-              style={{ fontSize: 16, lineHeight: 1.2 }}
+              style={{ fontSize: 16, lineHeight: 1 }}
             >
               {project.name}
             </p>
@@ -304,14 +304,14 @@ function ListCard({
             {/* iOS: subtitleText — caption = Kosugi-Regular 14pt, secondaryText (#AAAAAA), lineLimit 1 */}
             <p
               className="font-kosugi truncate"
-              style={{ fontSize: 14, lineHeight: 1.3, color: '#AAAAAA' }}
+              style={{ fontSize: 14, lineHeight: 1.1, color: '#AAAAAA' }}
             >
               {project.clientName}
             </p>
           </div>
 
           {/* iOS: metadataRow — HStack(spacing: 12), icons .system(size: 11), text smallCaption = Kosugi 12pt, tertiaryText (#777777) */}
-          <div className="flex items-center" style={{ gap: 12, marginTop: 8, height: 16 }}>
+          <div className="flex items-center" style={{ gap: 12, marginTop: 4, height: 14 }}>
             {/* Location */}
             <div className="flex items-center min-w-0" style={{ gap: 4, maxWidth: '35%' }}>
               <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ color: '#777777', flexShrink: 0 }}>
