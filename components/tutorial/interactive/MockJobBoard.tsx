@@ -736,24 +736,30 @@ function ListView({
 
   return (
     <>
-      {/* App Header */}
-      <MockAppHeader />
-      {/* Section selector: starts on DASHBOARD, animates to PROJECTS per iOS */}
-      <MockSectionSelector
-        selected="DASHBOARD"
-        animateToProjects={true}
-      />
+      {/* App Header — solid bg + z-index so cards scroll behind it */}
+      <div className="relative" style={{ zIndex: 2, background: '#000000' }}>
+        <MockAppHeader />
+        {/* Section selector: starts on DASHBOARD, animates to PROJECTS per iOS */}
+        <MockSectionSelector
+          selected="DASHBOARD"
+          animateToProjects={true}
+        />
+      </div>
 
       {/* Scrollable project list — LazyVStack with 12pt spacing, matching iOS */}
       <div
-        className="flex-1 overflow-y-auto"
-        style={{
-          transform: `translateY(-${scrollOffset}px)`,
-          transition: scrollActive ? 'transform 0.8s cubic-bezier(0.42, 0, 0.58, 1)' : 'none',
-          paddingTop: 12,
-          paddingBottom: 120,
-        }}
+        className="flex-1 overflow-hidden"
+        style={{ position: 'relative', zIndex: 1 }}
       >
+        <div
+          className="absolute inset-0"
+          style={{
+            transform: `translateY(-${scrollOffset}px)`,
+            transition: scrollActive ? 'transform 0.8s cubic-bezier(0.42, 0, 0.58, 1)' : 'none',
+            paddingTop: 12,
+            paddingBottom: 120,
+          }}
+        >
         {/* Active projects — no section header, just cards with 12pt spacing */}
         <div ref={activeSectionRef} style={{
           opacity: showActiveOverlay ? 0.3 : 1,
@@ -917,6 +923,7 @@ function ListView({
             </div>
           )}
         </div>
+      </div>
       </div>
 
       {/* Touch cursor for scroll animation hint */}
