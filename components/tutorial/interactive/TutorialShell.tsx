@@ -11,9 +11,9 @@ import {
   isJobBoardAnimationPhase,
 } from '@/lib/tutorial/TutorialPhase'
 import type { DemoProject } from '@/lib/constants/demo-data'
-import { DEMO_TASK_TYPES } from '@/lib/constants/demo-data'
+import { DEMO_TASK_TYPES, DEMO_PROJECTS } from '@/lib/constants/demo-data'
 
-import { MockJobBoard } from './MockJobBoard'
+import { MockJobBoard, ClosedProjectsSheet } from './MockJobBoard'
 import { MockCalendar } from './MockCalendar'
 import { MockFAB } from './MockFAB'
 import { MockProjectForm } from './MockProjectForm'
@@ -53,7 +53,9 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
   const [dragAnimStarted, setDragAnimStarted] = useState(false)
   const [dragAnimLanded, setDragAnimLanded] = useState(false) // animation finished, waiting for user tap
 
-  // (Step 14 now uses autoAdvanceMs in TutorialPhase config — no manual state needed)
+  // Step 14: closed projects sheet is open and ready — show continue button
+  const [closedSheetOpen, setClosedSheetOpen] = useState(false)
+  const [closedSheetReady, setClosedSheetReady] = useState(false)
 
   useEffect(() => {
     // When transitioning from taskFormDone to projectFormComplete, trigger close animation
@@ -64,6 +66,10 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
     }
     // Reset transient states on phase change
     if (phase !== 'dragToAccepted') setDragAnimLanded(false)
+    if (phase !== 'closedProjectsScroll') {
+      setClosedSheetOpen(false)
+      setClosedSheetReady(false)
+    }
     prevPhaseRef.current = phase
   }, [phase])
 
@@ -97,6 +103,22 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
     crew: selectedCrew!,
     date: selectedDate!,
   } : null
+
+  // Build closed projects list for sheet (user's project + any demo closed/completed projects)
+  const closedProjects = useMemo(() => {
+    const projects: DemoProject[] = []
+    // Add user's project as closed
+    if (userProject) {
+      projects.push({ ...userProject, status: 'closed' as const })
+    }
+    // Add demo projects that are completed/closed
+    DEMO_PROJECTS.forEach(p => {
+      if (p.status === 'completed' || p.status === 'closed') {
+        projects.push(p)
+      }
+    })
+    return projects
+  }, [userProject])
 
   const showCompleted = phase === 'completed'
 
@@ -230,6 +252,11 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
                   : null
               }
               onSwipeComplete={handleSwipeComplete}
+              onClosedSheetReady={() => {
+                setClosedSheetOpen(true)
+                // Delay showing continue button until sheet animation completes
+                setTimeout(() => setClosedSheetReady(true), 500)
+              }}
               startDragAnimation={dragAnimStarted}
               onDragAnimationDone={handleDragAnimationDone}
             />
@@ -325,6 +352,16 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
         </div>
       )}
 
+      {/* Layer 5b: Closed Projects Sheet (z-40) - slides up during closedProjectsScroll */}
+      {closedSheetOpen && (
+        <div className="absolute inset-0" style={{ zIndex: 40 }}>
+          <ClosedProjectsSheet
+            projects={closedProjects}
+            userProjectId={userProject?.id}
+          />
+        </div>
+      )}
+
       {/* Layer 6: Tooltip (z-50, always on top of content) */}
       <div className="absolute top-0 left-0 right-0" style={{ zIndex: 50 }}>
         <CollapsibleTooltip
@@ -337,7 +374,8 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
       {/* Layer 7: Continue/Done button (z-60) — hide during drag animation */}
       {(
         (phaseConfig.showContinueButton && !dragAnimStarted) ||
-        dragAnimLanded
+        dragAnimLanded ||
+        closedSheetReady
       ) && (
         <ContinueButton
           label={dragAnimLanded ? 'CONTINUE' : phaseConfig.continueLabel || 'CONTINUE'}
