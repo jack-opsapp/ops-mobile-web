@@ -216,6 +216,7 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
                   : null
               }
               onSwipeComplete={handleSwipeComplete}
+              onContinue={handleContinue}
               startDragAnimation={dragAnimStarted}
               onDragAnimationDone={handleDragAnimationDone}
             />

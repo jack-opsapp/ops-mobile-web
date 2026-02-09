@@ -29,6 +29,7 @@ interface MockProjectCardProps {
   variant: 'dashboard' | 'list'
   isHighlighted?: boolean
   showShimmer?: boolean
+  showStatusGlow?: boolean
   statusOverride?: string
   className?: string
   style?: React.CSSProperties
@@ -39,6 +40,7 @@ export function MockProjectCard({
   variant,
   isHighlighted = false,
   showShimmer = false,
+  showStatusGlow = false,
   statusOverride,
   className = '',
   style,
@@ -51,7 +53,9 @@ export function MockProjectCard({
       <DashboardCard
         project={project}
         statusColor={statusColor}
+        effectiveStatus={effectiveStatus}
         isHighlighted={isHighlighted}
+        showStatusGlow={showStatusGlow}
         className={className}
         style={style}
       />
@@ -76,13 +80,17 @@ export function MockProjectCard({
 function DashboardCard({
   project,
   statusColor,
+  effectiveStatus,
   isHighlighted,
+  showStatusGlow,
   className,
   style,
 }: {
   project: DemoProject
   statusColor: string
+  effectiveStatus: string
   isHighlighted: boolean
+  showStatusGlow: boolean
   className: string
   style?: React.CSSProperties
 }) {
@@ -90,6 +98,7 @@ function DashboardCard({
   const teamCount = project.crew ? 1 : 0
   const taskCount = 1
   const mockDate = 'Feb 12'
+  const statusLabel = STATUS_LABELS[effectiveStatus] || effectiveStatus.toUpperCase()
 
   return (
     <div
@@ -161,20 +170,26 @@ function DashboardCard({
 
           {/* Right metadata column */}
           <div className="flex flex-col items-end justify-between ml-2 flex-shrink-0" style={{ gap: 2 }}>
-            {/* Team member count */}
-            {teamCount > 0 && (
-              <div className="flex items-center gap-1">
-                <svg width="10" height="10" viewBox="0 0 16 16" fill="none" className="text-ops-text-tertiary">
-                  <circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.3" />
-                  <path d="M1.5 13.5c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                  <circle cx="11" cy="5.5" r="2" stroke="currentColor" strokeWidth="1.3" />
-                  <path d="M11 9.5c2 0 3.5 1.2 3.5 3.2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                </svg>
-                <span className="font-kosugi text-ops-text-tertiary" style={{ fontSize: 10 }}>
-                  {teamCount}
-                </span>
-              </div>
-            )}
+            {/* Status badge — with optional pulsing glow */}
+            <span
+              className="font-kosugi uppercase whitespace-nowrap"
+              style={{
+                fontSize: 10,
+                lineHeight: 1,
+                color: statusColor,
+                padding: '3px 6px',
+                borderRadius: 4,
+                background: `${statusColor}1A`,
+                border: `1px solid ${statusColor}`,
+                boxShadow: showStatusGlow
+                  ? `0 0 8px ${statusColor}, 0 0 16px ${statusColor}80, 0 0 24px ${statusColor}40`
+                  : 'none',
+                animation: showStatusGlow ? 'statusBadgeGlow 1.5s ease-in-out infinite' : 'none',
+                transition: 'box-shadow 0.3s ease',
+              }}
+            >
+              {statusLabel}
+            </span>
 
             {/* Task count */}
             <div className="flex items-center gap-1">

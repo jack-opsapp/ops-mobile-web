@@ -421,6 +421,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
   // =========================================================================
 
   const monthScrollRef = useRef<HTMLDivElement>(null)
+  const monthContentRef = useRef<HTMLDivElement>(null) // inner content for height measurement
   const monthTouchStartY = useRef<number | null>(null)
   const monthScrollStartTop = useRef<number>(0)
   const [monthScrollTop, setMonthScrollTop] = useState(0)
@@ -429,9 +430,12 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
   const handleMonthTouchStart = useCallback((e: React.TouchEvent) => {
     monthTouchStartY.current = e.touches[0].clientY
     monthScrollStartTop.current = monthScrollTop
-    // Calculate max scroll from content height - container height
-    if (monthScrollRef.current) {
-      monthMaxScroll.current = Math.max(0, monthScrollRef.current.scrollHeight - monthScrollRef.current.clientHeight)
+    // Calculate max scroll from INNER CONTENT height minus container height
+    // (scrollHeight on overflow:hidden container equals clientHeight, so we must measure inner div)
+    if (monthScrollRef.current && monthContentRef.current) {
+      const containerH = monthScrollRef.current.clientHeight
+      const contentH = monthContentRef.current.offsetHeight
+      monthMaxScroll.current = Math.max(0, contentH - containerH)
     }
   }, [monthScrollTop])
 
@@ -700,7 +704,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
             onTouchMove={handleMonthTouchMove}
             onTouchEnd={handleMonthTouchEnd}
           >
-            <div style={{ transform: `translateY(-${monthScrollTop}px)` }}>
+            <div ref={monthContentRef} style={{ transform: `translateY(-${monthScrollTop}px)` }}>
             {/* Week rows */}
             {monthWeeks.map((week, weekIndex) => {
               const { spans, moreIndicators } = weekLayouts[weekIndex]

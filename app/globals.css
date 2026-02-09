@@ -88,3 +88,9 @@ input:-webkit-autofill:focus {
   0% { transform: translateX(-100px); }
   100% { transform: translateX(calc(100vw + 100px)); }
 }
+
+/* Tutorial status badge glow animation */
+@keyframes statusBadgeGlow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
