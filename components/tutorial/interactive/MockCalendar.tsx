@@ -664,7 +664,8 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
           {/* Scrollable month grid — matching iOS ScrollView */}
           <div
             className="flex-1 overflow-y-auto"
-            style={{ touchAction: 'pan-y', padding: '0 20px' }}
+            style={{ touchAction: 'pan-y', padding: '0 20px', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+            onTouchMove={(e) => e.stopPropagation()}
           >
             {/* Week rows */}
             {monthWeeks.map((week, weekIndex) => {

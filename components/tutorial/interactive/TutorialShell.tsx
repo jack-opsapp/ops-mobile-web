@@ -195,7 +195,7 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
   return (
     <div
       className="relative w-full h-full overflow-hidden bg-ops-background"
-      style={{ touchAction: phase === 'calendarMonth' ? 'pan-y' : 'none' }}
+      style={{ touchAction: phase === 'calendarMonth' ? 'manipulation' : 'none', overscrollBehavior: 'none' } as React.CSSProperties}
     >
       {/* Layer 1: Mock app content (z-0) */}
       <div

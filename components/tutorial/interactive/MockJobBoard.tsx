@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { DEMO_PROJECTS, type DemoProject } from '@/lib/constants/demo-data'
 import { MockProjectCard } from './MockProjectCard'
-import { TouchCursorAnimation } from './TouchCursorAnimation'
 import type { TutorialPhase } from '@/lib/tutorial/TutorialPhase'
 
 interface MockJobBoardProps {
@@ -419,24 +418,62 @@ function DashboardView({
           })}
         </div>
 
-        {/* Chevron arrows overlay — visible during arrows and sliding phases */}
+        {/* Right edge "ACCEPTED" bar — visible during arrows and sliding phases */}
         {phase === 'dragToAccepted' && (dragAnimPhase === 'arrows' || dragAnimPhase === 'sliding') && (
           <div
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
-            style={{ zIndex: 10 }}
+            className="absolute top-0 bottom-0 right-0 flex items-center justify-center pointer-events-none"
+            style={{
+              width: 48,
+              zIndex: 10,
+              background: `${STATUS_COLORS.accepted}${arrowLit >= 3 ? '40' : '20'}`,
+              borderLeft: `2px solid ${STATUS_COLORS.accepted}`,
+              transition: 'background 0.3s ease',
+            }}
           >
-            <div className="flex flex-col items-center" style={{ gap: 8 }}>
+            <span
+              className="font-kosugi font-bold uppercase"
+              style={{
+                fontSize: 11,
+                color: STATUS_COLORS.accepted,
+                writingMode: 'vertical-rl',
+                textOrientation: 'mixed',
+                transform: 'rotate(180deg)',
+                letterSpacing: 2,
+              }}
+            >
+              Accepted
+            </span>
+          </div>
+        )}
+
+        {/* Chevron arrows + label overlay — positioned in lower-center with black glow */}
+        {phase === 'dragToAccepted' && (dragAnimPhase === 'arrows' || dragAnimPhase === 'sliding') && (
+          <div
+            className="absolute left-0 right-0 flex justify-center pointer-events-none"
+            style={{ bottom: 60, zIndex: 10 }}
+          >
+            <div
+              className="flex flex-col items-center"
+              style={{
+                gap: 8,
+                padding: '12px 20px',
+                borderRadius: 12,
+                background: 'rgba(0, 0, 0, 0.85)',
+                boxShadow: '0 0 24px rgba(0, 0, 0, 0.9), 0 0 60px rgba(0, 0, 0, 0.6)',
+              }}
+            >
               <div className="flex items-center" style={{ gap: 6 }}>
                 {[1, 2, 3].map(n => (
                   <svg
                     key={n}
-                    width="20"
-                    height="20"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
                     fill="none"
                     style={{
                       opacity: arrowLit >= n ? 1 : 0.2,
-                      transition: 'opacity 0.3s ease',
+                      transform: arrowLit >= n ? 'scale(1.2)' : 'scale(1)',
+                      transition: 'opacity 0.15s ease-out, transform 0.15s ease-out',
                       color: arrowLit >= n ? '#417394' : '#AAAAAA',
                     }}
                   >
@@ -502,6 +539,7 @@ function ListView({
   const [userSwipeOffset, setUserSwipeOffset] = useState(0)
   const [swipeDismissed, setSwipeDismissed] = useState(false)
   const [cardFading, setCardFading] = useState(false) // fade-out after snap-back
+  const [showConfirmFlash, setShowConfirmFlash] = useState(false) // "CLOSED" confirmation overlay
   const [isTouching, setIsTouching] = useState(false) // track finger down for transition
   const swipeCompleted = useRef(false)
 
@@ -596,11 +634,16 @@ function ListView({
     return () => timers.forEach(t => clearTimeout(t))
   }, [phase, userProject])
 
-  // Measure active section height for scroll target
+  // Measure scroll target: position CLOSED button ~1/3 from bottom of visible area
+  // Show some project cards above the button, with button in lower portion of view
   useEffect(() => {
     if (phase === 'closedProjectsScroll' && activeSectionRef.current) {
-      const height = activeSectionRef.current.getBoundingClientRect().height
-      setMeasuredScrollTarget(height + 20)
+      const activeHeight = activeSectionRef.current.getBoundingClientRect().height
+      // Scroll less than the full active section height so cards remain visible above
+      // The CLOSED button sits below the active section, so we want it roughly
+      // 1/3 from the bottom of the viewport. Subtract ~200px to keep cards visible.
+      const target = Math.max(0, activeHeight - 160)
+      setMeasuredScrollTarget(target)
     }
   }, [phase])
 
@@ -678,20 +721,22 @@ function ListView({
     const threshold = cardWidth * SWIPE_THRESHOLD_RATIO
 
     if (userSwipeOffset >= threshold) {
-      // iOS: snap back to center, then show confirmation overlay, then fade
+      // iOS: snap back to center, show CLOSED confirmation flash, then fade
       swipeCompleted.current = true
       setSwipeDismissed(true)
       setUserSwipeOffset(0) // Snap back to center
+      setShowConfirmFlash(true) // Show "CLOSED" confirmation overlay
 
-      // T+250ms: Start card fade-out
+      // T+400ms: Hide flash, start card fade-out
       setTimeout(() => {
+        setShowConfirmFlash(false)
         setCardFading(true)
-      }, 250)
+      }, 400)
 
       // Advance tutorial
       setTimeout(() => {
         onSwipeComplete?.()
-      }, 700)
+      }, 800)
     } else {
       // Below threshold: spring snap back
       setUserSwipeOffset(0)
@@ -854,13 +899,33 @@ function ListView({
                         zIndex: 2,
                       }}
                     >
-                      <MockProjectCard
-                        project={project}
-                        variant="list"
-                        isHighlighted={!swipeDismissed}
-                        showShimmer={!swipeDismissed}
-                        statusOverride={userStatus}
-                      />
+                      {/* iOS RevealedStatusCard confirmation flash — shows "CLOSED" briefly after swipe completes */}
+                      {showConfirmFlash && (
+                        <div
+                          className="absolute inset-0 flex items-center justify-center rounded-[5px]"
+                          style={{
+                            background: 'rgba(233, 233, 233, 0.1)',
+                            border: '1px solid #E9E9E9',
+                            zIndex: 5,
+                          }}
+                        >
+                          <span
+                            className="font-mohave font-bold uppercase tracking-wider"
+                            style={{ fontSize: 18, color: '#E9E9E9' }}
+                          >
+                            CLOSED
+                          </span>
+                        </div>
+                      )}
+                      <div style={{ opacity: showConfirmFlash ? 0 : 1, transition: 'opacity 0.15s ease' }}>
+                        <MockProjectCard
+                          project={project}
+                          variant="list"
+                          isHighlighted={!swipeDismissed}
+                          showShimmer={!swipeDismissed}
+                          statusOverride={userStatus}
+                        />
+                      </div>
                     </div>
                   </div>
                 )
@@ -925,15 +990,7 @@ function ListView({
       </div>
       </div>
 
-      {/* Touch cursor for scroll animation hint */}
-      {phase === 'closedProjectsScroll' && (
-        <TouchCursorAnimation
-          type="scroll-down"
-          startX={180}
-          startY={120}
-          visible
-        />
-      )}
+      {/* Touch cursor removed per user request — scroll animation is sufficient */}
 
       {/* Animation keyframes */}
       <style jsx>{`
