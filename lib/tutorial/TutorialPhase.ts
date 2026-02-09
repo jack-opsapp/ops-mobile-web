@@ -120,8 +120,8 @@ export const PHASE_CONFIGS: Record<TutorialPhase, PhaseConfig> = {
   closedProjectsScroll: {
     tooltipText: 'COMPLETE. SCROLL DOWN TO FIND IT.',
     tooltipDescription: 'Finished jobs move to the bottom so active work stays on top.',
-    showContinueButton: false,
-    autoAdvanceMs: 3000,
+    showContinueButton: true,
+    continueLabel: 'CONTINUE',
   },
   calendarWeek: {
     tooltipText: 'THIS IS YOUR WEEK VIEW',

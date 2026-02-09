@@ -102,27 +102,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
     return { year, month, daysInMonth, startDay }
   }, [today])
 
-  // Build 25 months of data for scrollable month view (iOS shows 25 months)
-  const multiMonthData = useMemo(() => {
-    const months: { year: number; month: number; daysInMonth: number; startDay: number; label: string }[] = []
-    // Start 2 months before current, go 22 months after
-    for (let offset = -2; offset <= 22; offset++) {
-      const d = new Date(today.getFullYear(), today.getMonth() + offset, 1)
-      const yr = d.getFullYear()
-      const mo = d.getMonth()
-      const dim = new Date(yr, mo + 1, 0).getDate()
-      let sd = d.getDay() - 1
-      if (sd < 0) sd = 6
-      months.push({
-        year: yr,
-        month: mo,
-        daysInMonth: dim,
-        startDay: sd,
-        label: `${monthNames[mo]} ${yr}`,
-      })
-    }
-    return months
-  }, [today])
+  // (multiMonthData removed — single month view now used)
 
   // =========================================================================
   // EVENT DATA (deterministic based on day)
@@ -205,8 +185,236 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
     return items
   }, [activeDay, today, userProject, getEventsForDay])
 
-  // Month grid expansion level: 0=compact, 1=medium, 2=expanded
-  const [expansionLevel, setExpansionLevel] = useState(0)
+  // Month grid expansion: maps to iOS cellHeight levels
+  // Level 0 = 80px (iOS <120 = Level 1: compact bars, 0.5 opacity, no text)
+  // Level 1 = 120px (iOS 120-180 = Level 2: bars with title, 0.2 opacity)
+  // Level 2 = 180px (iOS >=180 = Level 3: tall single-day, multi-day bars with title)
+  const [expansionLevel, setExpansionLevel] = useState(1) // start at Level 2 like iOS default (cellHeight=120)
+
+  // =========================================================================
+  // MONTH EVENT DATA — week-span based layout matching iOS MonthGridView
+  // =========================================================================
+
+  interface MonthEvent {
+    id: string
+    title: string
+    color: string
+    startDay: number // 1-indexed day of month
+    endDay: number   // 1-indexed day of month (same for single-day)
+    taskType?: string
+  }
+
+  // Generate deterministic events for the current month using demo data
+  const monthEvents = useMemo((): MonthEvent[] => {
+    const events: MonthEvent[] = []
+    const daysInMonth = monthData.daysInMonth
+    const todayDay = today.getDate()
+
+    // Multi-day events (spanning across days)
+    events.push(
+      { id: 'me-1', title: 'Flight Deck Coating', color: '#5A7BD4', startDay: Math.max(1, todayDay - 2), endDay: Math.min(daysInMonth, todayDay + 1), taskType: 'Coating' },
+      { id: 'me-2', title: "O'Club Patio Resurface", color: '#B088D4', startDay: Math.max(1, todayDay - 1), endDay: Math.min(daysInMonth, todayDay + 3), taskType: 'Paving' },
+      { id: 'me-3', title: 'Hangar Siding Repair', color: '#D47B9F', startDay: Math.min(daysInMonth - 4, 8), endDay: Math.min(daysInMonth - 1, 11), taskType: 'Installation' },
+      { id: 'me-4', title: 'Runway Crack Repair', color: '#5AC8D4', startDay: Math.min(daysInMonth - 2, 15), endDay: Math.min(daysInMonth, 18), taskType: 'Diagnostic' },
+      { id: 'me-5', title: "Charlie's Driveway", color: '#8EC8E8', startDay: Math.min(daysInMonth - 1, 22), endDay: Math.min(daysInMonth, 24), taskType: 'Sealing' },
+    )
+
+    // Single-day events scattered throughout the month
+    events.push(
+      { id: 'se-1', title: 'MIG Detailing', color: '#A5D4A0', startDay: 3, endDay: 3, taskType: 'Cleaning' },
+      { id: 'se-2', title: 'Locker Room Reno', color: '#E8945A', startDay: 7, endDay: 7, taskType: 'Demolition' },
+      { id: 'se-3', title: 'Pressure Wash Bay', color: '#D4C95A', startDay: 12, endDay: 12, taskType: 'Pressure Wash' },
+      { id: 'se-4', title: 'Briefing Room Install', color: '#D47B9F', startDay: 14, endDay: 14, taskType: 'Installation' },
+      { id: 'se-5', title: 'Equipment Diagnostic', color: '#5AC8D4', startDay: 19, endDay: 19, taskType: 'Diagnostic' },
+      { id: 'se-6', title: 'Fence Removal', color: '#E8B45A', startDay: 21, endDay: 21, taskType: 'Removal' },
+      { id: 'se-7', title: 'Garden Planting', color: '#8ED4A0', startDay: 26, endDay: 26, taskType: 'Planting' },
+      { id: 'se-8', title: 'Exterior Coating', color: '#5A7BD4', startDay: 28, endDay: 28, taskType: 'Coating' },
+    )
+
+    // Add user project event on today
+    if (userProject) {
+      events.push({
+        id: 'user-event',
+        title: userProject.name,
+        color: userProject.taskTypeColor,
+        startDay: todayDay,
+        endDay: todayDay,
+        taskType: userProject.taskType,
+      })
+    }
+
+    // Clamp all events to valid days
+    return events.map(e => ({
+      ...e,
+      startDay: Math.max(1, Math.min(daysInMonth, e.startDay)),
+      endDay: Math.max(1, Math.min(daysInMonth, e.endDay)),
+    }))
+  }, [monthData.daysInMonth, today, userProject])
+
+  // Build week-based slot layout matching iOS weekSpansForWeek algorithm
+  interface WeekEventSpan {
+    eventId: string
+    title: string
+    color: string
+    startCol: number  // 0-6 column within the week
+    endCol: number    // 0-6 column within the week
+    row: number       // slot row
+    isFirstSegment: boolean
+    isLastSegment: boolean
+    isSingleDay: boolean
+    taskType?: string
+  }
+
+  interface MoreIndicator {
+    col: number
+    count: number
+    row: number
+  }
+
+  const computeWeekLayout = useCallback((weekDates: (number | null)[]): { spans: WeekEventSpan[]; moreIndicators: MoreIndicator[] } => {
+    const cellH = expansionLevel === 0 ? 80 : expansionLevel === 1 ? 120 : 180
+    const isLevel3 = cellH >= 180
+    const baseSlotH = cellH < 120 ? 10 : 14
+    const rowSpacing = 2
+    const availableH = cellH - 26 // 26px for day number area
+    const maxSlots = Math.max(4, Math.floor(availableH / (baseSlotH + rowSpacing / 2)))
+
+    const spans: WeekEventSpan[] = []
+    const moreIndicators: MoreIndicator[] = []
+    const occupied: boolean[][] = Array.from({ length: 7 }, () => Array(maxSlots).fill(false))
+    const processedEvents = new Set<string>()
+
+    // Collect events per day column
+    const eventsByCol: MonthEvent[][] = Array.from({ length: 7 }, () => [])
+    for (let col = 0; col < 7; col++) {
+      const dayNum = weekDates[col]
+      if (dayNum === null) continue
+      for (const ev of monthEvents) {
+        if (dayNum >= ev.startDay && dayNum <= ev.endDay) {
+          eventsByCol[col].push(ev)
+        }
+      }
+      // Sort: multi-day first, then by start
+      eventsByCol[col].sort((a, b) => {
+        const aMulti = a.startDay !== a.endDay
+        const bMulti = b.startDay !== b.endDay
+        if (aMulti !== bMulti) return aMulti ? -1 : 1
+        return a.startDay - b.startDay
+      })
+    }
+
+    // Assign slots, processing each day left to right
+    for (let col = 0; col < 7; col++) {
+      for (const ev of eventsByCol[col]) {
+        if (processedEvents.has(ev.id)) continue
+
+        // Find this event's column span in this week
+        let startCol = -1
+        let endCol = -1
+        for (let c = 0; c < 7; c++) {
+          const d = weekDates[c]
+          if (d !== null && d >= ev.startDay && d <= ev.endDay) {
+            if (startCol === -1) startCol = c
+            endCol = c
+          }
+        }
+        if (startCol < 0) continue
+
+        const isSingleDay = ev.startDay === ev.endDay
+        const slotsNeeded = (isLevel3 && isSingleDay) ? 3 : 1
+
+        // Find available slot (reserve last for "+N more")
+        let assignedSlot = -1
+        for (let s = 0; s < maxSlots - 1; s++) {
+          if (s + slotsNeeded > maxSlots - 1) break
+          let available = true
+          for (let so = 0; so < slotsNeeded; so++) {
+            for (let c = startCol; c <= endCol; c++) {
+              if (occupied[c][s + so]) { available = false; break }
+            }
+            if (!available) break
+          }
+          if (available) {
+            assignedSlot = s
+            for (let so = 0; so < slotsNeeded; so++) {
+              for (let c = startCol; c <= endCol; c++) {
+                occupied[c][s + so] = true
+              }
+            }
+            break
+          }
+        }
+
+        if (assignedSlot >= 0) {
+          const isFirstSeg = weekDates[startCol] === ev.startDay
+          const isLastSeg = weekDates[endCol] === ev.endDay
+          spans.push({
+            eventId: ev.id,
+            title: ev.title,
+            color: ev.color,
+            startCol,
+            endCol,
+            row: assignedSlot,
+            isFirstSegment: isFirstSeg,
+            isLastSegment: isLastSeg,
+            isSingleDay,
+            taskType: ev.taskType,
+          })
+          processedEvents.add(ev.id)
+        }
+      }
+    }
+
+    // Compute "+N more" indicators for overflow
+    for (let col = 0; col < 7; col++) {
+      const dayNum = weekDates[col]
+      if (dayNum === null) continue
+      const totalEvents = eventsByCol[col].length
+      const placedEvents = eventsByCol[col].filter(ev => processedEvents.has(ev.id)).length
+      // Also check events that couldn't be placed (not in processedEvents means no slot)
+      const hidden = totalEvents - placedEvents
+      // Actually we need a different approach: count events that overlap this column but weren't placed
+      const eventsInCol = monthEvents.filter(ev => dayNum >= ev.startDay && dayNum <= ev.endDay)
+      const placedInCol = eventsInCol.filter(ev => {
+        return spans.some(s => s.eventId === ev.id && col >= s.startCol && col <= s.endCol)
+      })
+      const hiddenCount = eventsInCol.length - placedInCol.length
+      if (hiddenCount > 0) {
+        moreIndicators.push({ col, count: hiddenCount, row: maxSlots - 1 })
+      }
+    }
+
+    return { spans, moreIndicators }
+  }, [monthEvents, expansionLevel])
+
+  // Break month into weeks (arrays of day numbers, null for padding)
+  const monthWeeks = useMemo(() => {
+    const weeks: (number | null)[][] = []
+    const cells: (number | null)[] = []
+
+    // Leading padding
+    for (let i = 0; i < monthData.startDay; i++) {
+      cells.push(null)
+    }
+    // Days
+    for (let d = 1; d <= monthData.daysInMonth; d++) {
+      cells.push(d)
+    }
+    // Trailing padding
+    while (cells.length % 7 !== 0) {
+      cells.push(null)
+    }
+    // Split into week rows
+    for (let i = 0; i < cells.length; i += 7) {
+      weeks.push(cells.slice(i, i + 7))
+    }
+    return weeks
+  }, [monthData])
+
+  // Pre-compute layout for all weeks
+  const weekLayouts = useMemo(() => {
+    return monthWeeks.map(week => computeWeekLayout(week))
+  }, [monthWeeks, computeWeekLayout])
 
   // =========================================================================
   // SWIPE GESTURE for week day row
@@ -429,170 +637,240 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
       )}
 
       {isMonthView ? (
-        /* ===== MONTH VIEW — Single month grid with expand/contract ===== */
-        <div className="flex-1 flex flex-col overflow-hidden" style={{ padding: '0 20px' }}>
-          {/* Month navigation header */}
-          <div className="flex items-center justify-between" style={{ padding: '4px 0 8px' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-[#417394]">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span className="font-mohave font-bold text-[18px] text-white uppercase tracking-wider">
-              {monthNames[monthData.month]} {monthData.year}
-            </span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-[#417394]">
-              <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
+        /* ===== MONTH VIEW — Rebuilt from scratch matching iOS MonthGridView ===== */
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Sticky header: Month/Year label + separator + weekday labels — iOS VStack(spacing:0) */}
+          <div style={{ padding: '0 20px' }}>
+            {/* Month-Year title — iOS: OPSStyle.Typography.subtitle, leading aligned */}
+            <div style={{ padding: '0 4px 6px' }}>
+              <span className="font-kosugi text-[22px] text-white uppercase tracking-wider">
+                {monthNames[monthData.month]} {monthData.year}
+              </span>
+            </div>
 
-          {/* Card container for month grid — matching iOS #0D0D0D card */}
-          <div
-            className="flex-1 overflow-y-auto p-3"
-            style={{
-              background: '#0D0D0D',
-              borderRadius: 5,
-              touchAction: 'pan-y',
-            }}
-          >
-            {/* Day of week headers */}
-            <div className="grid grid-cols-7 mb-1">
+            {/* Separator — iOS: secondaryText.opacity(0.3), 0.5px */}
+            <div style={{ height: 0.5, background: 'rgba(170,170,170,0.3)', margin: '0 4px' }} />
+
+            {/* Weekday labels — iOS: OPSStyle.Typography.caption, secondaryText */}
+            <div className="grid grid-cols-7" style={{ paddingTop: 6 }}>
               {dayAbbreviations.map((abbr, i) => (
-                <div key={i} className="text-center font-kosugi text-[12px] text-ops-text-secondary py-1">
+                <div key={i} className="text-center font-kosugi text-[14px] text-ops-text-secondary">
                   {abbr}
                 </div>
               ))}
             </div>
+          </div>
 
-            {/* Calendar grid */}
-            <div className="grid grid-cols-7">
-              {/* Empty cells for offset */}
-              {Array.from({ length: monthData.startDay }, (_, i) => (
-                <div
-                  key={`empty-${i}`}
-                  style={{
-                    height: expansionLevel === 0 ? 48 : expansionLevel === 1 ? 80 : 120,
-                    transition: 'height 0.3s ease',
-                    borderBottom: '1px solid rgba(255,255,255,0.05)',
-                  }}
-                />
-              ))}
+          {/* Scrollable month grid — matching iOS ScrollView */}
+          <div
+            className="flex-1 overflow-y-auto"
+            style={{ touchAction: 'pan-y', padding: '0 20px' }}
+          >
+            {/* Week rows */}
+            {monthWeeks.map((week, weekIndex) => {
+              const { spans, moreIndicators } = weekLayouts[weekIndex]
+              const cellH = expansionLevel === 0 ? 80 : expansionLevel === 1 ? 120 : 180
+              const baseSlotH = cellH < 120 ? 10 : 14
+              const rowSpacing = 2
 
-              {/* Day cells */}
-              {Array.from({ length: monthData.daysInMonth }, (_, i) => {
-                const dayNum = i + 1
-                const isToday = dayNum === today.getDate()
-                const events = getEventsForDay(dayNum)
-                const allColors = [...events.map(e => e.color)]
+              return (
+                <div key={weekIndex}>
+                  {/* Separator line — iOS: secondaryText.opacity(0.2), 0.5px */}
+                  <div style={{ height: 0.5, background: 'rgba(170,170,170,0.2)', margin: '0 4px' }} />
 
-                if (userProject && isToday) {
-                  allColors.unshift(userProject.taskTypeColor)
-                }
+                  {/* Week row: day cells + overlaid event bars — iOS uses GeometryReader + ZStack */}
+                  <div className="relative" style={{ height: cellH, transition: 'height 0.3s ease' }}>
+                    {/* Day number cells layer */}
+                    <div className="grid grid-cols-7 absolute inset-0">
+                      {week.map((dayNum, colIndex) => {
+                        if (dayNum === null) {
+                          return <div key={`empty-${colIndex}`} style={{ height: cellH }} />
+                        }
 
-                const eventNames = [
-                  'Coating', 'Paving', 'Cleaning', 'Sealing', 'Demolition', 'Installation', 'Diagnostic'
-                ]
+                        const isToday = dayNum === today.getDate() && today.getMonth() === monthData.month
+                        const todayBg = isToday ? 'rgba(65, 115, 148, 0.5)' : 'transparent'
 
-                // How many bars to show depends on level
-                const maxBars = expansionLevel === 0 ? 2 : expansionLevel === 1 ? 3 : 4
-                const displayBars = allColors.slice(0, maxBars)
-                const extraCount = Math.max(0, allColors.length - maxBars)
-                // Bar height depends on level
-                const barHeight = expansionLevel === 0 ? 6 : expansionLevel === 1 ? 10 : 16
-                const cellHeight = expansionLevel === 0 ? 48 : expansionLevel === 1 ? 80 : 120
-
-                return (
-                  <div
-                    key={dayNum}
-                    className="flex flex-col relative px-[1px]"
-                    style={{
-                      height: cellHeight,
-                      transition: 'height 0.3s ease',
-                      borderBottom: '1px solid rgba(255,255,255,0.05)',
-                      paddingTop: 2,
-                    }}
-                  >
-                    {/* Today highlight — white circle behind number */}
-                    {isToday && (
-                      <div
-                        className="absolute"
-                        style={{
-                          width: 22,
-                          height: 22,
-                          borderRadius: 11,
-                          background: 'white',
-                          top: 1,
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                        }}
-                      />
-                    )}
-                    {/* Day number */}
-                    <span
-                      className="font-mohave font-bold relative z-10 self-center"
-                      style={{
-                        fontSize: expansionLevel === 0 ? 13 : 15,
-                        color: isToday ? '#000000' : 'rgba(255,255,255,0.7)',
-                        lineHeight: '22px',
-                        transition: 'font-size 0.3s ease',
-                      }}
-                    >
-                      {dayNum}
-                    </span>
-                    {/* Event bars */}
-                    {displayBars.length > 0 && (
-                      <div
-                        className="flex flex-col relative z-10 w-full"
-                        style={{
-                          gap: expansionLevel === 0 ? 1 : 2,
-                          marginTop: expansionLevel === 0 ? 1 : 2,
-                          paddingLeft: 1,
-                          paddingRight: 1,
-                        }}
-                      >
-                        {displayBars.map((color, j) => (
+                        return (
                           <div
-                            key={j}
-                            className="w-full overflow-hidden"
+                            key={dayNum}
+                            className="flex flex-col items-center relative"
                             style={{
-                              backgroundColor: `${color}33`,
-                              height: barHeight,
-                              borderRadius: 2,
-                              display: 'flex',
-                              alignItems: 'center',
-                              paddingLeft: expansionLevel >= 1 ? 3 : 1,
-                              transition: 'height 0.3s ease',
+                              height: cellH,
+                              background: todayBg,
+                              borderRadius: 4,
+                              paddingTop: 4,
                             }}
                           >
-                            {expansionLevel >= 1 && (
-                              <span
-                                className="font-kosugi truncate leading-none"
+                            {/* Today: white 24x24 circle behind day number — iOS: Circle().fill(.white).frame(24,24) */}
+                            {isToday ? (
+                              <div
+                                className="flex items-center justify-center"
                                 style={{
-                                  fontSize: expansionLevel === 1 ? 7 : 9,
-                                  color: color,
+                                  width: 24,
+                                  height: 24,
+                                  borderRadius: 12,
+                                  background: 'white',
                                 }}
                               >
-                                {userProject && isToday && j === 0
-                                  ? userProject.name.slice(0, expansionLevel === 2 ? 12 : 6)
-                                  : eventNames[(dayNum + j) % eventNames.length].slice(0, expansionLevel === 2 ? 12 : 6)}
+                                <span className="font-mohave font-bold text-[16px] text-black leading-none">
+                                  {dayNum}
+                                </span>
+                              </div>
+                            ) : (
+                              <span
+                                className="font-mohave font-bold text-[16px] leading-none"
+                                style={{
+                                  color: 'rgba(255,255,255,0.8)',
+                                  height: 24,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                {dayNum}
                               </span>
                             )}
                           </div>
-                        ))}
-                      </div>
-                    )}
-                    {/* +N indicator */}
-                    {extraCount > 0 && expansionLevel >= 1 && (
-                      <span className="font-kosugi text-[7px] text-ops-text-tertiary relative z-10 mt-[1px] self-center">
-                        +{extraCount}
-                      </span>
-                    )}
+                        )
+                      })}
+                    </div>
+
+                    {/* Event bars layer — positioned absolutely like iOS ZStack offset */}
+                    {spans.map((span) => {
+                      const colWidth = 100 / 7 // percentage
+                      const left = `${span.startCol * colWidth}%`
+                      const width = `${(span.endCol - span.startCol + 1) * colWidth}%`
+                      const isLevel1 = cellH < 120
+                      const isLevel3 = cellH >= 180
+                      const isTall = isLevel3 && span.isSingleDay
+                      const barH = isTall ? baseSlotH * 3 : baseSlotH
+                      const topOffset = 26 + span.row * (baseSlotH + rowSpacing)
+                      const opacity = isLevel1 ? 0.5 : 0.2
+
+                      // Corner radii — iOS: 3pt on first/last segments
+                      const rLeft = (span.isSingleDay || span.isFirstSegment) ? 3 : 0
+                      const rRight = (span.isSingleDay || span.isLastSegment) ? 3 : 0
+
+                      return (
+                        <div
+                          key={span.eventId}
+                          className="absolute overflow-hidden"
+                          style={{
+                            left,
+                            width,
+                            top: topOffset,
+                            height: barH,
+                            padding: '0 2px', // iOS: .padding(.horizontal, 2)
+                            transition: 'top 0.3s ease, height 0.3s ease',
+                          }}
+                        >
+                          <div
+                            className="w-full h-full overflow-hidden"
+                            style={{
+                              background: `${span.color}${isLevel1 ? '80' : '33'}`, // 0.5 or 0.2 opacity hex
+                              borderRadius: `${rLeft}px ${rRight}px ${rRight}px ${rLeft}px`,
+                            }}
+                          >
+                            {/* Tall single-day event at Level 3 — iOS: VStack with title + task type */}
+                            {isTall ? (
+                              <div className="flex flex-col h-full" style={{ padding: '2px 4px' }}>
+                                <span
+                                  className="leading-tight overflow-hidden"
+                                  style={{
+                                    fontSize: 10,
+                                    fontWeight: 500,
+                                    color: span.color,
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical' as const,
+                                  }}
+                                >
+                                  {span.title}
+                                </span>
+                                <div className="flex-1" />
+                                {span.taskType && (
+                                  <span
+                                    className="font-kosugi uppercase truncate"
+                                    style={{
+                                      fontSize: 9,
+                                      color: '#AAAAAA', // secondaryText
+                                      lineHeight: 1,
+                                      paddingBottom: 1,
+                                    }}
+                                  >
+                                    {span.taskType}
+                                  </span>
+                                )}
+                              </div>
+                            ) : !isLevel1 ? (
+                              /* Level 2 or Level 3 multi-day — iOS: HStack with title */
+                              (span.isSingleDay || span.isFirstSegment) && (
+                                <div className="flex items-center h-full" style={{ padding: '0 4px' }}>
+                                  <span
+                                    className="truncate leading-none"
+                                    style={{
+                                      fontSize: 10,
+                                      color: span.color,
+                                    }}
+                                  >
+                                    {span.title}
+                                  </span>
+                                </div>
+                              )
+                            ) : null /* Level 1: no text */}
+                          </div>
+                        </div>
+                      )
+                    })}
+
+                    {/* +N more indicators */}
+                    {moreIndicators.map((ind, i) => {
+                      const colWidth = 100 / 7
+                      const left = `${ind.col * colWidth}%`
+                      const width = `${colWidth}%`
+                      const topOffset = 26 + ind.row * (baseSlotH + rowSpacing)
+                      const indH = cellH < 120 ? 10 : 14
+
+                      return (
+                        <div
+                          key={`more-${weekIndex}-${i}`}
+                          className="absolute"
+                          style={{
+                            left,
+                            width,
+                            top: topOffset,
+                            height: indH,
+                            padding: '0 2px',
+                          }}
+                        >
+                          <div
+                            className="w-full h-full flex items-center overflow-hidden"
+                            style={{
+                              background: 'rgba(170,170,170,0.1)',
+                              borderRadius: 3,
+                              paddingLeft: 4,
+                            }}
+                          >
+                            <span style={{ fontSize: 10, color: '#666666' }}>
+                              +{ind.count}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                )
-              })}
-            </div>
+                </div>
+              )
+            })}
+
+            {/* Bottom spacing for tab bar */}
+            <div style={{ height: 120 }} />
           </div>
 
-          {/* Expand/Contract button — fixed at bottom of month view */}
-          <div className="flex justify-center" style={{ padding: '8px 0 100px' }}>
+          {/* Expand/Contract button — replaces iOS pinch gesture */}
+          <div
+            className="absolute left-0 right-0 flex justify-center"
+            style={{ bottom: 110, zIndex: 10 }}
+          >
             <button
               onClick={() => setExpansionLevel(prev => (prev + 1) % 3)}
               className="flex items-center gap-2 px-4 py-2"
@@ -604,16 +882,12 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                 animation: 'calendarPulse 2.4s ease-in-out infinite',
               }}
             >
-              {/* Expand/contract icon */}
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-[#417394]">
                 {expansionLevel < 2 ? (
-                  // Expand arrows
                   <>
-                    <path d="M12 3v18M3 12l9-9 9 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" />
                     <path d="M7 7l5-5 5 5M7 17l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </>
                 ) : (
-                  // Contract arrows
                   <>
                     <path d="M7 3l5 5 5-5M7 21l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </>
