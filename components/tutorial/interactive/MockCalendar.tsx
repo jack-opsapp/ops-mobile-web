@@ -1049,34 +1049,35 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                     style={{ width: 4, backgroundColor: item.color }}
                   />
 
-                  {/* Content — iOS: HStack(spacing:0) with VStack(spacing:4) + badge overlay */}
-                  <div className="flex-1 min-w-0 relative" style={{ padding: '10px 14px' }}>
-                    {/* Main text column — iOS: VStack(alignment: .leading, spacing: 4) */}
-                    <div className="flex flex-col" style={{ gap: 3, paddingRight: 80 }}>
+                  {/* Content — iOS: ZStack { HStack { VStack(spacing:6), Color.clear(80) } .padding(16) } */}
+                  <div className="flex-1 min-w-0 relative" style={{ padding: 16 }}>
+                    {/* Main text column — iOS: VStack(alignment: .leading, spacing: 6) */}
+                    <div className="flex flex-col" style={{ gap: 6, paddingRight: 80 }}>
                       {/* Title — iOS: bodyBold = Mohave-Medium 16pt, primaryText, uppercase, lineLimit 1 */}
-                      <span className="font-mohave font-medium text-[16px] text-white uppercase tracking-wide block truncate" style={{ lineHeight: 1.1 }}>
+                      <span className="font-mohave font-medium text-[16px] text-white uppercase tracking-wide block truncate">
                         {item.name}
                       </span>
-                      {/* Client name — iOS: caption = Kosugi-Regular 14pt, secondaryText */}
-                      <span className="font-kosugi text-[14px] text-ops-text-secondary block truncate" style={{ lineHeight: 1.1 }}>
+                      {/* Client name — iOS: caption = Kosugi-Regular 14pt, secondaryText, lineLimit 1 */}
+                      <span className="font-kosugi text-[14px] text-ops-text-secondary block truncate">
                         {item.clientName}
                       </span>
-                      {/* Address — iOS: caption, tertiaryText */}
+                      {/* Address — iOS: caption = Kosugi-Regular 14pt, tertiaryText, lineLimit 1 */}
                       {item.address && (
-                        <span className="font-kosugi text-[12px] text-ops-text-tertiary block truncate" style={{ lineHeight: 1.1 }}>
+                        <span className="font-kosugi text-[14px] text-ops-text-tertiary block truncate">
                           {item.address}
                         </span>
                       )}
                     </div>
 
-                    {/* Task type badge — iOS: top-right, smallCaption = Kosugi 12pt */}
+                    {/* Task type badge — iOS: top-right, smallCaption = Kosugi 12pt,
+                         padding 8h 4v, fill badgeColor.opacity(0.1), stroke badgeColor.opacity(0.3) */}
                     <span
                       className="font-kosugi uppercase flex-shrink-0 absolute"
                       style={{
-                        top: 10,
-                        right: 14,
+                        top: 16,
+                        right: 16,
                         fontSize: 12,
-                        padding: '3px 8px',
+                        padding: '4px 8px',
                         borderRadius: 4,
                         backgroundColor: `${item.color}1A`,
                         border: `1px solid ${item.color}4D`,
