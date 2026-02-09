@@ -94,3 +94,12 @@ input:-webkit-autofill:focus {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
 }
+
+/* Hide scrollbar on month grid scroll container */
+.month-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+.month-scroll-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

@@ -190,6 +190,7 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
     }
     if (phase === 'dragToAccepted' && dragAnimLanded) {
       // Second tap: advance after user has seen the landed state
+      setDragAnimStarted(false)
       setDragAnimLanded(false)
       advance()
       return
@@ -199,7 +200,7 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
 
   const handleDragAnimationDone = () => {
     // Animation landed — show continue button, wait for user tap to advance
-    setDragAnimStarted(false)
+    // Keep dragAnimStarted=true so DashboardView effect doesn't reset dragAnimPhase to 'idle'
     setDragAnimLanded(true)
   }
 
