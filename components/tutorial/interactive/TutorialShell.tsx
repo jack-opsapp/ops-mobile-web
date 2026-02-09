@@ -49,6 +49,9 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
   const [taskFormClosing, setTaskFormClosing] = useState(false)
   const prevPhaseRef = useRef(phase)
 
+  // Drag animation state — starts when user taps continue during dragToAccepted
+  const [dragAnimStarted, setDragAnimStarted] = useState(false)
+
   useEffect(() => {
     // When transitioning from taskFormDone to projectFormComplete, trigger close animation
     if (prevPhaseRef.current === 'taskFormDone' && phase === 'projectFormComplete') {
@@ -173,6 +176,16 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
   }
 
   const handleContinue = () => {
+    if (phase === 'dragToAccepted') {
+      // Start drag animation instead of advancing immediately
+      setDragAnimStarted(true)
+      return
+    }
+    advance()
+  }
+
+  const handleDragAnimationDone = () => {
+    setDragAnimStarted(false)
     advance()
   }
 
@@ -182,7 +195,7 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
   return (
     <div
       className="relative w-full h-full overflow-hidden bg-ops-background"
-      style={{ touchAction: 'none' }}
+      style={{ touchAction: phase === 'calendarMonth' ? 'pan-y' : 'none' }}
     >
       {/* Layer 1: Mock app content (z-0) */}
       <div
@@ -190,7 +203,7 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
         style={{ zIndex: 0, opacity: contentDimmed ? 0.3 : 1 }}
       >
         {/* Content fills space above tab bar */}
-        <div className="flex-1 overflow-hidden">
+        <div className={`flex-1 ${phase === 'calendarMonth' ? 'overflow-y-auto' : 'overflow-hidden'}`}>
           {showJobBoard && (
             <MockJobBoard
               phase={phase}
@@ -203,6 +216,8 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
                   : null
               }
               onSwipeComplete={handleSwipeComplete}
+              startDragAnimation={dragAnimStarted}
+              onDragAnimationDone={handleDragAnimationDone}
             />
           )}
 
@@ -305,8 +320,8 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
         />
       </div>
 
-      {/* Layer 7: Continue/Done button (z-60) */}
-      {phaseConfig.showContinueButton && (
+      {/* Layer 7: Continue/Done button (z-60) — hide during drag animation */}
+      {phaseConfig.showContinueButton && !dragAnimStarted && (
         <ContinueButton
           label={phaseConfig.continueLabel || 'CONTINUE'}
           onClick={handleContinue}

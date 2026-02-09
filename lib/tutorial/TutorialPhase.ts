@@ -101,10 +101,10 @@ export const PHASE_CONFIGS: Record<TutorialPhase, PhaseConfig> = {
     showContinueButton: false,
   },
   dragToAccepted: {
-    tooltipText: 'DRAG RIGHT TO ACCEPTED',
-    tooltipDescription: 'Drag it to the "Accepted" column. This is how you move jobs between stages.',
-    showContinueButton: false,
-    autoAdvanceMs: 3500,
+    tooltipText: 'YOUR PROJECT IS ON THE BOARD',
+    tooltipDescription: 'See it in the Estimated column? This is how you move jobs between stages.',
+    showContinueButton: true,
+    continueLabel: 'CONTINUE',
   },
   projectListStatusDemo: {
     tooltipText: 'WATCH THE STATUS UPDATE',

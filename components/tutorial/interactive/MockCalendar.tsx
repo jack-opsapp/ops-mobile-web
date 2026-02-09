@@ -249,7 +249,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
   const TOOLTIP_TOP_INSET = 100
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className={`flex-1 flex flex-col ${isMonthView ? 'overflow-y-auto' : 'overflow-hidden'}`}>
       {/* Spacer: push content below the floating tooltip */}
       <div style={{ height: TOOLTIP_TOP_INSET, flexShrink: 0 }} />
 
@@ -429,7 +429,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
 
       {isMonthView ? (
         /* ===== MONTH VIEW — Scrollable multi-month grid ===== */
-        <div className="flex-1 overflow-y-auto" style={{ padding: '0 20px', paddingBottom: 120 }}>
+        <div className="flex-1" style={{ padding: '0 20px', paddingBottom: 120 }}>
           {multiMonthData.map((md, mIdx) => {
             const isCurrent = md.year === today.getFullYear() && md.month === today.getMonth()
             return (

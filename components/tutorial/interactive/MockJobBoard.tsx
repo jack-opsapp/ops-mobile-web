@@ -10,6 +10,8 @@ interface MockJobBoardProps {
   phase: TutorialPhase
   userProject: DemoProject | null
   onSwipeComplete?: () => void
+  startDragAnimation?: boolean
+  onDragAnimationDone?: () => void
 }
 
 type StatusColumn = 'rfq' | 'estimated' | 'accepted' | 'inProgress' | 'completed'
@@ -134,7 +136,7 @@ function MockSectionSelector({ selected, animateToProjects }: { selected: Sectio
 // On web we must add this padding explicitly.
 const TOOLTIP_TOP_INSET = 100
 
-export function MockJobBoard({ phase, userProject, onSwipeComplete }: MockJobBoardProps) {
+export function MockJobBoard({ phase, userProject, onSwipeComplete, startDragAnimation, onDragAnimationDone }: MockJobBoardProps) {
   const isDashboardView = DASHBOARD_PHASES.includes(phase)
   const isListView = LIST_PHASES.includes(phase)
 
@@ -147,7 +149,7 @@ export function MockJobBoard({ phase, userProject, onSwipeComplete }: MockJobBoa
       <div style={{ height: TOOLTIP_TOP_INSET, flexShrink: 0 }} />
 
       {viewMode === 'dashboard' ? (
-        <DashboardView phase={phase} userProject={userProject} />
+        <DashboardView phase={phase} userProject={userProject} startDragAnimation={startDragAnimation} onDragAnimationDone={onDragAnimationDone} />
       ) : (
         <ListView phase={phase} userProject={userProject} onSwipeComplete={onSwipeComplete} />
       )}
@@ -162,9 +164,13 @@ export function MockJobBoard({ phase, userProject, onSwipeComplete }: MockJobBoa
 function DashboardView({
   phase,
   userProject,
+  startDragAnimation,
+  onDragAnimationDone,
 }: {
   phase: TutorialPhase
   userProject: DemoProject | null
+  startDragAnimation?: boolean
+  onDragAnimationDone?: () => void
 }) {
   const columns: StatusColumn[] = ['rfq', 'estimated', 'accepted', 'inProgress', 'completed']
   const [currentPage, setCurrentPage] = useState(0)
@@ -221,9 +227,9 @@ function DashboardView({
     }
   }, [phase])
 
-  // Drag animation sequence for dragToAccepted
+  // Drag animation sequence — only starts when startDragAnimation becomes true
   useEffect(() => {
-    if (phase !== 'dragToAccepted' || !userProject) return
+    if (phase !== 'dragToAccepted' || !userProject || !startDragAnimation) return
     const timers: NodeJS.Timeout[] = []
 
     // T+0: Show arrows phase
@@ -253,8 +259,13 @@ function DashboardView({
       setAcceptedGlow(false)
     }, 2800))
 
+    // T+3200: Animation complete — notify parent to advance
+    timers.push(setTimeout(() => {
+      onDragAnimationDone?.()
+    }, 3200))
+
     return () => timers.forEach(t => clearTimeout(t))
-  }, [phase, userProject])
+  }, [phase, userProject, startDragAnimation])
 
   // Simple swipe handling for page navigation
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -543,7 +554,13 @@ function ListView({
   // Status demo animation: accepted -> inProgress -> completed
   // Per iOS: 0.3s dim to 0.3 opacity → status change → 0.3s restore, 1.8s between starts
   useEffect(() => {
-    if (phase !== 'projectListStatusDemo' || !userProject) return
+    if (phase !== 'projectListStatusDemo') {
+      // Reset animation state when leaving this phase
+      setAnimatingStatus(null)
+      setCardDimmed(false)
+      return
+    }
+    if (!userProject) return
 
     const steps = ['accepted', 'inProgress', 'completed']
     const timers: NodeJS.Timeout[] = []
