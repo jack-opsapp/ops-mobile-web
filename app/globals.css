@@ -94,3 +94,9 @@ input:-webkit-autofill:focus {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
 }
+
+/* Tutorial closed projects sheet slide-up */
+@keyframes sheetSlideUp {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(0); }
+}

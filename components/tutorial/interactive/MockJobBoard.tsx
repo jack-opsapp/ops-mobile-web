@@ -598,6 +598,109 @@ function DashboardView({
 }
 
 // =============================================================================
+// CLOSED PROJECTS SHEET — matches iOS ProjectListSheet (JobBoardProjectListView.swift:698-794)
+// NavigationView with inline title, search bar, LazyVStack of cards
+// =============================================================================
+
+export function ClosedProjectsSheet({
+  projects,
+  userProjectId,
+}: {
+  projects: DemoProject[]
+  userProjectId?: string
+}) {
+  return (
+    <div
+      className="absolute inset-0 flex flex-col"
+      style={{
+        background: '#000000',
+        animation: 'sheetSlideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
+      }}
+    >
+      {/* Spacer for tooltip above */}
+      <div style={{ height: 80, flexShrink: 0 }} />
+
+      {/* iOS: .toolbar with .principal title + .navigationBarTrailing DONE button */}
+      <div
+        className="flex items-center justify-center flex-shrink-0 relative"
+        style={{ padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <span
+          className="font-mohave font-bold text-white uppercase"
+          style={{ fontSize: 16 }}
+        >
+          CLOSED PROJECTS
+        </span>
+      </div>
+
+      {/* iOS: Search bar — HStack { search icon, TextField, clear button }
+           .background(cardBackgroundDark) .cornerRadius(5) .padding(.horizontal, 16) .padding(.top, 12) */}
+      <div style={{ padding: '12px 16px 0' }}>
+        <div
+          className="flex items-center"
+          style={{
+            background: '#1F293D',
+            borderRadius: 5,
+            padding: '12px 16px',
+            gap: 12,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ color: '#AAAAAA', flexShrink: 0 }}>
+            <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+            <path d="M20 20l-4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <span className="font-mohave text-[16px]" style={{ color: '#AAAAAA' }}>
+            Search projects...
+          </span>
+        </div>
+      </div>
+
+      {/* iOS: ScrollView { LazyVStack(spacing: 12) { ForEach ... UniversalJobBoardCard(disableSwipe: true) } }
+           .padding(.horizontal, 16) .padding(.vertical, 12) */}
+      <div className="flex-1 overflow-y-auto" style={{ padding: '12px 16px 120px' }}>
+        <div className="flex flex-col" style={{ gap: 12 }}>
+          {projects.map(project => {
+            const isUserProject = project.id === userProjectId
+            return (
+              <div
+                key={project.id}
+                style={{
+                  borderRadius: 5,
+                  border: isUserProject ? '2px solid rgba(65, 115, 148, 0.8)' : 'none',
+                  boxShadow: isUserProject
+                    ? '0 0 12px rgba(65, 115, 148, 0.4), 0 0 24px rgba(65, 115, 148, 0.2)'
+                    : 'none',
+                  animation: isUserProject ? 'statusBadgeGlow 1.5s ease-in-out infinite' : 'none',
+                }}
+              >
+                <MockProjectCard
+                  project={project}
+                  variant="list"
+                  isHighlighted={false}
+                  statusOverride="closed"
+                />
+              </div>
+            )
+          })}
+
+          {projects.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 gap-4">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ color: '#555555' }}>
+                <path d="M3 7v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M21 7H3l2-4h14l2 4z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="font-mohave text-[16px]" style={{ color: '#AAAAAA' }}>
+                No projects
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// =============================================================================
 // LIST VIEW - Vertical scrollable cards (like iOS project list with swipeable cards)
 // =============================================================================
 
@@ -735,15 +838,15 @@ function ListView({
     }
   }, [phase])
 
-  // Dark overlay on active cards during closedProjectsScroll
-  // iOS: T+0.3s scroll, T+1.2s overlay, T+4.2s auto-advance
+  // Dark overlay on active cards + auto-open sheet during closedProjectsScroll
+  // Flow: T+0.3s scroll, T+1.2s darken, T+2.0s open sheet
   useEffect(() => {
     if (phase === 'closedProjectsScroll') {
       const timers: NodeJS.Timeout[] = []
-      // T+1.2s: darken active cards (iOS: showClosedSectionOverlay = true)
+      // T+1.2s: darken active cards
       timers.push(setTimeout(() => setShowActiveOverlay(true), 1200))
-      // T+4.2s: signal viewed — show continue button (iOS: auto-advances here)
-      timers.push(setTimeout(() => onClosedSectionViewed?.(), 4200))
+      // T+2.0s: signal TutorialShell to open closed projects sheet
+      timers.push(setTimeout(() => onClosedSectionViewed?.(), 2000))
       return () => timers.forEach(t => clearTimeout(t))
     } else {
       setShowActiveOverlay(false)
