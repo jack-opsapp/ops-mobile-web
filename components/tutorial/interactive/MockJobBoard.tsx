@@ -250,44 +250,42 @@ function DashboardView({
     setDragAnimPhase('dragging')
     setCardLifted(true)
     setArrowLit(0)
-    setFloatingCardPos({ x: 35, y: 40 }) // Start near card position
+    setFloatingCardPos({ x: 30, y: 40 }) // Start near card position
 
-    // T+400: First arrow lights — card moves right (25% progress)
+    // T+200: Start moving — arrows light sequentially, card glides smoothly right
     timers.push(setTimeout(() => {
       setArrowLit(1)
-      setFloatingCardPos({ x: 50, y: 38 })
-    }, 400))
+    }, 200))
 
-    // T+800: Second arrow — card moves further right (50%)
+    // T+500: Card starts moving right in one smooth motion
     timers.push(setTimeout(() => {
       setArrowLit(2)
-      setFloatingCardPos({ x: 62, y: 36 })
-    }, 800))
+      setFloatingCardPos({ x: 75, y: 36 }) // Single smooth move to near right edge
+    }, 500))
 
-    // T+1200: Third arrow — card near right edge (75%+)
+    // T+1000: Third arrow — card at right edge
     timers.push(setTimeout(() => {
       setArrowLit(3)
-      setFloatingCardPos({ x: 78, y: 34 })
-    }, 1200))
+    }, 1000))
 
-    // T+1700: Card dropped in right zone — slide page to accepted
+    // T+1800: Card dropped in right zone — slide page to accepted
     timers.push(setTimeout(() => {
       setDragAnimPhase('sliding')
       setCardLifted(false)
       const acceptedIdx = columns.indexOf('accepted')
       if (acceptedIdx >= 0) setCurrentPage(acceptedIdx)
-    }, 1700))
+    }, 1800))
 
-    // T+2200: Card landed in accepted column — show dark overlay + status badge glow
+    // T+2400: Card landed in accepted column — show dark overlay + status badge glow
     timers.push(setTimeout(() => {
       setDragAnimPhase('landed')
       setShowStatusGlow(true)
-    }, 2200))
+    }, 2400))
 
-    // T+3400: Done — advance to next phase
+    // T+3600: Done — advance to next phase
     timers.push(setTimeout(() => {
       onDragAnimationDone?.()
-    }, 3400))
+    }, 3600))
 
     return () => timers.forEach(t => clearTimeout(t))
   }, [phase, userProject, startDragAnimation])
@@ -520,10 +518,11 @@ function DashboardView({
             style={{
               left: `${floatingCardPos.x}%`,
               top: `${floatingCardPos.y}%`,
-              transform: 'translate(-50%, -100%) scale(0.98)',
-              transition: 'left 0.4s ease-out, top 0.4s ease-out',
+              transform: 'translate(-50%, -50%) scale(0.98)',
+              transition: 'left 0.6s cubic-bezier(0.25, 0.1, 0.25, 1), top 0.6s cubic-bezier(0.25, 0.1, 0.25, 1)',
               zIndex: 15,
-              width: 200,
+              width: '75%',
+              maxWidth: 280,
               filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.8))',
             }}
           >
@@ -620,23 +619,16 @@ export function ClosedProjectsSheet({
       {/* Spacer for tooltip above */}
       <div style={{ height: 80, flexShrink: 0 }} />
 
-      {/* iOS: .toolbar { .principal: bodyBold = Mohave-Medium 16pt, .trailing: DONE in bodyBold, primaryAccent } */}
+      {/* Header — bodyBold = Mohave-Medium 16pt, centered title */}
       <div
-        className="flex items-center justify-between flex-shrink-0"
+        className="flex items-center justify-center flex-shrink-0"
         style={{ padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
       >
-        <div style={{ width: 50 }} />
         <span
           className="font-mohave font-medium text-white uppercase"
           style={{ fontSize: 16 }}
         >
           CLOSED PROJECTS
-        </span>
-        <span
-          className="font-mohave font-medium uppercase"
-          style={{ fontSize: 16, color: '#FF7733', width: 50, textAlign: 'right' }}
-        >
-          DONE
         </span>
       </div>
 

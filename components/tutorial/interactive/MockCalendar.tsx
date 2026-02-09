@@ -458,7 +458,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
   const TOOLTIP_TOP_INSET = 80
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0">
       {/* Spacer: push content below the floating tooltip */}
       <div style={{ height: TOOLTIP_TOP_INSET, flexShrink: 0 }} />
 
@@ -638,7 +638,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
 
       {isMonthView ? (
         /* ===== MONTH VIEW — Rebuilt from scratch matching iOS MonthGridView ===== */
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0">
           {/* Sticky header: Month/Year label + separator + weekday labels — iOS VStack(spacing:0) */}
           <div style={{ padding: '0 20px' }}>
             {/* Month-Year title — iOS: OPSStyle.Typography.subtitle, leading aligned */}
@@ -663,8 +663,8 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
 
           {/* Scrollable month grid — native overflow scroll */}
           <div
-            className="flex-1 overflow-y-auto"
-            style={{ padding: '0 20px', WebkitOverflowScrolling: 'touch' }}
+            className="flex-1 overflow-y-auto min-h-0"
+            style={{ padding: '0 20px' }}
           >
             <div>
             {/* Week rows */}
@@ -1049,35 +1049,34 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                     style={{ width: 4, backgroundColor: item.color }}
                   />
 
-                  {/* Content — iOS: HStack(spacing:0) with VStack(spacing:6) + badge overlay */}
-                  <div className="flex-1 min-w-0 relative" style={{ padding: '16px 16px' }}>
-                    {/* Main text column — iOS: VStack(alignment: .leading, spacing: 6) */}
-                    <div className="flex flex-col" style={{ gap: 6, paddingRight: 80 }}>
+                  {/* Content — iOS: HStack(spacing:0) with VStack(spacing:4) + badge overlay */}
+                  <div className="flex-1 min-w-0 relative" style={{ padding: '10px 14px' }}>
+                    {/* Main text column — iOS: VStack(alignment: .leading, spacing: 4) */}
+                    <div className="flex flex-col" style={{ gap: 3, paddingRight: 80 }}>
                       {/* Title — iOS: bodyBold = Mohave-Medium 16pt, primaryText, uppercase, lineLimit 1 */}
-                      <span className="font-mohave font-medium text-[16px] text-white uppercase tracking-wide block truncate">
+                      <span className="font-mohave font-medium text-[16px] text-white uppercase tracking-wide block truncate" style={{ lineHeight: 1.1 }}>
                         {item.name}
                       </span>
                       {/* Client name — iOS: caption = Kosugi-Regular 14pt, secondaryText */}
-                      <span className="font-kosugi text-[14px] text-ops-text-secondary block truncate">
+                      <span className="font-kosugi text-[14px] text-ops-text-secondary block truncate" style={{ lineHeight: 1.1 }}>
                         {item.clientName}
                       </span>
-                      {/* Address — iOS: caption = Kosugi 14pt, tertiaryText */}
+                      {/* Address — iOS: caption, tertiaryText */}
                       {item.address && (
-                        <span className="font-kosugi text-[14px] text-ops-text-tertiary block truncate">
+                        <span className="font-kosugi text-[12px] text-ops-text-tertiary block truncate" style={{ lineHeight: 1.1 }}>
                           {item.address}
                         </span>
                       )}
                     </div>
 
-                    {/* Task type badge — iOS: top-right, smallCaption = Kosugi 12pt, badgeColor,
-                         padding 8h 4v, fill opacity 0.1, stroke opacity 0.3 */}
+                    {/* Task type badge — iOS: top-right, smallCaption = Kosugi 12pt */}
                     <span
                       className="font-kosugi uppercase flex-shrink-0 absolute"
                       style={{
-                        top: 16,
-                        right: 16,
+                        top: 10,
+                        right: 14,
                         fontSize: 12,
-                        padding: '4px 8px',
+                        padding: '3px 8px',
                         borderRadius: 4,
                         backgroundColor: `${item.color}1A`,
                         border: `1px solid ${item.color}4D`,
