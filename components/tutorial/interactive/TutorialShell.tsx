@@ -53,8 +53,7 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
   const [dragAnimStarted, setDragAnimStarted] = useState(false)
   const [dragAnimLanded, setDragAnimLanded] = useState(false) // animation finished, waiting for user tap
 
-  // Step 14: closed section ready — MockJobBoard signals when closed section is expanded
-  const [closedSectionReady, setClosedSectionReady] = useState(false)
+  // (Step 14 now uses autoAdvanceMs in TutorialPhase config — no manual state needed)
 
   useEffect(() => {
     // When transitioning from taskFormDone to projectFormComplete, trigger close animation
@@ -64,7 +63,6 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
       return () => clearTimeout(timer)
     }
     // Reset transient states on phase change
-    if (phase !== 'closedProjectsScroll') setClosedSectionReady(false)
     if (phase !== 'dragToAccepted') setDragAnimLanded(false)
     prevPhaseRef.current = phase
   }, [phase])
@@ -204,9 +202,6 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
     setDragAnimLanded(true)
   }
 
-  const handleClosedSectionReady = () => {
-    setClosedSectionReady(true)
-  }
 
   // Continue button always uses inline variant now (no more tutorialSummary fullWidth)
   const continueVariant = 'inline' as const
@@ -235,7 +230,6 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
                   : null
               }
               onSwipeComplete={handleSwipeComplete}
-              onClosedSectionReady={handleClosedSectionReady}
               startDragAnimation={dragAnimStarted}
               onDragAnimationDone={handleDragAnimationDone}
             />
@@ -343,15 +337,10 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
       {/* Layer 7: Continue/Done button (z-60) — hide during drag animation */}
       {(
         (phaseConfig.showContinueButton && !dragAnimStarted) ||
-        dragAnimLanded ||
-        (phase === 'closedProjectsScroll' && closedSectionReady)
+        dragAnimLanded
       ) && (
         <ContinueButton
-          label={
-            dragAnimLanded ? 'CONTINUE' :
-            (phase === 'closedProjectsScroll' && closedSectionReady) ? 'CONTINUE' :
-            phaseConfig.continueLabel || 'CONTINUE'
-          }
+          label={dragAnimLanded ? 'CONTINUE' : phaseConfig.continueLabel || 'CONTINUE'}
           onClick={handleContinue}
           variant={continueVariant}
         />

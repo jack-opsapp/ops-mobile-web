@@ -9,7 +9,6 @@ interface MockJobBoardProps {
   phase: TutorialPhase
   userProject: DemoProject | null
   onSwipeComplete?: () => void
-  onClosedSectionReady?: () => void
   startDragAnimation?: boolean
   onDragAnimationDone?: () => void
 }
@@ -136,7 +135,7 @@ function MockSectionSelector({ selected, animateToProjects }: { selected: Sectio
 // On web we must add this padding explicitly.
 const TOOLTIP_TOP_INSET = 80
 
-export function MockJobBoard({ phase, userProject, onSwipeComplete, onClosedSectionReady, startDragAnimation, onDragAnimationDone }: MockJobBoardProps) {
+export function MockJobBoard({ phase, userProject, onSwipeComplete, startDragAnimation, onDragAnimationDone }: MockJobBoardProps) {
   const isDashboardView = DASHBOARD_PHASES.includes(phase)
   const isListView = LIST_PHASES.includes(phase)
 
@@ -151,7 +150,7 @@ export function MockJobBoard({ phase, userProject, onSwipeComplete, onClosedSect
       {viewMode === 'dashboard' ? (
         <DashboardView phase={phase} userProject={userProject} startDragAnimation={startDragAnimation} onDragAnimationDone={onDragAnimationDone} />
       ) : (
-        <ListView phase={phase} userProject={userProject} onSwipeComplete={onSwipeComplete} onClosedSectionReady={onClosedSectionReady} />
+        <ListView phase={phase} userProject={userProject} onSwipeComplete={onSwipeComplete} />
       )}
     </div>
   )
@@ -605,12 +604,10 @@ function ListView({
   phase,
   userProject,
   onSwipeComplete,
-  onClosedSectionReady,
 }: {
   phase: TutorialPhase
   userProject: DemoProject | null
   onSwipeComplete?: () => void
-  onClosedSectionReady?: () => void
 }) {
   const [scrollOffset, setScrollOffset] = useState(0)
   const activeSectionRef = useRef<HTMLDivElement>(null)
@@ -622,8 +619,7 @@ function ListView({
   const [cardDimmed, setCardDimmed] = useState(false) // dim/restore sub-animation
   const [showActiveOverlay, setShowActiveOverlay] = useState(false)
 
-  // Step 14: Auto-open closed section after scroll animation
-  const [closedSectionOpen, setClosedSectionOpen] = useState(false)
+  // (closedSectionOpen removed — iOS tutorial just shows the button, doesn't expand it)
 
   // --- Interactive swipe state ---
   const swipeTouchStartX = useRef<number | null>(null)
@@ -739,20 +735,14 @@ function ListView({
   }, [phase])
 
   // Dark overlay on active cards during closedProjectsScroll
-  // iOS: overlay appears at T=1.2s (0.3s delay + 0.8s scroll + 0.1s buffer)
+  // iOS: active cards dim to 30% opacity at T=1.2s, closed button stays highlighted
+  // Auto-advance handled by TutorialPhase config (autoAdvanceMs: 5300)
   useEffect(() => {
     if (phase === 'closedProjectsScroll') {
-      const timers: NodeJS.Timeout[] = []
-      // T+1.2s: Dark overlay on active cards
-      timers.push(setTimeout(() => setShowActiveOverlay(true), 1200))
-      // T+1.8s: Auto-open the closed section to show where closed jobs live
-      timers.push(setTimeout(() => setClosedSectionOpen(true), 1800))
-      // T+2.5s: Signal TutorialShell to show continue button (at z-60, above tab bar)
-      timers.push(setTimeout(() => onClosedSectionReady?.(), 2500))
-      return () => timers.forEach(t => clearTimeout(t))
+      const timer = setTimeout(() => setShowActiveOverlay(true), 1200)
+      return () => clearTimeout(timer)
     } else {
       setShowActiveOverlay(false)
-      setClosedSectionOpen(false)
     }
   }, [phase])
 
@@ -1089,50 +1079,15 @@ function ListView({
                 ({closed.length})
               </span>
               <div className="flex-1" />
-              {/* Chevron — rotates down when open */}
-              <svg
-                width="10" height="10" viewBox="0 0 8 12" fill="none"
-                style={{
-                  color: '#777777',
-                  transform: closedSectionOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.3s ease',
-                }}
-              >
+              {/* Chevron */}
+              <svg width="10" height="10" viewBox="0 0 8 12" fill="none" style={{ color: '#777777' }}>
                 <path d="M1 1l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
           )}
         </div>
-
-        {/* Expanded closed projects list — auto-opens during closedProjectsScroll */}
-        {closedSectionOpen && (
-          <div
-            className="px-5"
-            style={{
-              paddingTop: 8,
-              animation: 'closedSectionReveal 0.4s ease-out',
-            }}
-          >
-            <div className="flex flex-col" style={{ gap: 10 }}>
-              {closed.map(project => {
-                const isUserCard = userProject && project.id === userProject.id
-                return (
-                  <MockProjectCard
-                    key={project.id}
-                    project={project}
-                    variant="list"
-                    isHighlighted={!!isUserCard}
-                    statusOverride="closed"
-                  />
-                )
-              })}
-            </div>
-          </div>
-        )}
       </div>
       </div>
-
-      {/* Continue button for closedProjectsScroll is managed by TutorialShell (z-60, above tab bar) */}
 
       {/* Touch cursor removed per user request — scroll animation is sufficient */}
 
@@ -1142,10 +1097,6 @@ function ListView({
           0% { opacity: 0; transform: scale(0.98); }
           30% { opacity: 1; transform: scale(1); }
           100% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes closedSectionReveal {
-          0% { opacity: 0; transform: translateY(12px); }
-          100% { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </>

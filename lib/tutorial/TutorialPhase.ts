@@ -121,6 +121,7 @@ export const PHASE_CONFIGS: Record<TutorialPhase, PhaseConfig> = {
     tooltipText: 'COMPLETE. SCROLL DOWN TO FIND IT.',
     tooltipDescription: 'Finished jobs move to the bottom so active work stays on top.',
     showContinueButton: false,
+    autoAdvanceMs: 5300, // iOS: 0.3s delay + 0.8s scroll + 1.2s overlay fade + 3.0s display
   },
   calendarWeek: {
     tooltipText: 'THIS IS YOUR WEEK VIEW',

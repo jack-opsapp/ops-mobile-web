@@ -420,21 +420,35 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
   // MONTH GRID JS-BASED SCROLL (parent has touchAction:none, so we scroll manually)
   // =========================================================================
 
-  // JS-driven scroll: since ancestor has touchAction:'none', native scroll is blocked.
-  // We use overflow-y:auto + programmatic scrollTop to scroll the month grid.
+  // JS-driven scroll via translateY: ancestor has touchAction:'none' blocking native scroll.
+  // We compute max scroll from known data (weeks × cellHeight) to avoid DOM measurement issues.
   const monthScrollRef = useRef<HTMLDivElement>(null)
   const monthTouchStartY = useRef<number | null>(null)
   const monthScrollStartTop = useRef<number>(0)
+  const [monthScrollTop, setMonthScrollTop] = useState(0)
+  const monthMaxScroll = useRef(0)
+
+  // Compute content height from data: (weeks × cellHeight) + separators + bottom padding
+  const getMonthContentHeight = useCallback(() => {
+    const cellH = expansionLevel === 0 ? 80 : expansionLevel === 1 ? 120 : 180
+    const separatorH = 0.5
+    return monthWeeks.length * (cellH + separatorH) + 120 // 120px bottom padding
+  }, [monthWeeks.length, expansionLevel])
 
   const handleMonthTouchStart = useCallback((e: React.TouchEvent) => {
     monthTouchStartY.current = e.touches[0].clientY
-    monthScrollStartTop.current = monthScrollRef.current?.scrollTop || 0
-  }, [])
+    monthScrollStartTop.current = monthScrollTop
+    // Compute max scroll: content height - visible container height
+    const contentH = getMonthContentHeight()
+    const containerH = monthScrollRef.current?.getBoundingClientRect().height || 400
+    monthMaxScroll.current = Math.max(0, contentH - containerH)
+  }, [monthScrollTop, getMonthContentHeight])
 
   const handleMonthTouchMove = useCallback((e: React.TouchEvent) => {
-    if (monthTouchStartY.current === null || !monthScrollRef.current) return
+    if (monthTouchStartY.current === null) return
     const diff = monthTouchStartY.current - e.touches[0].clientY
-    monthScrollRef.current.scrollTop = monthScrollStartTop.current + diff
+    const newTop = Math.max(0, Math.min(monthMaxScroll.current, monthScrollStartTop.current + diff))
+    setMonthScrollTop(newTop)
   }, [])
 
   const handleMonthTouchEnd = useCallback(() => {
@@ -686,16 +700,16 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
             </div>
           </div>
 
-          {/* Scrollable month grid — JS-driven scrollTop since ancestor has touchAction:none */}
+          {/* Scrollable month grid — JS-driven translateY since ancestor has touchAction:none */}
           <div
             ref={monthScrollRef}
-            className="flex-1 month-scroll-container"
-            style={{ padding: '0 20px', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+            className="flex-1 overflow-hidden"
+            style={{ padding: '0 20px' }}
             onTouchStart={handleMonthTouchStart}
             onTouchMove={handleMonthTouchMove}
             onTouchEnd={handleMonthTouchEnd}
           >
-            <div>
+            <div style={{ transform: `translateY(-${monthScrollTop}px)` }}>
             {/* Week rows */}
             {monthWeeks.map((week, weekIndex) => {
               const { spans, moreIndicators } = weekLayouts[weekIndex]
@@ -903,7 +917,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
             style={{ bottom: 110, zIndex: 10 }}
           >
             <button
-              onClick={() => { setExpansionLevel(prev => (prev + 1) % 3); if (monthScrollRef.current) monthScrollRef.current.scrollTop = 0 }}
+              onClick={() => { setExpansionLevel(prev => (prev + 1) % 3); setMonthScrollTop(0) }}
               className="flex items-center gap-2 px-4 py-2"
               style={{
                 background: '#0D0D0D',
