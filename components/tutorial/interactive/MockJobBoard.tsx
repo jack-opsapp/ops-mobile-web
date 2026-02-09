@@ -201,8 +201,8 @@ function DashboardView({
 
     if (userProject) {
       if (phase === 'dragToAccepted') {
-        // After slide animation, card appears in accepted column
-        if (dragAnimPhase === 'landed') {
+        // Before slide: card in estimated. During/after slide: card in accepted.
+        if (dragAnimPhase === 'sliding' || dragAnimPhase === 'landed') {
           groups.accepted.unshift(userProject)
         } else {
           groups.estimated.unshift(userProject)
@@ -419,8 +419,8 @@ function DashboardView({
           })}
         </div>
 
-        {/* Chevron arrows overlay — centered on estimated column during drag animation */}
-        {phase === 'dragToAccepted' && dragAnimPhase === 'arrows' && (
+        {/* Chevron arrows overlay — visible during arrows and sliding phases */}
+        {phase === 'dragToAccepted' && (dragAnimPhase === 'arrows' || dragAnimPhase === 'sliding') && (
           <div
             className="absolute inset-0 flex items-center justify-center pointer-events-none"
             style={{ zIndex: 10 }}
@@ -539,8 +539,8 @@ function ListView({
 
     if (userProject) {
       const userP = { ...userProject, status: userStatus as DemoProject['status'] }
-      // During status demo, always keep in active list so card doesn't disappear
-      if (phase === 'projectListStatusDemo') {
+      // During status demo and swipe, always keep in active list so card doesn't disappear
+      if (phase === 'projectListStatusDemo' || phase === 'projectListSwipe') {
         active.unshift(userP)
       } else if (userStatus === 'closed' || userStatus === 'completed') {
         closed.unshift(userP)

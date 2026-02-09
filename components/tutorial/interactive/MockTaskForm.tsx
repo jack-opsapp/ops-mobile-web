@@ -672,13 +672,13 @@ function MockCalendarSchedulerSheet({
 
   return (
     <div
-      className={`absolute inset-0 flex flex-col ${closing ? '' : 'animate-fade-up'}`}
+      className={`absolute inset-0 flex flex-col ${!closing ? 'animate-fade-up' : ''}`}
       style={{
         zIndex: 60,
         background: '#000000',
         transform: closing ? 'translateY(100%)' : 'translateY(0)',
         opacity: closing ? 0 : 1,
-        transition: closing ? 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s ease-in' : 'none',
+        transition: 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s ease-in',
       }}
     >
       {/* Header: Cancel | Schedule Task | Clear */}
