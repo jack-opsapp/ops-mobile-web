@@ -9,7 +9,7 @@ interface MockJobBoardProps {
   phase: TutorialPhase
   userProject: DemoProject | null
   onSwipeComplete?: () => void
-  onContinue?: () => void
+  onClosedSectionReady?: () => void
   startDragAnimation?: boolean
   onDragAnimationDone?: () => void
 }
@@ -136,7 +136,7 @@ function MockSectionSelector({ selected, animateToProjects }: { selected: Sectio
 // On web we must add this padding explicitly.
 const TOOLTIP_TOP_INSET = 80
 
-export function MockJobBoard({ phase, userProject, onSwipeComplete, onContinue, startDragAnimation, onDragAnimationDone }: MockJobBoardProps) {
+export function MockJobBoard({ phase, userProject, onSwipeComplete, onClosedSectionReady, startDragAnimation, onDragAnimationDone }: MockJobBoardProps) {
   const isDashboardView = DASHBOARD_PHASES.includes(phase)
   const isListView = LIST_PHASES.includes(phase)
 
@@ -151,7 +151,7 @@ export function MockJobBoard({ phase, userProject, onSwipeComplete, onContinue, 
       {viewMode === 'dashboard' ? (
         <DashboardView phase={phase} userProject={userProject} startDragAnimation={startDragAnimation} onDragAnimationDone={onDragAnimationDone} />
       ) : (
-        <ListView phase={phase} userProject={userProject} onSwipeComplete={onSwipeComplete} onContinue={onContinue} />
+        <ListView phase={phase} userProject={userProject} onSwipeComplete={onSwipeComplete} onClosedSectionReady={onClosedSectionReady} />
       )}
     </div>
   )
@@ -426,6 +426,11 @@ function DashboardView({
                           variant="dashboard"
                           isHighlighted={!!isUserCard && phase === 'dragToAccepted' && !cardLifted}
                           showStatusGlow={!!isLandedUserCard && showStatusGlow}
+                          statusOverride={
+                            isUserCard && (dragAnimPhase === 'sliding' || dragAnimPhase === 'landed')
+                              ? 'accepted'
+                              : undefined
+                          }
                         />
                       </div>
                     )
@@ -600,12 +605,12 @@ function ListView({
   phase,
   userProject,
   onSwipeComplete,
-  onContinue,
+  onClosedSectionReady,
 }: {
   phase: TutorialPhase
   userProject: DemoProject | null
   onSwipeComplete?: () => void
-  onContinue?: () => void
+  onClosedSectionReady?: () => void
 }) {
   const [scrollOffset, setScrollOffset] = useState(0)
   const activeSectionRef = useRef<HTMLDivElement>(null)
@@ -617,9 +622,8 @@ function ListView({
   const [cardDimmed, setCardDimmed] = useState(false) // dim/restore sub-animation
   const [showActiveOverlay, setShowActiveOverlay] = useState(false)
 
-  // Step 14: Auto-open closed section after scroll animation, then show continue
+  // Step 14: Auto-open closed section after scroll animation
   const [closedSectionOpen, setClosedSectionOpen] = useState(false)
-  const [showDelayedContinue, setShowDelayedContinue] = useState(false)
 
   // --- Interactive swipe state ---
   const swipeTouchStartX = useRef<number | null>(null)
@@ -743,13 +747,12 @@ function ListView({
       timers.push(setTimeout(() => setShowActiveOverlay(true), 1200))
       // T+1.8s: Auto-open the closed section to show where closed jobs live
       timers.push(setTimeout(() => setClosedSectionOpen(true), 1800))
-      // T+2.5s: Show the continue button after user has seen the closed projects
-      timers.push(setTimeout(() => setShowDelayedContinue(true), 2500))
+      // T+2.5s: Signal TutorialShell to show continue button (at z-60, above tab bar)
+      timers.push(setTimeout(() => onClosedSectionReady?.(), 2500))
       return () => timers.forEach(t => clearTimeout(t))
     } else {
       setShowActiveOverlay(false)
       setClosedSectionOpen(false)
-      setShowDelayedContinue(false)
     }
   }, [phase])
 
@@ -1129,28 +1132,7 @@ function ListView({
       </div>
       </div>
 
-      {/* Delayed continue button for closedProjectsScroll — shown after closed section opens */}
-      {phase === 'closedProjectsScroll' && showDelayedContinue && (
-        <div className="absolute bottom-0 left-0 right-0 px-5 pb-5" style={{ zIndex: 60 }}>
-          <button
-            onClick={() => onContinue?.()}
-            className="w-full flex items-center justify-center gap-2 bg-white text-black font-mohave font-medium text-[16px] tracking-wide
-                       hover:bg-gray-100 active:bg-gray-200 transition-colors duration-150"
-            style={{
-              paddingTop: '14px',
-              paddingBottom: '14px',
-              borderRadius: 5,
-              boxShadow: '0 0 20px rgba(0,0,0,0.8), 0 8px 40px rgba(0,0,0,0.6), 0 12px 60px rgba(0,0,0,0.4)',
-              animation: 'closedSectionReveal 0.4s ease-out',
-            }}
-          >
-            <span>CONTINUE</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-black">
-              <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
-      )}
+      {/* Continue button for closedProjectsScroll is managed by TutorialShell (z-60, above tab bar) */}
 
       {/* Touch cursor removed per user request — scroll animation is sufficient */}
 

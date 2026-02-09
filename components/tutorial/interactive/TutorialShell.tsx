@@ -51,6 +51,10 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
 
   // Drag animation state — starts when user taps continue during dragToAccepted
   const [dragAnimStarted, setDragAnimStarted] = useState(false)
+  const [dragAnimLanded, setDragAnimLanded] = useState(false) // animation finished, waiting for user tap
+
+  // Step 14: closed section ready — MockJobBoard signals when closed section is expanded
+  const [closedSectionReady, setClosedSectionReady] = useState(false)
 
   useEffect(() => {
     // When transitioning from taskFormDone to projectFormComplete, trigger close animation
@@ -59,6 +63,9 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
       const timer = setTimeout(() => setTaskFormClosing(false), 400) // match animation duration
       return () => clearTimeout(timer)
     }
+    // Reset transient states on phase change
+    if (phase !== 'closedProjectsScroll') setClosedSectionReady(false)
+    if (phase !== 'dragToAccepted') setDragAnimLanded(false)
     prevPhaseRef.current = phase
   }, [phase])
 
@@ -176,17 +183,28 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
   }
 
   const handleContinue = () => {
-    if (phase === 'dragToAccepted') {
-      // Start drag animation instead of advancing immediately
+    if (phase === 'dragToAccepted' && !dragAnimLanded) {
+      // First tap: start drag animation
       setDragAnimStarted(true)
+      return
+    }
+    if (phase === 'dragToAccepted' && dragAnimLanded) {
+      // Second tap: advance after user has seen the landed state
+      setDragAnimLanded(false)
+      advance()
       return
     }
     advance()
   }
 
   const handleDragAnimationDone = () => {
+    // Animation landed — show continue button, wait for user tap to advance
     setDragAnimStarted(false)
-    advance()
+    setDragAnimLanded(true)
+  }
+
+  const handleClosedSectionReady = () => {
+    setClosedSectionReady(true)
   }
 
   // Continue button always uses inline variant now (no more tutorialSummary fullWidth)
@@ -216,7 +234,7 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
                   : null
               }
               onSwipeComplete={handleSwipeComplete}
-              onContinue={handleContinue}
+              onClosedSectionReady={handleClosedSectionReady}
               startDragAnimation={dragAnimStarted}
               onDragAnimationDone={handleDragAnimationDone}
             />
@@ -322,9 +340,17 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
       </div>
 
       {/* Layer 7: Continue/Done button (z-60) — hide during drag animation */}
-      {phaseConfig.showContinueButton && !dragAnimStarted && (
+      {(
+        (phaseConfig.showContinueButton && !dragAnimStarted) ||
+        dragAnimLanded ||
+        (phase === 'closedProjectsScroll' && closedSectionReady)
+      ) && (
         <ContinueButton
-          label={phaseConfig.continueLabel || 'CONTINUE'}
+          label={
+            dragAnimLanded ? 'CONTINUE' :
+            (phase === 'closedProjectsScroll' && closedSectionReady) ? 'CONTINUE' :
+            phaseConfig.continueLabel || 'CONTINUE'
+          }
           onClick={handleContinue}
           variant={continueVariant}
         />
