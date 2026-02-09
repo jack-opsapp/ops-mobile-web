@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { DEMO_TASK_TYPES, DEMO_CREW } from '@/lib/constants/demo-data'
 import type { TutorialPhase } from '@/lib/tutorial/TutorialPhase'
 
@@ -30,6 +30,7 @@ export function MockTaskForm({
   const [showTypeDropdown, setShowTypeDropdown] = useState(false)
   const [showCrewList, setShowCrewList] = useState(false)
   const [showDateSheet, setShowDateSheet] = useState(false)
+  const [dateSheetClosing, setDateSheetClosing] = useState(false) // close animation
   const [dateStartDate, setDateStartDate] = useState<number | null>(null)
   const [dateEndDate, setDateEndDate] = useState<number | null>(null)
 
@@ -570,8 +571,9 @@ export function MockTaskForm({
       </div>
 
       {/* Calendar Scheduler Sheet — slides up when date field is tapped */}
-      {showDateSheet && isFieldActive('date') && (
+      {(showDateSheet && (isFieldActive('date') || dateSheetClosing)) && (
         <MockCalendarSchedulerSheet
+          closing={dateSheetClosing}
           startDate={dateStartDate}
           endDate={dateEndDate}
           onSelectDate={(dayNum) => {
@@ -603,8 +605,13 @@ export function MockTaskForm({
               const dateStr = dateEndDate && dateEndDate !== dateStartDate
                 ? `${month} ${dateStartDate} - ${dateEndDate}`
                 : `${month} ${dateStartDate}, ${today.getFullYear()}`
-              onSelectDate(dateStr)
-              setShowDateSheet(false)
+              // Start close animation, then advance
+              setDateSheetClosing(true)
+              setTimeout(() => {
+                setShowDateSheet(false)
+                setDateSheetClosing(false)
+                onSelectDate(dateStr)
+              }, 350) // match slide-down animation duration
             }
           }}
           onCancel={() => setShowDateSheet(false)}
@@ -627,12 +634,14 @@ export function MockTaskForm({
 // =============================================================================
 
 function MockCalendarSchedulerSheet({
+  closing,
   startDate,
   endDate,
   onSelectDate,
   onConfirm,
   onCancel,
 }: {
+  closing?: boolean
   startDate: number | null
   endDate: number | null
   onSelectDate: (day: number) => void
@@ -663,8 +672,14 @@ function MockCalendarSchedulerSheet({
 
   return (
     <div
-      className="absolute inset-0 flex flex-col animate-fade-up"
-      style={{ zIndex: 60, background: '#000000' }}
+      className={`absolute inset-0 flex flex-col ${closing ? '' : 'animate-fade-up'}`}
+      style={{
+        zIndex: 60,
+        background: '#000000',
+        transform: closing ? 'translateY(100%)' : 'translateY(0)',
+        opacity: closing ? 0 : 1,
+        transition: closing ? 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s ease-in' : 'none',
+      }}
     >
       {/* Header: Cancel | Schedule Task | Clear */}
       <div className="flex items-center px-4" style={{ height: 60 }}>

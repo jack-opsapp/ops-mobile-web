@@ -135,8 +135,8 @@ export const PHASE_CONFIGS: Record<TutorialPhase, PhaseConfig> = {
     showContinueButton: false,
   },
   calendarMonth: {
-    tooltipText: 'PINCH OUTWARD TO EXPAND',
-    tooltipDescription: 'This shows more detail for each day. Pinch inward to shrink it back.',
+    tooltipText: 'TAP THE EXPAND BUTTON',
+    tooltipDescription: 'Expand or contract the calendar rows to see more or less detail for each day.',
     showContinueButton: true,
     continueLabel: 'DONE',
   },

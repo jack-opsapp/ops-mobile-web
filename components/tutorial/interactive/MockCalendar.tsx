@@ -205,7 +205,8 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
     return items
   }, [activeDay, today, userProject, getEventsForDay])
 
-  // Month view no longer needs expansion animation — it's a scrollable multi-month grid
+  // Month grid expansion level: 0=compact, 1=medium, 2=expanded
+  const [expansionLevel, setExpansionLevel] = useState(0)
 
   // =========================================================================
   // SWIPE GESTURE for week day row
@@ -246,10 +247,10 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
   // =========================================================================
 
   // Height reserved at top for the floating tooltip (no safe area on web)
-  const TOOLTIP_TOP_INSET = 100
+  const TOOLTIP_TOP_INSET = 80
 
   return (
-    <div className={`flex-1 flex flex-col ${isMonthView ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+    <div className="flex-1 flex flex-col overflow-hidden">
       {/* Spacer: push content below the floating tooltip */}
       <div style={{ height: TOOLTIP_TOP_INSET, flexShrink: 0 }} />
 
@@ -428,137 +429,201 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
       )}
 
       {isMonthView ? (
-        /* ===== MONTH VIEW — Scrollable multi-month grid ===== */
-        <div className="flex-1" style={{ padding: '0 20px', paddingBottom: 120 }}>
-          {multiMonthData.map((md, mIdx) => {
-            const isCurrent = md.year === today.getFullYear() && md.month === today.getMonth()
-            return (
-              <div key={`${md.year}-${md.month}`} style={{ marginBottom: 24 }}>
-                {/* Month label header */}
-                <div className="flex items-center justify-between" style={{ padding: '8px 4px', marginBottom: 4 }}>
-                  <span className="font-mohave font-bold text-[16px] text-white uppercase tracking-wider">
-                    {md.label}
-                  </span>
-                  {isCurrent && (
-                    <span className="font-kosugi text-[12px] text-ops-text-secondary">Today</span>
-                  )}
+        /* ===== MONTH VIEW — Single month grid with expand/contract ===== */
+        <div className="flex-1 flex flex-col overflow-hidden" style={{ padding: '0 20px' }}>
+          {/* Month navigation header */}
+          <div className="flex items-center justify-between" style={{ padding: '4px 0 8px' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-[#417394]">
+              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span className="font-mohave font-bold text-[18px] text-white uppercase tracking-wider">
+              {monthNames[monthData.month]} {monthData.year}
+            </span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-[#417394]">
+              <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+
+          {/* Card container for month grid — matching iOS #0D0D0D card */}
+          <div
+            className="flex-1 overflow-y-auto p-3"
+            style={{
+              background: '#0D0D0D',
+              borderRadius: 5,
+              touchAction: 'pan-y',
+            }}
+          >
+            {/* Day of week headers */}
+            <div className="grid grid-cols-7 mb-1">
+              {dayAbbreviations.map((abbr, i) => (
+                <div key={i} className="text-center font-kosugi text-[12px] text-ops-text-secondary py-1">
+                  {abbr}
                 </div>
+              ))}
+            </div>
 
-                {/* Card container for month grid — matching iOS #0D0D0D card */}
+            {/* Calendar grid */}
+            <div className="grid grid-cols-7">
+              {/* Empty cells for offset */}
+              {Array.from({ length: monthData.startDay }, (_, i) => (
                 <div
-                  className="p-3"
+                  key={`empty-${i}`}
                   style={{
-                    background: '#0D0D0D',
-                    borderRadius: 5,
+                    height: expansionLevel === 0 ? 48 : expansionLevel === 1 ? 80 : 120,
+                    transition: 'height 0.3s ease',
+                    borderBottom: '1px solid rgba(255,255,255,0.05)',
                   }}
-                >
-                  {/* Day of week headers */}
-                  <div className="grid grid-cols-7 mb-1">
-                    {dayAbbreviations.map((abbr, i) => (
-                      <div key={i} className="text-center font-kosugi text-[12px] text-ops-text-secondary py-1">
-                        {abbr}
-                      </div>
-                    ))}
-                  </div>
+                />
+              ))}
 
-                  {/* Calendar grid */}
-                  <div className="grid grid-cols-7 gap-px">
-                    {/* Empty cells for offset */}
-                    {Array.from({ length: md.startDay }, (_, i) => (
-                      <div key={`empty-${i}`} style={{ height: 80 }} />
-                    ))}
+              {/* Day cells */}
+              {Array.from({ length: monthData.daysInMonth }, (_, i) => {
+                const dayNum = i + 1
+                const isToday = dayNum === today.getDate()
+                const events = getEventsForDay(dayNum)
+                const allColors = [...events.map(e => e.color)]
 
-                    {/* Day cells */}
-                    {Array.from({ length: md.daysInMonth }, (_, i) => {
-                      const dayNum = i + 1
-                      const isToday = isCurrent && dayNum === today.getDate()
-                      const events = getEventsForDay(dayNum)
-                      const allColors = [...events.map(e => e.color)]
+                if (userProject && isToday) {
+                  allColors.unshift(userProject.taskTypeColor)
+                }
 
-                      if (userProject && isToday) {
-                        allColors.unshift(userProject.taskTypeColor)
-                      }
-                      const displayBars = allColors.slice(0, 3)
-                      const extraCount = allColors.length - 3
+                const eventNames = [
+                  'Coating', 'Paving', 'Cleaning', 'Sealing', 'Demolition', 'Installation', 'Diagnostic'
+                ]
 
-                      const eventNames = [
-                        'Coating', 'Paving', 'Cleaning', 'Sealing', 'Demolition', 'Installation', 'Diagnostic'
-                      ]
+                // How many bars to show depends on level
+                const maxBars = expansionLevel === 0 ? 2 : expansionLevel === 1 ? 3 : 4
+                const displayBars = allColors.slice(0, maxBars)
+                const extraCount = Math.max(0, allColors.length - maxBars)
+                // Bar height depends on level
+                const barHeight = expansionLevel === 0 ? 6 : expansionLevel === 1 ? 10 : 16
+                const cellHeight = expansionLevel === 0 ? 48 : expansionLevel === 1 ? 80 : 120
 
-                      return (
-                        <div
-                          key={dayNum}
-                          className="flex flex-col relative px-0.5 justify-start pt-1"
-                          style={{ height: 80 }}
-                        >
-                          {/* Today highlight — white circle behind number */}
-                          {isToday && (
-                            <div
-                              className="absolute"
-                              style={{
-                                width: 24,
-                                height: 24,
-                                borderRadius: 12,
-                                background: 'white',
-                                top: 2,
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                              }}
-                            />
-                          )}
-                          {/* Day number — bodyBold (16pt Mohave Bold) */}
-                          <span
-                            className="font-mohave font-bold relative z-10 self-center"
+                return (
+                  <div
+                    key={dayNum}
+                    className="flex flex-col relative px-[1px]"
+                    style={{
+                      height: cellHeight,
+                      transition: 'height 0.3s ease',
+                      borderBottom: '1px solid rgba(255,255,255,0.05)',
+                      paddingTop: 2,
+                    }}
+                  >
+                    {/* Today highlight — white circle behind number */}
+                    {isToday && (
+                      <div
+                        className="absolute"
+                        style={{
+                          width: 22,
+                          height: 22,
+                          borderRadius: 11,
+                          background: 'white',
+                          top: 1,
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                        }}
+                      />
+                    )}
+                    {/* Day number */}
+                    <span
+                      className="font-mohave font-bold relative z-10 self-center"
+                      style={{
+                        fontSize: expansionLevel === 0 ? 13 : 15,
+                        color: isToday ? '#000000' : 'rgba(255,255,255,0.7)',
+                        lineHeight: '22px',
+                        transition: 'font-size 0.3s ease',
+                      }}
+                    >
+                      {dayNum}
+                    </span>
+                    {/* Event bars */}
+                    {displayBars.length > 0 && (
+                      <div
+                        className="flex flex-col relative z-10 w-full"
+                        style={{
+                          gap: expansionLevel === 0 ? 1 : 2,
+                          marginTop: expansionLevel === 0 ? 1 : 2,
+                          paddingLeft: 1,
+                          paddingRight: 1,
+                        }}
+                      >
+                        {displayBars.map((color, j) => (
+                          <div
+                            key={j}
+                            className="w-full overflow-hidden"
                             style={{
-                              fontSize: 16,
-                              color: isToday ? '#000000' : 'rgba(255,255,255,0.7)',
-                              lineHeight: '24px',
+                              backgroundColor: `${color}33`,
+                              height: barHeight,
+                              borderRadius: 2,
+                              display: 'flex',
+                              alignItems: 'center',
+                              paddingLeft: expansionLevel >= 1 ? 3 : 1,
+                              transition: 'height 0.3s ease',
                             }}
                           >
-                            {dayNum}
-                          </span>
-                          {/* Event bars — 0.2 opacity bg, full color text */}
-                          {displayBars.length > 0 && (
-                            <div className="flex flex-col gap-[2px] mt-[2px] relative z-10 w-full px-[2px]">
-                              {displayBars.map((color, j) => (
-                                <div
-                                  key={j}
-                                  className="w-full overflow-hidden"
-                                  style={{
-                                    backgroundColor: `${color}33`,
-                                    height: 10,
-                                    borderRadius: 3,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    paddingLeft: 2,
-                                  }}
-                                >
-                                  <span
-                                    className="font-kosugi truncate leading-none"
-                                    style={{ fontSize: 7, color: color }}
-                                  >
-                                    {userProject && isToday && j === 0
-                                      ? userProject.name.slice(0, 6)
-                                      : eventNames[(dayNum + j) % eventNames.length].slice(0, 6)}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          {/* +N indicator */}
-                          {extraCount > 0 && (
-                            <span className="font-kosugi text-[7px] text-ops-text-tertiary relative z-10 mt-[1px] self-center">
-                              +{extraCount}
-                            </span>
-                          )}
-                        </div>
-                      )
-                    })}
+                            {expansionLevel >= 1 && (
+                              <span
+                                className="font-kosugi truncate leading-none"
+                                style={{
+                                  fontSize: expansionLevel === 1 ? 7 : 9,
+                                  color: color,
+                                }}
+                              >
+                                {userProject && isToday && j === 0
+                                  ? userProject.name.slice(0, expansionLevel === 2 ? 12 : 6)
+                                  : eventNames[(dayNum + j) % eventNames.length].slice(0, expansionLevel === 2 ? 12 : 6)}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* +N indicator */}
+                    {extraCount > 0 && expansionLevel >= 1 && (
+                      <span className="font-kosugi text-[7px] text-ops-text-tertiary relative z-10 mt-[1px] self-center">
+                        +{extraCount}
+                      </span>
+                    )}
                   </div>
-                </div>
-              </div>
-            )
-          })}
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Expand/Contract button — fixed at bottom of month view */}
+          <div className="flex justify-center" style={{ padding: '8px 0 100px' }}>
+            <button
+              onClick={() => setExpansionLevel(prev => (prev + 1) % 3)}
+              className="flex items-center gap-2 px-4 py-2"
+              style={{
+                background: '#0D0D0D',
+                borderRadius: 5,
+                border: '2px solid rgba(65, 115, 148, 0.6)',
+                boxShadow: '0 0 12px rgba(65, 115, 148, 0.3)',
+                animation: 'calendarPulse 2.4s ease-in-out infinite',
+              }}
+            >
+              {/* Expand/contract icon */}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-[#417394]">
+                {expansionLevel < 2 ? (
+                  // Expand arrows
+                  <>
+                    <path d="M12 3v18M3 12l9-9 9 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" />
+                    <path d="M7 7l5-5 5 5M7 17l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </>
+                ) : (
+                  // Contract arrows
+                  <>
+                    <path d="M7 3l5 5 5-5M7 21l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </>
+                )}
+              </svg>
+              <span className="font-mohave font-bold text-[14px] text-[#417394] uppercase tracking-wider">
+                {expansionLevel === 0 ? 'Expand' : expansionLevel === 1 ? 'Expand More' : 'Contract'}
+              </span>
+            </button>
+          </div>
         </div>
       ) : (
         /* ===== WEEK VIEW ===== */

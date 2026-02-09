@@ -195,7 +195,7 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
   return (
     <div
       className="relative w-full h-full overflow-hidden bg-ops-background"
-      style={{ touchAction: phase === 'calendarMonth' ? 'pan-y' : 'none' }}
+      style={{ touchAction: 'none' }}
     >
       {/* Layer 1: Mock app content (z-0) */}
       <div
@@ -203,7 +203,7 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
         style={{ zIndex: 0, opacity: contentDimmed ? 0.3 : 1 }}
       >
         {/* Content fills space above tab bar */}
-        <div className={`flex-1 ${phase === 'calendarMonth' ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+        <div className="flex-1 overflow-hidden">
           {showJobBoard && (
             <MockJobBoard
               phase={phase}

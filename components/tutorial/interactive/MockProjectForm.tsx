@@ -123,13 +123,12 @@ export function MockProjectForm({
             <button
               onClick={onCreate}
               disabled={!isFieldActive('create')}
-              className="font-mohave font-medium text-[16px] text-right"
+              className="font-mohave font-medium text-[16px] flex items-center justify-center"
               style={{
                 color: isFormValid && isFieldActive('create') ? '#417394' : '#777777',
-                minWidth: 70,
                 background: 'none',
                 cursor: isFieldActive('create') ? 'pointer' : 'default',
-                padding: '4px 8px',
+                padding: '4px 12px',
                 borderRadius: 5,
                 border: isFieldActive('create')
                   ? '2px solid #417394'

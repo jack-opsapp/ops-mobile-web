@@ -134,7 +134,7 @@ function MockSectionSelector({ selected, animateToProjects }: { selected: Sectio
 // Height reserved at top for the floating tooltip (no safe area on web)
 // iOS has ~47px safe area that pushes content below the tooltip naturally.
 // On web we must add this padding explicitly.
-const TOOLTIP_TOP_INSET = 100
+const TOOLTIP_TOP_INSET = 80
 
 export function MockJobBoard({ phase, userProject, onSwipeComplete, startDragAnimation, onDragAnimationDone }: MockJobBoardProps) {
   const isDashboardView = DASHBOARD_PHASES.includes(phase)
@@ -305,7 +305,7 @@ function DashboardView({
         <div
           className="flex h-full transition-transform duration-300 ease-out"
           style={{
-            transform: `translateX(-${currentPage * 100}%)`,
+            transform: `translateX(-${currentPage * (100 / columns.length)}%)`,
             width: `${columns.length * 100}%`,
           }}
         >
@@ -376,7 +376,7 @@ function DashboardView({
 
                 {/* Project cards list */}
                 <div
-                  className="flex-1 overflow-y-auto px-3 pb-28"
+                  className="flex-1 overflow-y-auto px-3 pb-4"
                   style={{ gap: 10, display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 2 }}
                 >
                   {colProjects.map(project => {
@@ -455,8 +455,8 @@ function DashboardView({
         )}
       </div>
 
-      {/* Page indicator - small rectangles matching iOS (20x2) */}
-      <div className="absolute bottom-20 left-0 right-0 flex justify-center" style={{ gap: 6, zIndex: 10 }}>
+      {/* Page indicator - small rectangles matching iOS (20x2), positioned above tab bar */}
+      <div className="flex justify-center" style={{ gap: 6, paddingTop: 8, paddingBottom: 8 }}>
         {columns.map((status, idx) => (
           <div
             key={status}
@@ -493,6 +493,7 @@ function ListView({
 
   // Status animation for projectListStatusDemo
   const [animatingStatus, setAnimatingStatus] = useState<string | null>(null)
+  const [finalStatus, setFinalStatus] = useState<string>('accepted') // preserves last status from demo
   const [cardDimmed, setCardDimmed] = useState(false) // dim/restore sub-animation
   const [showActiveOverlay, setShowActiveOverlay] = useState(false)
 
@@ -523,7 +524,7 @@ function ListView({
     if (phase === 'projectListStatusDemo') {
       userStatus = animatingStatus || 'accepted'
     } else if (phase === 'projectListSwipe') {
-      userStatus = 'inProgress'
+      userStatus = finalStatus // preserve status from status demo (should be 'completed')
     } else if (phase === 'closedProjectsScroll') {
       userStatus = 'closed'
     }
@@ -549,13 +550,16 @@ function ListView({
     }
 
     return { active, closed, userStatus }
-  }, [phase, userProject, animatingStatus])
+  }, [phase, userProject, animatingStatus, finalStatus])
 
   // Status demo animation: accepted -> inProgress -> completed
   // Per iOS: 0.3s dim to 0.3 opacity → status change → 0.3s restore, 1.8s between starts
   useEffect(() => {
     if (phase !== 'projectListStatusDemo') {
-      // Reset animation state when leaving this phase
+      // When leaving this phase, save the final animating status for subsequent phases
+      if (animatingStatus) {
+        setFinalStatus(animatingStatus)
+      }
       setAnimatingStatus(null)
       setCardDimmed(false)
       return
@@ -695,42 +699,25 @@ function ListView({
   }
 
   // Scroll animation for closedProjectsScroll phase
-  // iOS: 0.3s delay, 0.8s easeInOut scroll
+  // iOS: 0.3s delay, 0.8s easeInOut scroll — use CSS transition instead of rAF
+  const [scrollActive, setScrollActive] = useState(false)
+
   useEffect(() => {
     if (phase !== 'closedProjectsScroll') {
       setScrollOffset(0)
+      setScrollActive(false)
       return
     }
 
     if (measuredScrollTarget === 0) return
 
-    let frame: number
-    let start: number | null = null
-    const duration = 800
-    const target = measuredScrollTarget
-
-    function animate(timestamp: number) {
-      if (!start) start = timestamp
-      const progress = Math.min((timestamp - start) / duration, 1)
-      // easeInOut cubic bezier approximation
-      const eased = progress < 0.5
-        ? 4 * progress * progress * progress
-        : 1 - Math.pow(-2 * progress + 2, 3) / 2
-      setScrollOffset(eased * target)
-
-      if (progress < 1) {
-        frame = requestAnimationFrame(animate)
-      }
-    }
-
+    // Set the target offset and activate scroll via CSS transition after delay
     const timeout = setTimeout(() => {
-      frame = requestAnimationFrame(animate)
+      setScrollOffset(measuredScrollTarget)
+      setScrollActive(true)
     }, 300) // 0.3s delay before scroll starts
 
-    return () => {
-      clearTimeout(timeout)
-      if (frame) cancelAnimationFrame(frame)
-    }
+    return () => clearTimeout(timeout)
   }, [phase, measuredScrollTarget])
 
   const { active, closed, userStatus } = getOrderedProjects()
@@ -762,7 +749,7 @@ function ListView({
         className="flex-1 overflow-y-auto"
         style={{
           transform: `translateY(-${scrollOffset}px)`,
-          transition: 'transform 0.1s linear',
+          transition: scrollActive ? 'transform 0.8s cubic-bezier(0.42, 0, 0.58, 1)' : 'none',
           paddingTop: 12,
           paddingBottom: 120,
         }}
