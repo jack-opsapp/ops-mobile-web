@@ -177,10 +177,14 @@ function DashboardView({
   const touchStartX = useRef<number | null>(null)
   const touchStartOffset = useRef<number>(0)
 
-  // Drag animation state for dragToAccepted
-  const [dragAnimPhase, setDragAnimPhase] = useState<'idle' | 'arrows' | 'sliding' | 'landed'>('idle')
+  // Drag animation state for dragToAccepted — simulates iOS long-press + drag sequence
+  const [dragAnimPhase, setDragAnimPhase] = useState<
+    'idle' | 'pressHold' | 'dragging' | 'sliding' | 'landed'
+  >('idle')
   const [arrowLit, setArrowLit] = useState(0) // 0-3 chevrons lit
   const [acceptedGlow, setAcceptedGlow] = useState(false)
+  const [floatingCardPos, setFloatingCardPos] = useState({ x: 50, y: 50 }) // percentage position
+  const [cardLifted, setCardLifted] = useState(false) // card in column dims/lifts
 
   // Group projects by status
   const getProjectsByStatus = useCallback((): Record<StatusColumn, DemoProject[]> => {
@@ -226,42 +230,69 @@ function DashboardView({
     }
   }, [phase])
 
-  // Drag animation sequence — only starts when startDragAnimation becomes true
+  // Drag animation sequence — simulates iOS long-press → drag → drop
+  // Phase 1: "PRESS AND HOLD" instruction (before startDragAnimation)
+  // Phase 2: Card lifts, floating card appears, arrows illuminate as card moves right
+  // Phase 3: Card reaches right edge zone, page slides to accepted column
+  // Phase 4: Card lands in accepted column with glow
   useEffect(() => {
-    if (phase !== 'dragToAccepted' || !userProject || !startDragAnimation) return
+    if (phase !== 'dragToAccepted' || !userProject) return
+
+    // Show "PRESS AND HOLD" instruction immediately
+    if (!startDragAnimation) {
+      setDragAnimPhase('pressHold')
+      return
+    }
+
     const timers: NodeJS.Timeout[] = []
 
-    // T+0: Show arrows phase
-    setDragAnimPhase('arrows')
+    // T+0: Card lifts — iOS: isLongPressing=true, card dims to 0.3, scale 0.95
+    setDragAnimPhase('dragging')
+    setCardLifted(true)
     setArrowLit(0)
+    setFloatingCardPos({ x: 35, y: 40 }) // Start near card position
 
-    // T+400, T+800, T+1200: Light up chevrons one by one
-    timers.push(setTimeout(() => setArrowLit(1), 400))
-    timers.push(setTimeout(() => setArrowLit(2), 800))
-    timers.push(setTimeout(() => setArrowLit(3), 1200))
+    // T+300: First arrow lights — card moves right (25% progress)
+    timers.push(setTimeout(() => {
+      setArrowLit(1)
+      setFloatingCardPos({ x: 50, y: 38 })
+    }, 400))
 
-    // T+1600: Slide page from estimated to accepted
+    // T+700: Second arrow — card moves further right (50%)
+    timers.push(setTimeout(() => {
+      setArrowLit(2)
+      setFloatingCardPos({ x: 62, y: 36 })
+    }, 800))
+
+    // T+1100: Third arrow — card near right edge (75%+)
+    timers.push(setTimeout(() => {
+      setArrowLit(3)
+      setFloatingCardPos({ x: 78, y: 34 })
+    }, 1200))
+
+    // T+1600: Card dropped in right zone — slide page to accepted
     timers.push(setTimeout(() => {
       setDragAnimPhase('sliding')
+      setCardLifted(false)
       const acceptedIdx = columns.indexOf('accepted')
       if (acceptedIdx >= 0) setCurrentPage(acceptedIdx)
-    }, 1600))
+    }, 1700))
 
-    // T+2100: Card has landed in accepted column, glow
+    // T+2200: Card landed in accepted column
     timers.push(setTimeout(() => {
       setDragAnimPhase('landed')
       setAcceptedGlow(true)
-    }, 2100))
+    }, 2200))
 
-    // T+2800: Remove glow
+    // T+2900: Remove glow
     timers.push(setTimeout(() => {
       setAcceptedGlow(false)
-    }, 2800))
+    }, 2900))
 
-    // T+3200: Animation complete — notify parent to advance
+    // T+3400: Done
     timers.push(setTimeout(() => {
       onDragAnimationDone?.()
-    }, 3200))
+    }, 3400))
 
     return () => timers.forEach(t => clearTimeout(t))
   }, [phase, userProject, startDragAnimation])
@@ -293,10 +324,10 @@ function DashboardView({
       {/* Section Selector - DASHBOARD selected */}
       <MockSectionSelector selected="DASHBOARD" />
 
-      {/* Paging container */}
+      {/* Paging container — flex-1 min-h-0 ensures it fills remaining vertical space */}
       <div
         ref={containerRef}
-        className="flex-1 relative overflow-hidden"
+        className="flex-1 relative overflow-hidden min-h-0"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         style={{ paddingTop: 4 }}
@@ -380,13 +411,23 @@ function DashboardView({
                 >
                   {colProjects.map(project => {
                     const isUserCard = userProject && project.id === userProject.id
+                    // iOS: when card is lifted (long press), original card dims to 0.3 opacity
+                    const isLifted = isUserCard && cardLifted
                     return (
-                      <MockProjectCard
+                      <div
                         key={project.id}
-                        project={project}
-                        variant="dashboard"
-                        isHighlighted={!!isUserCard && phase === 'dragToAccepted'}
-                      />
+                        style={{
+                          opacity: isLifted ? 0.3 : 1,
+                          transform: isLifted ? 'scale(0.95)' : 'scale(1)',
+                          transition: 'opacity 0.2s ease, transform 0.2s ease',
+                        }}
+                      >
+                        <MockProjectCard
+                          project={project}
+                          variant="dashboard"
+                          isHighlighted={!!isUserCard && phase === 'dragToAccepted' && !cardLifted}
+                        />
+                      </div>
                     )
                   })}
 
@@ -418,75 +459,135 @@ function DashboardView({
           })}
         </div>
 
-        {/* Right edge "ACCEPTED" bar — visible during arrows and sliding phases */}
-        {phase === 'dragToAccepted' && (dragAnimPhase === 'arrows' || dragAnimPhase === 'sliding') && (
+        {/* === iOS-matching drag overlay === */}
+
+        {/* Right edge zone — iOS: 6pt bar + chevron + rotated status name + carousel fade */}
+        {phase === 'dragToAccepted' && dragAnimPhase === 'dragging' && (
           <div
-            className="absolute top-0 bottom-0 right-0 flex items-center justify-center pointer-events-none"
-            style={{
-              width: 48,
-              zIndex: 10,
-              background: `${STATUS_COLORS.accepted}${arrowLit >= 3 ? '40' : '20'}`,
-              borderLeft: `2px solid ${STATUS_COLORS.accepted}`,
-              transition: 'background 0.3s ease',
-            }}
+            className="absolute top-0 bottom-0 right-0 pointer-events-none flex"
+            style={{ zIndex: 10, width: 80 }}
           >
-            <span
-              className="font-kosugi font-bold uppercase"
+            {/* Carousel fade gradient — iOS: carouselFadeRight, 74pt wide */}
+            <div
               style={{
-                fontSize: 11,
-                color: STATUS_COLORS.accepted,
-                writingMode: 'vertical-rl',
-                textOrientation: 'mixed',
-                transform: 'rotate(180deg)',
-                letterSpacing: 2,
+                flex: 1,
+                background: 'linear-gradient(to right, transparent, rgba(0,0,0,0.8))',
               }}
-            >
-              Accepted
-            </span>
+            />
+            {/* Vertical status bar — iOS: 6pt wide, status color */}
+            <div
+              style={{
+                width: 6,
+                background: `${STATUS_COLORS.accepted}${arrowLit >= 3 ? 'FF' : '99'}`,
+                transition: 'background 0.2s ease',
+              }}
+            />
+            {/* Chevron + label overlay */}
+            <div className="absolute inset-0 flex items-center justify-end" style={{ paddingRight: 12 }}>
+              <div className="flex flex-col items-center" style={{ gap: 4 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  style={{ color: STATUS_COLORS.accepted, opacity: arrowLit >= 3 ? 1 : 0.6 }}
+                >
+                  <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span
+                  className="font-kosugi uppercase"
+                  style={{
+                    fontSize: 10,
+                    color: STATUS_COLORS.accepted,
+                    opacity: arrowLit >= 3 ? 1 : 0.6,
+                    writingMode: 'vertical-rl',
+                    transform: 'rotate(180deg)',
+                    letterSpacing: 2,
+                  }}
+                >
+                  Accepted
+                </span>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Chevron arrows + label overlay — positioned in lower-center with black glow */}
-        {phase === 'dragToAccepted' && (dragAnimPhase === 'arrows' || dragAnimPhase === 'sliding') && (
+        {/* Floating card overlay — iOS: DraggingCardOverlay, 256pt wide, scale 0.98, shadow, follows cursor */}
+        {phase === 'dragToAccepted' && dragAnimPhase === 'dragging' && userProject && (
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              left: `${floatingCardPos.x}%`,
+              top: `${floatingCardPos.y}%`,
+              transform: 'translate(-50%, -100%) scale(0.98)',
+              transition: 'left 0.4s ease-out, top 0.4s ease-out',
+              zIndex: 15,
+              width: 200,
+              filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.8))',
+            }}
+          >
+            <MockProjectCard
+              project={userProject}
+              variant="dashboard"
+              isHighlighted={false}
+            />
+          </div>
+        )}
+
+        {/* Center tutorial overlay — iOS: tutorialCenterArrows */}
+        {/* Phase: pressHold = "PRESS AND HOLD", dragging = arrows + "DRAG TO ACCEPTED" */}
+        {phase === 'dragToAccepted' && (dragAnimPhase === 'pressHold' || dragAnimPhase === 'dragging') && (
           <div
             className="absolute left-0 right-0 flex justify-center pointer-events-none"
-            style={{ bottom: 60, zIndex: 10 }}
+            style={{ bottom: 48, zIndex: 12 }}
           >
             <div
               className="flex flex-col items-center"
               style={{
-                gap: 8,
-                padding: '12px 20px',
-                borderRadius: 12,
+                gap: 10,
+                padding: '16px 24px',
+                borderRadius: 16,
                 background: 'rgba(0, 0, 0, 0.85)',
-                boxShadow: '0 0 24px rgba(0, 0, 0, 0.9), 0 0 60px rgba(0, 0, 0, 0.6)',
+                boxShadow: '0 0 30px rgba(0, 0, 0, 0.9), 0 0 80px rgba(0, 0, 0, 0.5)',
               }}
             >
-              <div className="flex items-center" style={{ gap: 6 }}>
-                {[1, 2, 3].map(n => (
-                  <svg
-                    key={n}
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    style={{
-                      opacity: arrowLit >= n ? 1 : 0.2,
-                      transform: arrowLit >= n ? 'scale(1.2)' : 'scale(1)',
-                      transition: 'opacity 0.15s ease-out, transform 0.15s ease-out',
-                      color: arrowLit >= n ? '#417394' : '#AAAAAA',
-                    }}
+              {dragAnimPhase === 'pressHold' ? (
+                /* Before drag: hand icon + "PRESS AND HOLD" — iOS: hand.tap.fill, oscillating */
+                <>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-[#417394]"
+                    style={{ animation: 'pressHoldOscillate 0.6s ease-in-out infinite alternate' }}
                   >
-                    <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M18 8V6a4 4 0 00-8 0v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M14 8h4a2 2 0 012 2v6a6 6 0 01-12 0v-4a2 2 0 012-2h4z" stroke="currentColor" strokeWidth="1.5" />
+                    <circle cx="14" cy="12" r="1" fill="currentColor" />
                   </svg>
-                ))}
-              </div>
-              <span
-                className="font-mohave font-bold text-[14px] uppercase tracking-wider"
-                style={{ color: '#417394' }}
-              >
-                Drag to Accepted
-              </span>
+                  <span className="font-kosugi font-bold text-[12px] text-[#417394] uppercase tracking-wider">
+                    Press and hold the project card
+                  </span>
+                </>
+              ) : (
+                /* During drag: 3 chevrons + "DRAG TO ACCEPTED LIST" — iOS: 32pt bold chevrons */
+                <>
+                  <div className="flex items-center" style={{ gap: 8 }}>
+                    {[1, 2, 3].map(n => (
+                      <svg
+                        key={n}
+                        width="28"
+                        height="28"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        style={{
+                          opacity: arrowLit >= n ? 1 : 0.2,
+                          transform: arrowLit >= n ? 'scale(1.2)' : 'scale(1)',
+                          transition: 'opacity 0.15s ease-out, transform 0.15s ease-out',
+                          color: '#417394',
+                        }}
+                      >
+                        <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    ))}
+                  </div>
+                  <span className="font-kosugi font-bold text-[12px] text-[#417394] uppercase tracking-wider">
+                    Drag to Accepted List
+                  </span>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -721,22 +822,28 @@ function ListView({
     const threshold = cardWidth * SWIPE_THRESHOLD_RATIO
 
     if (userSwipeOffset >= threshold) {
-      // iOS: snap back to center, show CLOSED confirmation flash, then fade
+      // iOS exact sequence:
+      // 1. confirmingStatus set, isChangingStatus=true
+      // 2. swipeOffset snaps to 0 with spring(0.2, 0.85) — card content opacity → 0
+      // 3. RevealedStatusCard shows at full opacity (status color bg 0.1 + stroke)
+      // 4. After 0.05s: performStatusChange
+      // 5. After another 0.05s: isChangingStatus=false with spring(0.2, 0.85)
       swipeCompleted.current = true
       setSwipeDismissed(true)
-      setUserSwipeOffset(0) // Snap back to center
-      setShowConfirmFlash(true) // Show "CLOSED" confirmation overlay
+      setUserSwipeOffset(0) // Snap back to center — spring animation via CSS
+      setShowConfirmFlash(true) // Show RevealedStatusCard confirmation
 
-      // T+400ms: Hide flash, start card fade-out
+      // T+200ms: Card content already faded via CSS transition
+      // T+300ms: Start fading out the confirmation
       setTimeout(() => {
         setShowConfirmFlash(false)
         setCardFading(true)
-      }, 400)
+      }, 300)
 
       // Advance tutorial
       setTimeout(() => {
         onSwipeComplete?.()
-      }, 800)
+      }, 700)
     } else {
       // Below threshold: spring snap back
       setUserSwipeOffset(0)
@@ -899,25 +1006,30 @@ function ListView({
                         zIndex: 2,
                       }}
                     >
-                      {/* iOS RevealedStatusCard confirmation flash — shows "CLOSED" briefly after swipe completes */}
+                      {/* iOS RevealedStatusCard — status color bg(0.1) + stroke(1px) + status text */}
                       {showConfirmFlash && (
                         <div
-                          className="absolute inset-0 flex items-center justify-center rounded-[5px]"
+                          className="absolute inset-0 flex items-center rounded-[5px]"
                           style={{
                             background: 'rgba(233, 233, 233, 0.1)',
                             border: '1px solid #E9E9E9',
                             zIndex: 5,
+                            paddingLeft: 20,
                           }}
                         >
                           <span
-                            className="font-mohave font-bold uppercase tracking-wider"
-                            style={{ fontSize: 18, color: '#E9E9E9' }}
+                            className="font-mohave font-bold uppercase"
+                            style={{ fontSize: 16, color: '#E9E9E9' }}
                           >
                             CLOSED
                           </span>
                         </div>
                       )}
-                      <div style={{ opacity: showConfirmFlash ? 0 : 1, transition: 'opacity 0.15s ease' }}>
+                      {/* iOS: card content opacity → 0 when isChangingStatus, spring(0.2, 0.85) */}
+                      <div style={{
+                        opacity: showConfirmFlash ? 0 : 1,
+                        transition: 'opacity 0.2s cubic-bezier(0.2, 0.85, 0.4, 1)',
+                      }}>
                         <MockProjectCard
                           project={project}
                           variant="list"
@@ -998,6 +1110,10 @@ function ListView({
           0% { opacity: 0; transform: scale(0.98); }
           30% { opacity: 1; transform: scale(1); }
           100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes pressHoldOscillate {
+          0% { transform: translateX(-8px); }
+          100% { transform: translateX(8px); }
         }
       `}</style>
     </>
