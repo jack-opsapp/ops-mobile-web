@@ -126,11 +126,11 @@ function DashboardCard({
         <div className="flex-1 flex" style={{ padding: 12 }}>
           {/* Left content */}
           <div className="flex-1 flex flex-col justify-between min-w-0">
-            {/* Project title - Mohave Medium, 16pt equivalent, white, uppercased, lineLimit 2 */}
+            {/* Project title — iOS: bodyBold = Mohave-Medium 16pt, white, lineLimit 2 */}
             <p
-              className="font-mohave font-medium text-white leading-tight uppercase"
+              className="font-mohave font-medium text-white leading-tight"
               style={{
-                fontSize: 14,
+                fontSize: 16,
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
@@ -140,29 +140,29 @@ function DashboardCard({
               {project.name}
             </p>
 
-            {/* Client name - Kosugi 14pt equivalent, secondaryText, lineLimit 1 */}
+            {/* Client name — iOS: caption = Kosugi-Regular 14pt, secondaryText (#AAAAAA), lineLimit 1 */}
             <p
-              className="font-kosugi text-ops-text-secondary truncate"
-              style={{ fontSize: 11, marginTop: 2 }}
+              className="font-kosugi truncate"
+              style={{ fontSize: 14, marginTop: 4, color: '#AAAAAA' }}
             >
               {project.clientName}
             </p>
 
-            {/* Left metadata: calendar + date */}
-            <div className="flex items-center gap-1 mt-1.5">
+            {/* Left metadata: calendar + date — iOS: smallCaption = Kosugi 12pt, tertiaryText */}
+            <div className="flex items-center mt-2" style={{ gap: 4 }}>
               <svg
-                width="10"
-                height="10"
+                width="11"
+                height="11"
                 viewBox="0 0 16 16"
                 fill="none"
-                className="text-ops-text-tertiary flex-shrink-0"
+                style={{ color: '#777777', flexShrink: 0 }}
               >
                 <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
                 <line x1="2" y1="6.5" x2="14" y2="6.5" stroke="currentColor" strokeWidth="1.5" />
                 <line x1="5.5" y1="1.5" x2="5.5" y2="4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 <line x1="10.5" y1="1.5" x2="10.5" y2="4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <span className="font-kosugi text-ops-text-tertiary" style={{ fontSize: 10 }}>
+              <span className="font-kosugi" style={{ fontSize: 12, color: '#777777' }}>
                 {mockDate}
               </span>
             </div>
@@ -170,14 +170,14 @@ function DashboardCard({
 
           {/* Right metadata column */}
           <div className="flex flex-col items-end justify-between ml-2 flex-shrink-0" style={{ gap: 2 }}>
-            {/* Status badge — with optional pulsing glow */}
+            {/* Status badge — iOS: smallCaption = Kosugi 12pt, with optional pulsing glow */}
             <span
               className="font-kosugi uppercase whitespace-nowrap"
               style={{
-                fontSize: 10,
+                fontSize: 12,
                 lineHeight: 1,
                 color: statusColor,
-                padding: '3px 6px',
+                padding: '4px 8px',
                 borderRadius: 4,
                 background: `${statusColor}1A`,
                 border: `1px solid ${statusColor}`,
@@ -191,26 +191,26 @@ function DashboardCard({
               {statusLabel}
             </span>
 
-            {/* Task count */}
-            <div className="flex items-center gap-1">
-              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" className="text-ops-text-tertiary">
+            {/* Task count — iOS: smallCaption = Kosugi 12pt */}
+            <div className="flex items-center" style={{ gap: 4 }}>
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ color: '#777777' }}>
                 <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.3" />
                 <path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="font-kosugi text-ops-text-tertiary" style={{ fontSize: 10 }}>
+              <span className="font-kosugi" style={{ fontSize: 12, color: '#777777' }}>
                 {taskCount}
               </span>
             </div>
 
             <div className="flex-1" />
 
-            {/* Duration */}
-            <div className="flex items-center gap-1">
-              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" className="text-ops-text-tertiary">
+            {/* Duration — iOS: smallCaption = Kosugi 12pt */}
+            <div className="flex items-center" style={{ gap: 4 }}>
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ color: '#777777' }}>
                 <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3" />
                 <path d="M8 4.5V8l2.5 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
               </svg>
-              <span className="font-kosugi text-ops-text-tertiary" style={{ fontSize: 10 }}>
+              <span className="font-kosugi" style={{ fontSize: 12, color: '#777777' }}>
                 1d
               </span>
             </div>
@@ -222,7 +222,9 @@ function DashboardCard({
 }
 
 // --- List variant (UniversalJobBoardCard from iOS) ---
-// Used in the scrollable project list view
+// Matches projectCardContent in UniversalJobBoardCard.swift:387-501
+// Layout: HStack(spacing:0) { VStack { title/subtitle(spacing:4), metadataRow } } + badge overlay
+// Background: cardBackgroundDark (#1F293D), NO left status bar, padding 14
 function ListCard({
   project,
   effectiveStatus,
@@ -251,13 +253,13 @@ function ListCard({
       className={`overflow-hidden ${className}`}
       style={{
         height: 80,
-        background: '#0D0D0D',
+        background: '#1F293D', // iOS: cardBackgroundDark
         borderRadius: 5,
         border: showShimmer
           ? '2px solid #417394'
           : isHighlighted
             ? '2px solid rgba(65, 115, 148, 0.8)'
-            : '1px solid rgba(255,255,255,0.2)',
+            : '1px solid rgba(255,255,255,0.2)', // iOS: cardBorder
         boxShadow: isHighlighted
           ? '0 0 16px rgba(65, 115, 148, 0.25)'
           : 'none',
@@ -284,85 +286,79 @@ function ListCard({
           />
         </div>
       )}
+      {/* iOS: HStack(spacing: 0) — NO left status bar */}
       <div className="flex h-full" style={{ position: 'relative', zIndex: 2 }}>
-        {/* Left status bar - 4px wide with transition for status animation */}
-        <div
-          className="flex-shrink-0"
-          style={{
-            width: 4,
-            background: statusColor,
-            transition: 'background 0.3s ease',
-          }}
-        />
-        {/* Left content area */}
+        {/* iOS: VStack(alignment: .leading, spacing: 8) { title/subtitle block, metadataRow }
+             .frame(maxHeight: .infinity, alignment: .bottom) .padding(14) */}
         <div className="flex-1 flex flex-col justify-end min-w-0" style={{ padding: 14 }}>
-          {/* Title + subtitle block */}
-          <div className="flex flex-col" style={{ gap: 2 }}>
-            {/* Title - bodyBold / 16pt Mohave Medium, white, lineLimit 1 */}
+          {/* iOS: VStack(alignment: .leading, spacing: 4) { titleText, subtitleText } */}
+          <div className="flex flex-col" style={{ gap: 4 }}>
+            {/* iOS: titleText — bodyBold = Mohave-Medium 16pt, primaryText (white), lineLimit 1 */}
             <p
-              className="font-mohave font-medium text-white truncate uppercase"
-              style={{ fontSize: 14, lineHeight: 1.2 }}
+              className="font-mohave font-medium text-white truncate"
+              style={{ fontSize: 16, lineHeight: 1.2 }}
             >
               {project.name}
             </p>
 
-            {/* Subtitle / client - caption / 14pt Kosugi, secondaryText, lineLimit 1 */}
+            {/* iOS: subtitleText — caption = Kosugi-Regular 14pt, secondaryText (#AAAAAA), lineLimit 1 */}
             <p
-              className="font-kosugi text-ops-text-secondary truncate"
-              style={{ fontSize: 11, lineHeight: 1.3 }}
+              className="font-kosugi truncate"
+              style={{ fontSize: 14, lineHeight: 1.3, color: '#AAAAAA' }}
             >
               {project.clientName}
             </p>
           </div>
 
-          {/* Metadata row - spacing 12 between items */}
-          <div className="flex items-center mt-2" style={{ gap: 10, height: 14 }}>
+          {/* iOS: metadataRow — HStack(spacing: 12), icons .system(size: 11), text smallCaption = Kosugi 12pt, tertiaryText (#777777) */}
+          <div className="flex items-center" style={{ gap: 12, marginTop: 8, height: 16 }}>
             {/* Location */}
-            <div className="flex items-center gap-1 min-w-0" style={{ maxWidth: '35%' }}>
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" className="text-ops-text-tertiary flex-shrink-0">
+            <div className="flex items-center min-w-0" style={{ gap: 4, maxWidth: '35%' }}>
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ color: '#777777', flexShrink: 0 }}>
                 <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6c0 3.5 4.5 8.5 4.5 8.5s4.5-5 4.5-8.5c0-2.5-2-4.5-4.5-4.5z" stroke="currentColor" strokeWidth="1.3" />
                 <circle cx="8" cy="6" r="1.5" stroke="currentColor" strokeWidth="1.3" />
               </svg>
-              <span className="font-kosugi text-ops-text-tertiary truncate" style={{ fontSize: 10 }}>
+              <span className="font-kosugi truncate" style={{ fontSize: 12, color: '#777777' }}>
                 {mockAddress}
               </span>
             </div>
 
             {/* Calendar + date */}
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" className="text-ops-text-tertiary">
+            <div className="flex items-center flex-shrink-0" style={{ gap: 4 }}>
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ color: '#777777' }}>
                 <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
                 <line x1="2" y1="6.5" x2="14" y2="6.5" stroke="currentColor" strokeWidth="1.3" />
                 <line x1="5.5" y1="1.5" x2="5.5" y2="4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                 <line x1="10.5" y1="1.5" x2="10.5" y2="4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
               </svg>
-              <span className="font-kosugi text-ops-text-tertiary" style={{ fontSize: 10 }}>
+              <span className="font-kosugi" style={{ fontSize: 12, color: '#777777' }}>
                 {mockDate}
               </span>
             </div>
 
             {/* Person count */}
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" className="text-ops-text-tertiary">
+            <div className="flex items-center flex-shrink-0" style={{ gap: 4 }}>
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ color: '#777777' }}>
                 <circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.3" />
                 <path d="M1.5 13.5c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                 <circle cx="11" cy="5.5" r="2" stroke="currentColor" strokeWidth="1.3" />
                 <path d="M11 9.5c2 0 3.5 1.2 3.5 3.2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
               </svg>
-              <span className="font-kosugi text-ops-text-tertiary" style={{ fontSize: 10 }}>
+              <span className="font-kosugi" style={{ fontSize: 12, color: '#777777' }}>
                 {teamCount}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Right badges column */}
-        <div className="flex flex-col items-end justify-between flex-shrink-0" style={{ padding: '8px 14px 8px 0', minWidth: 80 }}>
-          {/* Top: Status badge — with transitions for status animation */}
+        {/* iOS: Badge overlay — VStack(alignment: .trailing, spacing: 0) .padding(8) */}
+        <div className="flex flex-col items-end justify-between flex-shrink-0" style={{ padding: 8, minWidth: 80 }}>
+          {/* iOS: Status badge — smallCaption = Kosugi 12pt, status color, padding 8h 4v,
+               fill status.color.opacity(0.1), stroke status.color 1px, cornerRadius 4 */}
           <span
             className="font-kosugi uppercase whitespace-nowrap"
             style={{
-              fontSize: 12, // smallCaption (12pt Kosugi)
+              fontSize: 12,
               lineHeight: 1,
               color: statusColor,
               padding: '4px 8px',
@@ -375,11 +371,11 @@ function ListCard({
             {statusLabel}
           </span>
 
-          {/* Middle: Task count badge */}
+          {/* iOS: Task count badge — smallCaption, schedulingBadgeColor, cardBackground fill */}
           <span
             className="font-kosugi uppercase whitespace-nowrap"
             style={{
-              fontSize: 12, // smallCaption (12pt Kosugi)
+              fontSize: 12,
               lineHeight: 1,
               color: '#AAAAAA',
               padding: '4px 8px',
@@ -391,7 +387,7 @@ function ListCard({
             {taskCount} {taskCount === 1 ? 'TASK' : 'TASKS'}
           </span>
 
-          {/* Bottom: Placeholder for unscheduled badge (empty to maintain spacing) */}
+          {/* Bottom spacer (iOS: Color.clear.frame(height: 0)) */}
           <div style={{ height: 0 }} />
         </div>
       </div>

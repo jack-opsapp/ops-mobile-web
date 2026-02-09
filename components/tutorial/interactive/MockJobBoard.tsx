@@ -620,16 +620,23 @@ export function ClosedProjectsSheet({
       {/* Spacer for tooltip above */}
       <div style={{ height: 80, flexShrink: 0 }} />
 
-      {/* iOS: .toolbar with .principal title + .navigationBarTrailing DONE button */}
+      {/* iOS: .toolbar { .principal: bodyBold = Mohave-Medium 16pt, .trailing: DONE in bodyBold, primaryAccent } */}
       <div
-        className="flex items-center justify-center flex-shrink-0 relative"
+        className="flex items-center justify-between flex-shrink-0"
         style={{ padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
       >
+        <div style={{ width: 50 }} />
         <span
-          className="font-mohave font-bold text-white uppercase"
+          className="font-mohave font-medium text-white uppercase"
           style={{ fontSize: 16 }}
         >
           CLOSED PROJECTS
+        </span>
+        <span
+          className="font-mohave font-medium uppercase"
+          style={{ fontSize: 16, color: '#FF7733', width: 50, textAlign: 'right' }}
+        >
+          DONE
         </span>
       </div>
 
@@ -649,7 +656,7 @@ export function ClosedProjectsSheet({
             <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
             <path d="M20 20l-4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
-          <span className="font-mohave text-[16px]" style={{ color: '#AAAAAA' }}>
+          <span className="font-mohave" style={{ fontSize: 16, fontWeight: 400, color: '#999999' }}>
             Search projects...
           </span>
         </div>
