@@ -748,11 +748,10 @@ function ListView({
 
       {/* Scrollable project list — LazyVStack with 12pt spacing, matching iOS */}
       <div
-        className="flex-1 overflow-hidden"
-        style={{ position: 'relative', zIndex: 1 }}
+        className="flex-1 overflow-hidden relative"
+        style={{ zIndex: 1 }}
       >
         <div
-          className="absolute inset-0"
           style={{
             transform: `translateY(-${scrollOffset}px)`,
             transition: scrollActive ? 'transform 0.8s cubic-bezier(0.42, 0, 0.58, 1)' : 'none',
