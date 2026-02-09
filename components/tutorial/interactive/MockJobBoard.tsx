@@ -9,7 +9,7 @@ interface MockJobBoardProps {
   phase: TutorialPhase
   userProject: DemoProject | null
   onSwipeComplete?: () => void
-  onClosedSheetReady?: () => void
+  onClosedSectionViewed?: () => void
   startDragAnimation?: boolean
   onDragAnimationDone?: () => void
 }
@@ -136,7 +136,7 @@ function MockSectionSelector({ selected, animateToProjects }: { selected: Sectio
 // On web we must add this padding explicitly.
 const TOOLTIP_TOP_INSET = 80
 
-export function MockJobBoard({ phase, userProject, onSwipeComplete, onClosedSheetReady, startDragAnimation, onDragAnimationDone }: MockJobBoardProps) {
+export function MockJobBoard({ phase, userProject, onSwipeComplete, onClosedSectionViewed, startDragAnimation, onDragAnimationDone }: MockJobBoardProps) {
   const isDashboardView = DASHBOARD_PHASES.includes(phase)
   const isListView = LIST_PHASES.includes(phase)
 
@@ -151,7 +151,7 @@ export function MockJobBoard({ phase, userProject, onSwipeComplete, onClosedShee
       {viewMode === 'dashboard' ? (
         <DashboardView phase={phase} userProject={userProject} startDragAnimation={startDragAnimation} onDragAnimationDone={onDragAnimationDone} />
       ) : (
-        <ListView phase={phase} userProject={userProject} onSwipeComplete={onSwipeComplete} onClosedSheetReady={onClosedSheetReady} />
+        <ListView phase={phase} userProject={userProject} onSwipeComplete={onSwipeComplete} onClosedSectionViewed={onClosedSectionViewed} />
       )}
     </div>
   )
@@ -598,130 +598,6 @@ function DashboardView({
 }
 
 // =============================================================================
-// CLOSED PROJECTS SHEET - Matches iOS ProjectListSheet (.sheet() modal)
-// =============================================================================
-
-export function ClosedProjectsSheet({
-  projects,
-  userProjectId,
-  onDismiss,
-}: {
-  projects: DemoProject[]
-  userProjectId?: string
-  onDismiss?: () => void
-}) {
-  return (
-    <div
-      className="absolute inset-0 flex flex-col"
-      style={{
-        background: '#000000',
-        animation: 'sheetSlideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
-        borderTopLeftRadius: 12,
-        borderTopRightRadius: 12,
-      }}
-    >
-      {/* Spacer for tooltip at top */}
-      <div style={{ height: 80, flexShrink: 0 }} />
-
-      {/* Navigation bar — title + DONE button */}
-      <div
-        className="flex items-center justify-between flex-shrink-0"
-        style={{ padding: '16px 20px 12px' }}
-      >
-        <h3
-          className="font-mohave font-bold text-white uppercase"
-          style={{ fontSize: 16, letterSpacing: 1 }}
-        >
-          Closed Projects
-        </h3>
-        <button
-          onClick={onDismiss}
-          className="font-mohave font-bold uppercase"
-          style={{ fontSize: 16, color: '#FF7733', letterSpacing: 1 }}
-        >
-          Done
-        </button>
-      </div>
-
-      {/* Search bar — matching iOS: cardBackgroundDark bg, search icon, placeholder */}
-      <div style={{ padding: '0 16px 12px' }}>
-        <div
-          className="flex items-center"
-          style={{
-            background: '#1F293D',
-            borderRadius: 5,
-            padding: '8px 12px',
-            gap: 8,
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ color: '#777777', flexShrink: 0 }}>
-            <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-            <path d="M20 20l-4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          <span className="font-kosugi text-[14px]" style={{ color: '#777777' }}>
-            Search projects...
-          </span>
-        </div>
-      </div>
-
-      {/* Project cards — LazyVStack(spacing: 12), padding 16h 12v */}
-      <div className="flex-1 overflow-y-auto" style={{ padding: '0 16px 120px' }}>
-        <div className="flex flex-col" style={{ gap: 12 }}>
-          {projects.map(project => {
-            const isUserProject = project.id === userProjectId
-            return (
-              <div
-                key={project.id}
-                style={{
-                  borderRadius: 5,
-                  border: isUserProject ? '2px solid rgba(65, 115, 148, 0.8)' : 'none',
-                  boxShadow: isUserProject
-                    ? '0 0 12px rgba(65, 115, 148, 0.4), 0 0 24px rgba(65, 115, 148, 0.2)'
-                    : 'none',
-                  animation: isUserProject ? 'statusBadgeGlow 1.5s ease-in-out infinite' : 'none',
-                }}
-              >
-                <MockProjectCard
-                  project={project}
-                  variant="list"
-                  isHighlighted={false}
-                  statusOverride="closed"
-                />
-              </div>
-            )
-          })}
-
-          {projects.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="text-ops-text-tertiary">
-                <path
-                  d="M3 7v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M21 7H3l2-4h14l2 4z"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span className="font-kosugi text-ops-text-tertiary" style={{ fontSize: 14 }}>
-                No projects
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* sheetSlideUp animation defined in globals.css */}
-    </div>
-  )
-}
-
-// =============================================================================
 // LIST VIEW - Vertical scrollable cards (like iOS project list with swipeable cards)
 // =============================================================================
 
@@ -729,12 +605,12 @@ function ListView({
   phase,
   userProject,
   onSwipeComplete,
-  onClosedSheetReady,
+  onClosedSectionViewed,
 }: {
   phase: TutorialPhase
   userProject: DemoProject | null
   onSwipeComplete?: () => void
-  onClosedSheetReady?: () => void
+  onClosedSectionViewed?: () => void
 }) {
   const [scrollOffset, setScrollOffset] = useState(0)
   const activeSectionRef = useRef<HTMLDivElement>(null)
@@ -860,15 +736,14 @@ function ListView({
   }, [phase])
 
   // Dark overlay on active cards during closedProjectsScroll
-  // iOS: active cards dim to 30% opacity at T=1.2s, closed button stays highlighted
-  // After scroll + darken, signal TutorialShell to open closed projects sheet
+  // iOS: T+0.3s scroll, T+1.2s overlay, T+4.2s auto-advance
   useEffect(() => {
     if (phase === 'closedProjectsScroll') {
       const timers: NodeJS.Timeout[] = []
-      // T+1.2s: darken active cards
+      // T+1.2s: darken active cards (iOS: showClosedSectionOverlay = true)
       timers.push(setTimeout(() => setShowActiveOverlay(true), 1200))
-      // T+2.0s: signal to TutorialShell to open sheet + show continue button
-      timers.push(setTimeout(() => onClosedSheetReady?.(), 2000))
+      // T+4.2s: signal viewed — show continue button (iOS: auto-advances here)
+      timers.push(setTimeout(() => onClosedSectionViewed?.(), 4200))
       return () => timers.forEach(t => clearTimeout(t))
     } else {
       setShowActiveOverlay(false)
