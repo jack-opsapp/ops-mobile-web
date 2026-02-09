@@ -639,7 +639,7 @@ export function ClosedProjectsSheet({
         <div
           className="flex items-center"
           style={{
-            background: '#1F293D',
+            background: '#0D0D0D',
             borderRadius: 5,
             padding: '12px 16px',
             gap: 12,
@@ -666,9 +666,9 @@ export function ClosedProjectsSheet({
                 key={project.id}
                 style={{
                   borderRadius: 5,
-                  border: isUserProject ? '2px solid rgba(65, 115, 148, 0.8)' : 'none',
+                  border: isUserProject ? '2px solid rgba(233, 233, 233, 0.6)' : 'none',
                   boxShadow: isUserProject
-                    ? '0 0 12px rgba(65, 115, 148, 0.4), 0 0 24px rgba(65, 115, 148, 0.2)'
+                    ? '0 0 12px rgba(233, 233, 233, 0.3), 0 0 24px rgba(233, 233, 233, 0.15)'
                     : 'none',
                   animation: isUserProject ? 'statusBadgeGlow 1.5s ease-in-out infinite' : 'none',
                 }}
