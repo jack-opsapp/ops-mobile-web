@@ -233,7 +233,7 @@ export function MockProjectForm({
                         border: '1px solid rgba(255,255,255,0.2)',
                       }}
                     >
-                      <span className="font-mohave font-bold text-[16px] text-white block">
+                      <span className="font-mohave font-medium text-[16px] text-white block">
                         {selectedClient}
                       </span>
                       <span className="font-kosugi text-[12px] block mt-0.5" style={{ color: '#777777' }}>
@@ -479,7 +479,7 @@ export function MockProjectForm({
                         />
                         {/* Task info */}
                         <div className="flex-1 min-w-0">
-                          <div className="font-mohave font-bold text-[14px] text-white">
+                          <div className="font-mohave font-medium text-[14px] text-white">
                             {addedTask.type}
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">

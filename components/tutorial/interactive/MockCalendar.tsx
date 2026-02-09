@@ -558,24 +558,24 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
         {/* Week/Month Toggle — bodyBold (16pt Mohave Bold), 12pt vertical padding, 5pt radius */}
         <div className="flex flex-1 overflow-hidden relative" style={{ background: '#0D0D0D', borderRadius: 5 }}>
           <button
-            className="flex-1 font-mohave font-bold text-[16px] uppercase tracking-wider transition-all"
+            className="flex-1 font-mohave font-medium text-[16px] uppercase tracking-wider transition-all"
             style={{
               padding: '12px 0',
               borderRadius: 5,
-              background: !isMonthView ? '#1A1A1A' : 'transparent',
-              color: !isMonthView ? '#FFFFFF' : '#AAAAAA',
+              background: !isMonthView ? 'white' : 'transparent',
+              color: !isMonthView ? 'black' : '#FFFFFF',
             }}
           >
             Week
           </button>
           <button
             onClick={() => isMonthPrompt && onToggleMonth()}
-            className="flex-1 font-mohave font-bold text-[16px] uppercase tracking-wider transition-all relative"
+            className="flex-1 font-mohave font-medium text-[16px] uppercase tracking-wider transition-all relative"
             style={{
               padding: '12px 0',
               borderRadius: 5,
-              background: isMonthView ? '#1A1A1A' : 'transparent',
-              color: isMonthView ? '#FFFFFF' : isMonthPrompt ? '#417394' : '#AAAAAA',
+              background: isMonthView ? 'white' : 'transparent',
+              color: isMonthView ? 'black' : isMonthPrompt ? '#417394' : '#FFFFFF',
             }}
           >
             Month
@@ -628,7 +628,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                 background: '#E5E5E5',
               }}
             >
-              <span className="font-mohave font-bold text-[16px] text-black whitespace-nowrap">
+              <span className="font-mohave font-medium text-[16px] text-black whitespace-nowrap">
                 {weekRangeLabel}
               </span>
             </div>
@@ -656,7 +656,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
               background: '#E5E5E5',
             }}
           >
-            <span className="font-mohave font-bold text-[16px] text-black whitespace-nowrap">
+            <span className="font-mohave font-medium text-[16px] text-black whitespace-nowrap">
               {monthNames[today.getMonth()]}
             </span>
           </div>
@@ -756,13 +756,13 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                                   background: 'white',
                                 }}
                               >
-                                <span className="font-mohave font-bold text-[16px] text-black leading-none">
+                                <span className="font-mohave font-medium text-[16px] text-black leading-none">
                                   {dayNum}
                                 </span>
                               </div>
                             ) : (
                               <span
-                                className="font-mohave font-bold text-[16px] leading-none"
+                                className="font-mohave font-medium text-[16px] leading-none"
                                 style={{
                                   color: 'rgba(255,255,255,0.8)',
                                   height: 24,
@@ -938,7 +938,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                   </>
                 )}
               </svg>
-              <span className="font-mohave font-bold text-[14px] text-[#417394] uppercase tracking-wider">
+              <span className="font-mohave font-medium text-[14px] text-[#417394] uppercase tracking-wider">
                 {expansionLevel === 0 ? 'Expand' : expansionLevel === 1 ? 'Expand More' : 'Contract'}
               </span>
             </button>
@@ -999,7 +999,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
 
                       {/* Date number — bodyBold (16pt Mohave Bold) */}
                       <span
-                        className="font-mohave font-bold"
+                        className="font-mohave font-medium"
                         style={{
                           fontSize: 16,
                           color: isToday ? '#FFFFFF' : isSelected ? '#E5E5E5' : 'rgba(229, 229, 229, 0.8)',
@@ -1050,7 +1050,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
           {/* Day header below selector — matching iOS ProjectListView sticky header */}
           <div style={{ padding: '0 20px 8px' }} className="flex items-center justify-between">
             <div className="flex items-baseline" style={{ gap: 8 }}>
-              <span className="font-mohave text-[16px] uppercase tracking-wider text-white font-bold">
+              <span className="font-mohave text-[16px] uppercase tracking-wider text-white font-medium">
                 {dayNames[activeDay.getDay()]}
               </span>
               <span className="font-kosugi text-[14px] text-ops-text-secondary">
@@ -1082,47 +1082,48 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
                   className="overflow-hidden flex"
                   style={{
                     background: '#0D0D0D',
-                    borderRadius: 5, // iOS cornerRadius
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 5,
+                    boxShadow: '0 1px 2px rgba(0,0,0,1)',
                   }}
                 >
-                  {/* Left color bar (4px) */}
+                  {/* Left color bar (4px) — iOS: Rectangle().fill(displayColor).frame(width: 4) */}
                   <div
                     className="flex-shrink-0"
                     style={{ width: 4, backgroundColor: item.color }}
                   />
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0 flex justify-between items-start" style={{ padding: 12 }}>
-                    <div className="flex-1 min-w-0">
-                      {/* Title — bodyBold (16pt Mohave Bold) uppercase */}
-                      <span className="font-mohave font-bold text-[16px] text-white uppercase tracking-wide block truncate">
+                  {/* Content — iOS: HStack(spacing:0) with VStack(spacing:6) + badge overlay */}
+                  <div className="flex-1 min-w-0 relative" style={{ padding: '16px 16px' }}>
+                    {/* Main text column — iOS: VStack(alignment: .leading, spacing: 6) */}
+                    <div className="flex flex-col" style={{ gap: 6, paddingRight: 80 }}>
+                      {/* Title — iOS: bodyBold = Mohave-Medium 16pt, primaryText, uppercase, lineLimit 1 */}
+                      <span className="font-mohave font-medium text-[16px] text-white uppercase tracking-wide block truncate">
                         {item.name}
                       </span>
-                      {/* Client name — caption (14pt Kosugi) */}
-                      <span className="font-kosugi text-[14px] text-ops-text-secondary block truncate mt-0.5">
+                      {/* Client name — iOS: caption = Kosugi-Regular 14pt, secondaryText */}
+                      <span className="font-kosugi text-[14px] text-ops-text-secondary block truncate">
                         {item.clientName}
                       </span>
-                      {/* Address — tertiary text */}
+                      {/* Address — iOS: caption = Kosugi 14pt, tertiaryText */}
                       {item.address && (
-                        <span className="font-kosugi text-[12px] text-ops-text-tertiary block truncate mt-0.5">
+                        <span className="font-kosugi text-[14px] text-ops-text-tertiary block truncate">
                           {item.address}
                         </span>
                       )}
-                      {/* Time */}
-                      <span className="font-kosugi text-[12px] text-ops-text-tertiary mt-1 block">
-                        {item.time}
-                      </span>
                     </div>
 
-                    {/* Task type badge top-right — smallCaption (12pt Kosugi) */}
+                    {/* Task type badge — iOS: top-right, smallCaption = Kosugi 12pt, badgeColor,
+                         padding 8h 4v, fill opacity 0.1, stroke opacity 0.3 */}
                     <span
-                      className="font-kosugi flex-shrink-0 ml-2"
+                      className="font-kosugi uppercase flex-shrink-0 absolute"
                       style={{
+                        top: 16,
+                        right: 16,
                         fontSize: 12,
-                        padding: '3px 8px',
+                        padding: '4px 8px',
                         borderRadius: 4,
-                        backgroundColor: `${item.color}20`,
+                        backgroundColor: `${item.color}1A`,
+                        border: `1px solid ${item.color}4D`,
                         color: item.color,
                       }}
                     >

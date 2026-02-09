@@ -113,7 +113,7 @@ function MockSectionSelector({ selected, animateToProjects }: { selected: Sectio
               <span
                 className="font-mohave text-[14px] uppercase tracking-wider transition-colors duration-300"
                 style={{
-                  color: isActive ? '#0D0D0D' : '#777777',
+                  color: isActive ? '#0D0D0D' : '#AAAAAA',
                   fontWeight: 400,
                 }}
               >
