@@ -469,6 +469,9 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
   }, [clampScroll])
 
   const handleScrollTouchStart = useCallback((e: React.TouchEvent) => {
+    // Prevent event from bubbling to parent (which has touchAction:'none')
+    e.stopPropagation()
+
     // Stop any ongoing momentum
     if (scrollAnimFrame.current) {
       cancelAnimationFrame(scrollAnimFrame.current)
@@ -484,6 +487,10 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
 
   const handleScrollTouchMove = useCallback((e: React.TouchEvent) => {
     if (scrollTouchStartY.current === null) return
+
+    // Prevent event from bubbling to parent (which has touchAction:'none')
+    e.stopPropagation()
+
     const y = e.touches[0].clientY
     const now = Date.now()
     const dt = now - scrollLastTime.current
@@ -500,7 +507,10 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
     setScrollY(prev => clampScroll(prev + dy))
   }, [clampScroll])
 
-  const handleScrollTouchEnd = useCallback(() => {
+  const handleScrollTouchEnd = useCallback((e: React.TouchEvent) => {
+    // Prevent event from bubbling to parent (which has touchAction:'none')
+    e.stopPropagation()
+
     scrollTouchStartY.current = null
     // Start momentum animation if we have velocity
     if (Math.abs(scrollVelocity.current) > 0.5) {
