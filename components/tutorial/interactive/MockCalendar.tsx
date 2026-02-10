@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
+import { useMemo, useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react'
 import type { TutorialPhase } from '@/lib/tutorial/TutorialPhase'
 
 interface MockCalendarProps {
@@ -431,8 +431,8 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
   const scrollAnimFrame = useRef<number | null>(null)
   const scrollMax = useRef(0)
 
-  // Compute max scroll whenever content changes
-  useEffect(() => {
+  // Compute max scroll whenever content changes — useLayoutEffect for reliable measurement
+  useLayoutEffect(() => {
     if (!scrollRef.current || !scrollContentRef.current) return
     const containerH = scrollRef.current.clientHeight
     const contentH = scrollContentRef.current.scrollHeight

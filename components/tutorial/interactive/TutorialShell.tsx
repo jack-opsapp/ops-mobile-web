@@ -236,8 +236,8 @@ export function TutorialShell({ onComplete }: TutorialShellProps) {
         className="absolute inset-0 flex flex-col transition-opacity duration-300"
         style={{ zIndex: 0, opacity: contentDimmed ? 0.3 : 1 }}
       >
-        {/* Content fills space above tab bar */}
-        <div className="flex-1 overflow-hidden">
+        {/* Content fills space above tab bar — must be flex so children's flex-1 constrains height */}
+        <div className="flex-1 overflow-hidden flex flex-col">
           {showJobBoard && (
             <MockJobBoard
               phase={phase}

@@ -4,8 +4,15 @@ interface MockTabBarProps {
   activeTab: 'home' | 'jobs' | 'schedule' | 'settings'
 }
 
-const ACCENT = '#417394'
+const ACCENT = '#FF7733' // iOS primaryAccent (orange)
 const INACTIVE = 'rgba(170, 170, 170, 0.8)'
+
+const TAB_LABELS: Record<string, string> = {
+  home: 'Home',
+  jobs: 'Jobs',
+  schedule: 'Schedule',
+  settings: 'Settings',
+}
 
 export function MockTabBar({ activeTab }: MockTabBarProps) {
   const tabs = [
@@ -29,19 +36,30 @@ export function MockTabBar({ activeTab }: MockTabBarProps) {
       {tabs.map((tab) => {
         const isActive = tab.id === activeTab
         return (
-          <div key={tab.id} className="flex flex-col items-center flex-1" style={{ paddingTop: 10 }}>
-            {/* Active indicator bar — 28px wide, 3px tall */}
+          <div key={tab.id} className="flex flex-col items-center flex-1" style={{ paddingTop: 10, gap: 4 }}>
+            {/* Active indicator bar — 28px wide, 3px tall, orange */}
             <div
               style={{
                 width: 28,
                 height: 3,
                 borderRadius: 1.5,
                 background: isActive ? ACCENT : 'transparent',
-                marginBottom: 8,
+                marginBottom: 4,
                 transition: 'background 0.2s ease',
               }}
             />
             <tab.icon active={isActive} />
+            {/* Tab label — iOS: smallCaption = Kosugi 12pt */}
+            <span
+              className="font-kosugi"
+              style={{
+                fontSize: 12,
+                color: isActive ? ACCENT : INACTIVE,
+                transition: 'color 0.2s ease',
+              }}
+            >
+              {TAB_LABELS[tab.id]}
+            </span>
           </div>
         )
       })}
