@@ -86,12 +86,12 @@ export function Sequence1B({ onComplete }: Sequence1BProps) {
       {/* Task folders with details */}
       <div
         className="absolute flex flex-col items-start gap-6"
-        style={{ top: '30%', left: '50%', transform: 'translateX(-50%)' }}
+        style={{ top: '20%', left: '50%', transform: 'translateX(-50%)' }}
       >
         {SAMPLE_TASKS.map((task, index) => (
           <motion.div
             key={index}
-            className="flex items-center gap-6"
+            className="relative flex items-center"
             initial={{ opacity: 1, y: 0 }}
             animate={{
               opacity: collapsing ? 0 : 1,
@@ -105,18 +105,20 @@ export function Sequence1B({ onComplete }: Sequence1BProps) {
             }}
           >
             {/* Task folder */}
-            <TaskFolder color={getTaskColor(index)} isActive={activeTask === index} />
+            <div style={{ width: 60 }}>
+              <TaskFolder color={getTaskColor(index)} isActive={activeTask === index} />
+            </div>
 
-            {/* Task details (appear when active) */}
+            {/* Task details (appear when active) - absolutely positioned to avoid layout shift */}
             <AnimatePresence>
               {activeTask === index && (
                 <motion.div
-                  className="flex items-center gap-4"
+                  className="absolute flex items-center gap-4"
+                  style={{ left: 80, color: task.color }}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: 0.3 }}
-                  style={{ color: task.color }}
                 >
                   {/* Task label */}
                   <span className="font-mohave font-medium text-[18px] uppercase tracking-wide">
