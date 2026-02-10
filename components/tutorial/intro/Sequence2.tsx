@@ -24,6 +24,8 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
   const [showArchiveLabel, setShowArchiveLabel] = useState(false)
   const [showMainText, setShowMainText] = useState(false)
   const [showArchiveText, setShowArchiveText] = useState(false)
+  const [showFinalText, setShowFinalText] = useState(false)
+  const [folderScalingUp, setFolderScalingUp] = useState(false)
 
   const currentStatus = STATUS_ORDER[currentStatusIndex]
   const folderColor = isArchiving && !hasReturnedFromArchive ? STATUS_COLORS.archived :
@@ -107,8 +109,24 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
       }, cumulativeTime)
     )
 
+    // Hold, then scale folder up big
+    cumulativeTime += 800
+    timers.push(
+      setTimeout(() => {
+        setFolderScalingUp(true)
+      }, cumulativeTime)
+    )
+
+    // Show final text
+    cumulativeTime += 600
+    timers.push(
+      setTimeout(() => {
+        setShowFinalText(true)
+      }, cumulativeTime)
+    )
+
     // Complete
-    cumulativeTime += 1000
+    cumulativeTime += 1500
     timers.push(
       setTimeout(() => {
         onComplete()
@@ -165,19 +183,41 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
         )}
       </AnimatePresence>
 
+      {/* Final text */}
+      <AnimatePresence>
+        {showFinalText && (
+          <motion.div
+            key="final-text"
+            className="absolute inset-0 flex items-center justify-center px-4"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, type: 'spring', stiffness: 100, damping: 20 }}
+          >
+            <p className="font-mohave font-bold text-[28px] md:text-[36px] uppercase tracking-wider text-white text-center">
+              NOW TRY IT YOURSELF
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Status carousel - horizontal sliding */}
       {!isArchiving && (
         <div
-          className="absolute overflow-hidden flex items-center justify-center"
+          className="absolute flex items-center justify-center overflow-hidden"
           style={{
             top: '35%',
-            left: 0,
-            right: 0,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '100%',
+            maxWidth: '800px',
             height: '60px',
           }}
         >
           <motion.div
             className="flex items-center"
+            style={{
+              paddingLeft: '50%', // Center the first item
+            }}
             animate={{
               x: carouselOffset,
             }}
@@ -196,25 +236,19 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
               const isVisible = isActive || isPrev || isNext
 
               return (
-                <motion.div
+                <div
                   key={status}
                   className="flex-shrink-0 font-mohave font-medium uppercase tracking-wider text-center"
                   style={{
                     width: 250,
-                  }}
-                  animate={{
                     fontSize: isActive ? '24px' : '16px',
                     color: isActive ? STATUS_COLORS[status] : '#FFFFFF',
                     opacity: isActive ? 1 : isVisible ? 0.4 : 0,
-                  }}
-                  transition={{
-                    fontSize: { duration: getTransitionDuration() * 0.6 },
-                    color: { duration: 0.1 }, // Instant color change
-                    opacity: { duration: getTransitionDuration() * 0.8 },
+                    transition: `color 0.1s, fontSize ${getTransitionDuration() * 0.6}s, opacity ${getTransitionDuration() * 0.8}s`,
                   }}
                 >
                   {STATUS_LABELS[status]}
-                </motion.div>
+                </div>
               )
             })}
           </motion.div>
@@ -241,7 +275,8 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
       <motion.div
         animate={{
           y: isArchiving && !hasReturnedFromArchive ? 100 : 0,
-          scale: isArchiving && !hasReturnedFromArchive ? 0.8 : 1,
+          scale: folderScalingUp ? 15 : isArchiving && !hasReturnedFromArchive ? 0.8 : 1,
+          opacity: folderScalingUp ? 0 : 1,
         }}
         transition={{
           type: 'spring',

@@ -12,7 +12,7 @@ interface Sequence1BProps {
 
 const TASK_COLORS = {
   task1: '#F5F5DC', // bone/cream
-  task2: '#E8945A', // burnt orange
+  task2: '#D4A574', // desaturated burnt orange
   task3: '#8B9D83', // sage green
 }
 
@@ -93,7 +93,7 @@ export function Sequence1B({ onComplete }: Sequence1BProps) {
       {/* Task folders with details */}
       <div
         className="absolute flex flex-col items-start gap-8"
-        style={{ top: '15%', left: '35%' }}
+        style={{ top: '15%', left: '20%' }}
       >
         {SAMPLE_TASKS.map((task, index) => (
           <motion.div
@@ -103,7 +103,7 @@ export function Sequence1B({ onComplete }: Sequence1BProps) {
             animate={{
               opacity: collapsing ? 0 : 1,
               y: collapsing ? 150 : 0,
-              x: activeTask === index ? -20 : 0,
+              x: activeTask === index ? -30 : 0,
             }}
             transition={{
               delay: collapsing ? index * 0.15 : 0,
@@ -117,49 +117,72 @@ export function Sequence1B({ onComplete }: Sequence1BProps) {
               <TaskFolder color={getTaskColor(index)} isActive={activeTask === index} />
             </div>
 
-            {/* Task details (slide out from folder when active) - absolutely positioned */}
+            {/* Task details (slide out from folder when active) - absolutely positioned with stacked layout */}
             <AnimatePresence>
               {showDetails === index && (
                 <motion.div
-                  className="absolute flex items-center gap-4 whitespace-nowrap"
-                  style={{ left: 60, color: task.color }}
+                  className="absolute flex flex-col gap-2"
+                  style={{ left: 90, color: task.color }}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ type: 'spring', stiffness: 180, damping: 20 }}
                 >
-                  {/* Task label */}
-                  <span className="font-mohave font-medium text-[18px] uppercase tracking-wide">
-                    {task.label}
-                  </span>
+                  {/* Row 1: Task label + Date */}
+                  <div className="flex items-center gap-4">
+                    {/* Task label */}
+                    <span className="font-mohave font-medium text-[18px] uppercase tracking-wide whitespace-nowrap">
+                      {task.label}
+                    </span>
 
-                  {/* Crew avatar */}
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-8 h-8 rounded-full overflow-hidden border-2"
-                      style={{ borderColor: task.color }}
-                    >
-                      <Image
-                        src={task.avatar}
-                        alt={task.crew}
-                        width={32}
-                        height={32}
-                        className="w-full h-full object-cover"
-                      />
+                    {/* Date */}
+                    <div className="flex items-center gap-2">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2" />
+                        <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2" />
+                        <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2" />
+                      </svg>
+                      <span className="font-kosugi text-[13px] whitespace-nowrap">{task.date}</span>
                     </div>
-                    <span className="font-kosugi text-[14px]">{task.crew}</span>
                   </div>
 
-                  {/* Date */}
-                  <div className="flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                      <rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="2" />
-                      <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2" />
-                      <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2" />
-                      <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2" />
-                    </svg>
-                    <span className="font-kosugi text-[14px]">{task.date}</span>
+                  {/* Row 2: Team icon + count, Crew avatar */}
+                  <div className="flex items-center gap-3">
+                    {/* Team icon with count */}
+                    <div className="flex items-center gap-1.5">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <circle cx="9" cy="7" r="4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span className="font-kosugi text-[13px]">1</span>
+                    </div>
+
+                    {/* Crew avatar */}
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-7 h-7 rounded-full overflow-hidden border-2"
+                        style={{ borderColor: task.color }}
+                      >
+                        <Image
+                          src={task.avatar}
+                          alt={task.crew}
+                          width={28}
+                          height={28}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <span className="font-kosugi text-[13px] whitespace-nowrap">{task.crew}</span>
+                    </div>
                   </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        ))}
+      </div>
                 </motion.div>
               )}
             </AnimatePresence>

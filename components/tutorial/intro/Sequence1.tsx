@@ -63,34 +63,34 @@ export function Sequence1({ onComplete }: Sequence1Props) {
         {tasksVisible && (
           <motion.div
             className="absolute flex flex-col items-start gap-8"
-            style={{ top: '15%', left: '35%' }}
+            style={{ top: '15%', left: '20%' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            {/* Task 1 */}
+            {/* Task 1 - emerges from project folder */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0, type: 'spring', stiffness: 120, damping: 18 }}
+              initial={{ opacity: 0, y: 200, x: 60 }}
+              animate={{ opacity: 1, y: 0, x: 0 }}
+              transition={{ delay: 0, type: 'spring', stiffness: 100, damping: 20 }}
             >
               <TaskFolder color={GRAYSCALE} />
             </motion.div>
 
             {/* Task 2 */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, type: 'spring', stiffness: 120, damping: 18 }}
+              initial={{ opacity: 0, y: 200, x: 60 }}
+              animate={{ opacity: 1, y: 0, x: 0 }}
+              transition={{ delay: 0.15, type: 'spring', stiffness: 100, damping: 20 }}
             >
               <TaskFolder color={GRAYSCALE} />
             </motion.div>
 
             {/* Task 3 */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, type: 'spring', stiffness: 120, damping: 18 }}
+              initial={{ opacity: 0, y: 200, x: 60 }}
+              animate={{ opacity: 1, y: 0, x: 0 }}
+              transition={{ delay: 0.3, type: 'spring', stiffness: 100, damping: 20 }}
             >
               <TaskFolder color={GRAYSCALE} />
             </motion.div>
