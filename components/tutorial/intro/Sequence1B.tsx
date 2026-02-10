@@ -183,12 +183,6 @@ export function Sequence1B({ onComplete }: Sequence1BProps) {
           </motion.div>
         ))}
       </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        ))}
-      </div>
 
       {/* Project folder (centered) */}
       <motion.div
