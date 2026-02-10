@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ProjectFolder } from './ProjectFolder'
 import { TaskFolder } from './TaskFolder'
+import { TypewriterText } from '@/components/ui/TypewriterText'
 
 interface Sequence1Props {
   onComplete: () => void
@@ -52,7 +53,7 @@ export function Sequence1({ onComplete }: Sequence1Props) {
             transition={{ duration: 0.4 }}
           >
             <p className="font-mohave font-medium text-[20px] md:text-[24px] uppercase tracking-wider text-white">
-              PROJECTS ARE BUILT OF TASKS
+              <TypewriterText text="PROJECTS ARE BUILT OF TASKS" typingSpeed={30} />
             </p>
           </motion.div>
         )}

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ProjectFolder } from './ProjectFolder'
 import { OPSStyle } from '@/lib/styles/OPSStyle'
+import { TypewriterText } from '@/components/ui/TypewriterText'
 
 interface Sequence2Props {
   onComplete: () => void
@@ -117,10 +118,11 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
       }, cumulativeTime)
     )
 
-    // Show final text
+    // Show final text (hide archive text first)
     cumulativeTime += 600
     timers.push(
       setTimeout(() => {
+        setShowArchiveText(false)
         setShowFinalText(true)
       }, cumulativeTime)
     )
@@ -148,7 +150,7 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center" style={{ maxWidth: 600, margin: '0 auto' }}>
       {/* Main text */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {showMainText && (
           <motion.div
             key="main-text"
@@ -159,14 +161,12 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
             transition={{ duration: 0.4 }}
           >
             <p className="font-mohave font-medium text-[20px] md:text-[24px] uppercase tracking-wider text-white">
-              PROJECT STATUS FLOWS FROM LEAD TO CLOSE
+              <TypewriterText text="PROJECT STATUS FLOWS FROM LEAD TO CLOSE" typingSpeed={30} />
             </p>
           </motion.div>
         )}
-      </AnimatePresence>
 
-      {/* Archive text */}
-      <AnimatePresence>
+        {/* Archive text */}
         {showArchiveText && (
           <motion.div
             key="archive-text"
@@ -177,14 +177,13 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
             transition={{ duration: 0.4 }}
           >
             <p className="font-mohave font-medium text-[20px] md:text-[24px] uppercase tracking-wider text-white">
-              <span style={{ color: STATUS_COLORS.archived }}>ARCHIVE</span> PROJECTS THAT DON&apos;T MOVE FORWARD
+              <span style={{ color: STATUS_COLORS.archived }}>ARCHIVE</span>{' '}
+              <TypewriterText text="PROJECTS THAT DON'T MOVE FORWARD" typingSpeed={30} />
             </p>
           </motion.div>
         )}
-      </AnimatePresence>
 
-      {/* Final text */}
-      <AnimatePresence>
+        {/* Final text */}
         {showFinalText && (
           <motion.div
             key="final-text"
@@ -194,7 +193,7 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
             transition={{ duration: 0.6, type: 'spring', stiffness: 100, damping: 20 }}
           >
             <p className="font-mohave font-bold text-[28px] md:text-[36px] uppercase tracking-wider text-white text-center">
-              NOW TRY IT YOURSELF
+              <TypewriterText text="NOW TRY IT YOURSELF" typingSpeed={40} />
             </p>
           </motion.div>
         )}

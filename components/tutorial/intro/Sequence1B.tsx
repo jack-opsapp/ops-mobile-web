@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ProjectFolder } from './ProjectFolder'
 import { TaskFolder } from './TaskFolder'
+import { TypewriterText } from '@/components/ui/TypewriterText'
 import Image from 'next/image'
 
 interface Sequence1BProps {
@@ -84,7 +85,7 @@ export function Sequence1B({ onComplete }: Sequence1BProps) {
             transition={{ duration: 0.4 }}
           >
             <p className="font-mohave font-medium text-[20px] md:text-[24px] uppercase tracking-wider text-white">
-              ASSIGN CREW AND DATES TO A TASK
+              <TypewriterText text="ASSIGN CREW AND DATES TO A TASK" typingSpeed={30} />
             </p>
           </motion.div>
         )}
