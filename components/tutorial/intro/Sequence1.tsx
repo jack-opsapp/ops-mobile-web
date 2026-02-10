@@ -40,7 +40,7 @@ export function Sequence1({ onComplete }: Sequence1Props) {
   const textVisible = step >= 4
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center">
+    <div className="relative w-full h-full flex flex-col items-center justify-center" style={{ maxWidth: 600, margin: '0 auto' }}>
       {/* Text */}
       <AnimatePresence>
         {textVisible && (

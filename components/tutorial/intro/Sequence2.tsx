@@ -136,8 +136,8 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
     return () => timers.forEach(clearTimeout)
   }, [onComplete])
 
-  // Calculate carousel offset (slides left as index increases)
-  // Each status is 250px wide to ensure proper spacing
+  // Calculate carousel offset to keep selected item centered
+  // Each status is 250px wide, we want the active one centered above the folder
   const carouselOffset = -currentStatusIndex * 250
 
   const getTransitionDuration = () => {
@@ -146,7 +146,7 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
   }
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center">
+    <div className="relative w-full h-full flex flex-col items-center justify-center" style={{ maxWidth: 600, margin: '0 auto' }}>
       {/* Main text */}
       <AnimatePresence>
         {showMainText && (
@@ -206,20 +206,19 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
           className="absolute flex items-center justify-center overflow-hidden"
           style={{
             top: '35%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '100%',
-            maxWidth: '800px',
+            left: 0,
+            right: 0,
             height: '60px',
           }}
         >
           <motion.div
-            className="flex items-center"
+            className="flex items-center justify-center"
             style={{
-              paddingLeft: '50%', // Center the first item
+              position: 'relative',
+              left: '50%',
             }}
             animate={{
-              x: carouselOffset,
+              x: `calc(-50% + ${carouselOffset}px)`,
             }}
             transition={{
               duration: getTransitionDuration(),

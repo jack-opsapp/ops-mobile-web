@@ -72,7 +72,7 @@ export function Sequence1B({ onComplete }: Sequence1BProps) {
   }
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center">
+    <div className="relative w-full h-full flex flex-col items-center justify-center" style={{ maxWidth: 600, margin: '0 auto' }}>
       {/* Text */}
       <AnimatePresence>
         {textVisible && (
@@ -128,28 +128,28 @@ export function Sequence1B({ onComplete }: Sequence1BProps) {
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ type: 'spring', stiffness: 180, damping: 20 }}
                 >
-                  {/* Row 1: Task label + Date */}
-                  <div className="flex items-center gap-4">
-                    {/* Task label */}
-                    <span className="font-mohave font-medium text-[18px] uppercase tracking-wide whitespace-nowrap">
-                      {task.label}
-                    </span>
+                  {/* Row 1: Task label */}
+                  <span className="font-mohave font-medium text-[18px] uppercase tracking-wide whitespace-nowrap">
+                    {task.label}
+                  </span>
 
-                    {/* Date */}
-                    <div className="flex items-center gap-2">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="2" />
-                        <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2" />
-                        <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2" />
-                        <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2" />
-                      </svg>
-                      <span className="font-kosugi text-[13px] whitespace-nowrap">{task.date}</span>
-                    </div>
-                  </div>
-
-                  {/* Row 2: Team icon + count, Crew avatar */}
+                  {/* Row 2: Avatar, Team count, Date in horizontal stack */}
                   <div className="flex items-center gap-3">
-                    {/* Team icon with count */}
+                    {/* Crew avatar */}
+                    <div
+                      className="w-7 h-7 rounded-full overflow-hidden border-2"
+                      style={{ borderColor: task.color }}
+                    >
+                      <Image
+                        src={task.avatar}
+                        alt={task.crew}
+                        width={28}
+                        height={28}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    {/* Team count with icon */}
                     <div className="flex items-center gap-1.5">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -160,21 +160,15 @@ export function Sequence1B({ onComplete }: Sequence1BProps) {
                       <span className="font-kosugi text-[13px]">1</span>
                     </div>
 
-                    {/* Crew avatar */}
+                    {/* Date */}
                     <div className="flex items-center gap-2">
-                      <div
-                        className="w-7 h-7 rounded-full overflow-hidden border-2"
-                        style={{ borderColor: task.color }}
-                      >
-                        <Image
-                          src={task.avatar}
-                          alt={task.crew}
-                          width={28}
-                          height={28}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <span className="font-kosugi text-[13px] whitespace-nowrap">{task.crew}</span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2" />
+                        <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2" />
+                        <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2" />
+                      </svg>
+                      <span className="font-kosugi text-[13px] whitespace-nowrap">{task.date}</span>
                     </div>
                   </div>
                 </motion.div>
