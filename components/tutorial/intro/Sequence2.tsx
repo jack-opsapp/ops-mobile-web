@@ -118,10 +118,11 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
       }, cumulativeTime)
     )
 
-    // Show final text (hide archive text first)
+    // Show final text (ensure all previous text is hidden)
     cumulativeTime += 600
     timers.push(
       setTimeout(() => {
+        setShowMainText(false)
         setShowArchiveText(false)
         setShowFinalText(true)
       }, cumulativeTime)
@@ -200,58 +201,63 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
       </AnimatePresence>
 
       {/* Status carousel - horizontal sliding */}
-      {!isArchiving && (
-        <div
-          className="absolute flex items-center justify-center overflow-hidden"
-          style={{
-            top: '35%',
-            left: 0,
-            right: 0,
-            height: '60px',
-          }}
-        >
+      <AnimatePresence>
+        {!isArchiving && (
           <motion.div
-            className="flex items-center justify-center"
+            className="absolute flex items-center justify-center overflow-visible"
             style={{
-              position: 'relative',
-              left: '50%',
+              top: '35%',
+              left: 0,
+              right: 0,
+              height: '60px',
             }}
-            animate={{
-              x: `calc(-50% + ${carouselOffset}px)`,
-            }}
-            transition={{
-              duration: getTransitionDuration(),
-              type: isReversing ? 'tween' : 'spring',
-              stiffness: isReversing ? undefined : 180,
-              damping: isReversing ? undefined : 16,
-              ease: isReversing ? 'linear' : undefined,
-            }}
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
           >
-            {STATUS_ORDER.map((status, index) => {
-              const isActive = index === currentStatusIndex
-              const isPrev = index === currentStatusIndex - 1
-              const isNext = index === currentStatusIndex + 1
-              const isVisible = isActive || isPrev || isNext
+            <motion.div
+              className="flex items-center justify-center"
+              style={{
+                position: 'relative',
+                left: '50%',
+              }}
+              animate={{
+                x: `calc(-50% + ${carouselOffset}px)`,
+              }}
+              transition={{
+                duration: getTransitionDuration(),
+                type: isReversing ? 'tween' : 'spring',
+                stiffness: isReversing ? undefined : 180,
+                damping: isReversing ? undefined : 16,
+                ease: isReversing ? 'linear' : undefined,
+              }}
+            >
+              {STATUS_ORDER.map((status, index) => {
+                const isActive = index === currentStatusIndex
+                const isPrev = index === currentStatusIndex - 1
+                const isNext = index === currentStatusIndex + 1
+                const isVisible = isActive || isPrev || isNext
 
-              return (
-                <div
-                  key={status}
-                  className="flex-shrink-0 font-mohave font-medium uppercase tracking-wider text-center"
-                  style={{
-                    width: 250,
-                    fontSize: isActive ? '24px' : '16px',
-                    color: isActive ? STATUS_COLORS[status] : '#FFFFFF',
-                    opacity: isActive ? 1 : isVisible ? 0.4 : 0,
-                    transition: `color 0.1s, fontSize ${getTransitionDuration() * 0.6}s, opacity ${getTransitionDuration() * 0.8}s`,
-                  }}
-                >
-                  {STATUS_LABELS[status]}
-                </div>
-              )
-            })}
+                return (
+                  <div
+                    key={status}
+                    className="flex-shrink-0 font-mohave font-medium uppercase tracking-wider text-center"
+                    style={{
+                      width: 250,
+                      fontSize: isActive ? '24px' : '16px',
+                      color: isActive ? STATUS_COLORS[status] : '#FFFFFF',
+                      opacity: isActive ? 1 : isVisible ? 0.4 : 0,
+                      transition: `color 0.1s, fontSize ${getTransitionDuration() * 0.6}s, opacity ${getTransitionDuration() * 0.8}s`,
+                    }}
+                  >
+                    {STATUS_LABELS[status]}
+                  </div>
+                )
+              })}
+            </motion.div>
           </motion.div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
       {/* Archive label (bottom) */}
       <AnimatePresence>
