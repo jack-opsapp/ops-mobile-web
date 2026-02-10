@@ -417,6 +417,111 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
   }, [monthWeeks, computeWeekLayout])
 
   // =========================================================================
+  // MONTH GRID SCROLL — JS-driven because ancestor has touchAction:'none'
+  // Uses requestAnimationFrame for smooth momentum scrolling.
+  // =========================================================================
+
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const scrollContentRef = useRef<HTMLDivElement>(null)
+  const [scrollY, setScrollY] = useState(0)
+  const scrollVelocity = useRef(0)
+  const scrollTouchStartY = useRef<number | null>(null)
+  const scrollLastTouchY = useRef(0)
+  const scrollLastTime = useRef(0)
+  const scrollAnimFrame = useRef<number | null>(null)
+  const scrollMax = useRef(0)
+
+  // Compute max scroll whenever content changes
+  useEffect(() => {
+    if (!scrollRef.current || !scrollContentRef.current) return
+    const containerH = scrollRef.current.clientHeight
+    const contentH = scrollContentRef.current.scrollHeight
+    scrollMax.current = Math.max(0, contentH - containerH)
+  }, [expansionLevel, monthWeeks.length, weekLayouts])
+
+  const clampScroll = useCallback((val: number) => {
+    return Math.max(0, Math.min(scrollMax.current, val))
+  }, [])
+
+  // Momentum animation
+  const animateMomentum = useCallback(() => {
+    const friction = 0.95
+    const minVelocity = 0.5
+
+    scrollVelocity.current *= friction
+    if (Math.abs(scrollVelocity.current) < minVelocity) {
+      scrollVelocity.current = 0
+      scrollAnimFrame.current = null
+      return
+    }
+
+    setScrollY(prev => {
+      const next = clampScroll(prev + scrollVelocity.current)
+      // Stop if we hit bounds
+      if (next === prev && prev === 0 || next === prev && prev === scrollMax.current) {
+        scrollVelocity.current = 0
+        return prev
+      }
+      return next
+    })
+
+    scrollAnimFrame.current = requestAnimationFrame(animateMomentum)
+  }, [clampScroll])
+
+  const handleScrollTouchStart = useCallback((e: React.TouchEvent) => {
+    // Stop any ongoing momentum
+    if (scrollAnimFrame.current) {
+      cancelAnimationFrame(scrollAnimFrame.current)
+      scrollAnimFrame.current = null
+    }
+    scrollVelocity.current = 0
+
+    const y = e.touches[0].clientY
+    scrollTouchStartY.current = y
+    scrollLastTouchY.current = y
+    scrollLastTime.current = Date.now()
+  }, [])
+
+  const handleScrollTouchMove = useCallback((e: React.TouchEvent) => {
+    if (scrollTouchStartY.current === null) return
+    const y = e.touches[0].clientY
+    const now = Date.now()
+    const dt = now - scrollLastTime.current
+    const dy = scrollLastTouchY.current - y // positive = scroll down
+
+    // Track velocity (pixels per frame at 16ms)
+    if (dt > 0) {
+      scrollVelocity.current = (dy / dt) * 16
+    }
+
+    scrollLastTouchY.current = y
+    scrollLastTime.current = now
+
+    setScrollY(prev => clampScroll(prev + dy))
+  }, [clampScroll])
+
+  const handleScrollTouchEnd = useCallback(() => {
+    scrollTouchStartY.current = null
+    // Start momentum animation if we have velocity
+    if (Math.abs(scrollVelocity.current) > 0.5) {
+      scrollAnimFrame.current = requestAnimationFrame(animateMomentum)
+    }
+  }, [animateMomentum])
+
+  // Reset scroll when expansion level changes
+  useEffect(() => {
+    setScrollY(0)
+    scrollVelocity.current = 0
+  }, [expansionLevel])
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (scrollAnimFrame.current) cancelAnimationFrame(scrollAnimFrame.current)
+    }
+  }, [])
+
+  // =========================================================================
   // SWIPE GESTURE for week day row
   // =========================================================================
 
@@ -458,7 +563,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
   const TOOLTIP_TOP_INSET = 80
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
+    <div className="flex-1 flex flex-col overflow-hidden">
       {/* Spacer: push content below the floating tooltip */}
       <div style={{ height: TOOLTIP_TOP_INSET, flexShrink: 0 }} />
 
@@ -638,7 +743,7 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
 
       {isMonthView ? (
         /* ===== MONTH VIEW — Rebuilt from scratch matching iOS MonthGridView ===== */
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col overflow-hidden">
           {/* Sticky header: Month/Year label + separator + weekday labels — iOS VStack(spacing:0) */}
           <div style={{ padding: '0 20px' }}>
             {/* Month-Year title — iOS: OPSStyle.Typography.subtitle, leading aligned */}
@@ -661,12 +766,19 @@ export function MockCalendar({ phase, viewMode, onToggleMonth, userProject }: Mo
             </div>
           </div>
 
-          {/* Scrollable month grid — native overflow scroll */}
+          {/* Scrollable month grid — JS-driven scroll with momentum */}
           <div
-            className="flex-1 overflow-y-auto min-h-0"
+            ref={scrollRef}
+            className="flex-1 overflow-hidden min-h-0"
             style={{ padding: '0 20px' }}
+            onTouchStart={handleScrollTouchStart}
+            onTouchMove={handleScrollTouchMove}
+            onTouchEnd={handleScrollTouchEnd}
           >
-            <div>
+            <div
+              ref={scrollContentRef}
+              style={{ transform: `translateY(-${scrollY}px)`, willChange: 'transform' }}
+            >
             {/* Week rows */}
             {monthWeeks.map((week, weekIndex) => {
               const { spans, moreIndicators } = weekLayouts[weekIndex]
