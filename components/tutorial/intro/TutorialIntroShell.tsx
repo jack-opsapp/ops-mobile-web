@@ -15,6 +15,7 @@ export function TutorialIntroShell() {
   const [sequence, setSequence] = useState<SequenceState>('1')
   const [showBreakpoint1, setShowBreakpoint1] = useState(false)
   const [showBreakpoint2, setShowBreakpoint2] = useState(false)
+  const [showSequence2Back, setShowSequence2Back] = useState(false)
 
   // Sequence 1 completion → advance to 1B
   const handleSequence1Complete = () => {
@@ -30,6 +31,7 @@ export function TutorialIntroShell() {
   const handleBreakpoint1Continue = () => {
     setShowBreakpoint1(false)
     setSequence('2-setup')
+    setShowSequence2Back(true)
   }
 
   // Breakpoint 1: "Back" → replay from Sequence 1
@@ -40,7 +42,14 @@ export function TutorialIntroShell() {
 
   // Sequence 2 completion → show breakpoint 2
   const handleSequence2Complete = () => {
+    setShowSequence2Back(false)
     setShowBreakpoint2(true)
+  }
+
+  // Sequence 2 back button → return to Sequence 1
+  const handleSequence2Back = () => {
+    setShowSequence2Back(false)
+    setSequence('1')
   }
 
   // Breakpoint 2: "Begin Tutorial" → navigate to interactive tutorial
@@ -80,6 +89,14 @@ export function TutorialIntroShell() {
             variant="gotit"
             onContinue={handleBreakpoint1Continue}
             onBack={handleBreakpoint1Back}
+          />
+        )}
+
+        {showSequence2Back && (
+          <BreakpointButtons
+            variant="back-only"
+            onContinue={() => {}}
+            onBack={handleSequence2Back}
           />
         )}
 

@@ -14,14 +14,7 @@ const STATUS_ORDER = ['rfq', 'estimated', 'accepted', 'inProgress', 'completed',
 const STATUS_LABELS = OPSStyle.StatusLabels
 const STATUS_COLORS = OPSStyle.Colors.status
 
-// Bell curve timing (in milliseconds)
-const TRANSITION_DURATIONS = {
-  rfqToEstimated: 1800,
-  estimatedToAccepted: 1200,
-  acceptedToInProgress: 600,
-  inProgressToCompleted: 1200,
-  completedToClosed: 1800,
-}
+const UNIFORM_DURATION = 1200 // Same duration for all transitions
 
 export function Sequence2({ onComplete, initialState }: Sequence2Props) {
   const [currentStatusIndex, setCurrentStatusIndex] = useState(0)
@@ -29,7 +22,8 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
   const [isArchiving, setIsArchiving] = useState(false)
   const [hasReturnedFromArchive, setHasReturnedFromArchive] = useState(false)
   const [showArchiveLabel, setShowArchiveLabel] = useState(false)
-  const [textPhase, setTextPhase] = useState<'main' | 'archive'>('main')
+  const [showMainText, setShowMainText] = useState(false)
+  const [showArchiveText, setShowArchiveText] = useState(false)
 
   const currentStatus = STATUS_ORDER[currentStatusIndex]
   const folderColor = isArchiving && !hasReturnedFromArchive ? STATUS_COLORS.archived :
@@ -40,23 +34,20 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
     const timers: NodeJS.Timeout[] = []
     let cumulativeTime = 0
 
-    // Forward progression with bell curve timing
-    const transitions = [
-      TRANSITION_DURATIONS.rfqToEstimated,
-      TRANSITION_DURATIONS.estimatedToAccepted,
-      TRANSITION_DURATIONS.acceptedToInProgress,
-      TRANSITION_DURATIONS.inProgressToCompleted,
-      TRANSITION_DURATIONS.completedToClosed,
-    ]
+    // Show main text
+    timers.push(setTimeout(() => setShowMainText(true), 200))
+    cumulativeTime = 200
 
-    transitions.forEach((duration, index) => {
-      cumulativeTime += duration
+    // Forward progression with uniform timing
+    for (let i = 1; i <= 5; i++) {
+      cumulativeTime += UNIFORM_DURATION
+      const targetIndex = i
       timers.push(
         setTimeout(() => {
-          setCurrentStatusIndex(index + 1)
+          setCurrentStatusIndex(targetIndex)
         }, cumulativeTime)
       )
-    })
+    }
 
     // Hold on "Closed"
     cumulativeTime += 1000
@@ -87,33 +78,37 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
     // Hold on Estimated
     cumulativeTime += 1000
 
-    // Show archive text and label
+    // Hide main text, show archive text and label
     timers.push(
       setTimeout(() => {
-        setTextPhase('archive')
+        setShowMainText(false)
+        setShowArchiveText(true)
         setShowArchiveLabel(true)
       }, cumulativeTime)
     )
 
     // Start archiving
-    cumulativeTime += 500
+    cumulativeTime += 600
     timers.push(
       setTimeout(() => {
         setIsArchiving(true)
       }, cumulativeTime)
     )
 
+    // Hold on archive longer
+    cumulativeTime += 2000
+
     // Return from archive
-    cumulativeTime += 1500
     timers.push(
       setTimeout(() => {
         setHasReturnedFromArchive(true)
         setShowArchiveLabel(false)
+        setShowArchiveText(false)
       }, cumulativeTime)
     )
 
     // Complete
-    cumulativeTime += 800
+    cumulativeTime += 1000
     timers.push(
       setTimeout(() => {
         onComplete()
@@ -123,33 +118,26 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
     return () => timers.forEach(clearTimeout)
   }, [onComplete])
 
-  // Get transition duration based on current transition
+  // Calculate carousel offset (slides left as index increases)
+  // Each status is 250px wide to ensure proper spacing
+  const carouselOffset = -currentStatusIndex * 250
+
   const getTransitionDuration = () => {
     if (isReversing) return 0.15
-    const durations = [
-      TRANSITION_DURATIONS.rfqToEstimated,
-      TRANSITION_DURATIONS.estimatedToAccepted,
-      TRANSITION_DURATIONS.acceptedToInProgress,
-      TRANSITION_DURATIONS.inProgressToCompleted,
-      TRANSITION_DURATIONS.completedToClosed,
-    ]
-    return (durations[currentStatusIndex - 1] || 1200) / 1000 // Convert to seconds
+    return UNIFORM_DURATION / 1000 // Convert to seconds
   }
-
-  // Calculate carousel offset (slides left as index increases)
-  const carouselOffset = -currentStatusIndex * 200 // 200px spacing between items
 
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center">
-      {/* Text */}
-      <AnimatePresence mode="wait">
-        {textPhase === 'main' && (
+      {/* Main text */}
+      <AnimatePresence>
+        {showMainText && (
           <motion.div
             key="main-text"
             className="absolute top-24 left-0 right-0 text-center px-4"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
+            exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.4 }}
           >
             <p className="font-mohave font-medium text-[20px] md:text-[24px] uppercase tracking-wider text-white">
@@ -157,18 +145,21 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
             </p>
           </motion.div>
         )}
+      </AnimatePresence>
 
-        {textPhase === 'archive' && (
+      {/* Archive text */}
+      <AnimatePresence>
+        {showArchiveText && (
           <motion.div
             key="archive-text"
             className="absolute top-24 left-0 right-0 text-center px-4"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.4 }}
           >
             <p className="font-mohave font-medium text-[20px] md:text-[24px] uppercase tracking-wider text-white">
-              ARCHIVE PROJECTS THAT DON&apos;T MOVE FORWARD
+              <span style={{ color: STATUS_COLORS.archived }}>ARCHIVE</span> PROJECTS THAT DON&apos;T MOVE FORWARD
             </p>
           </motion.div>
         )}
@@ -177,20 +168,16 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
       {/* Status carousel - horizontal sliding */}
       {!isArchiving && (
         <div
-          className="absolute overflow-hidden"
+          className="absolute overflow-hidden flex items-center justify-center"
           style={{
             top: '35%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '100%',
-            maxWidth: '600px',
+            left: 0,
+            right: 0,
+            height: '60px',
           }}
         >
           <motion.div
-            className="flex items-center justify-start"
-            style={{
-              paddingLeft: '50%', // Start centered
-            }}
+            className="flex items-center"
             animate={{
               x: carouselOffset,
             }}
@@ -206,24 +193,24 @@ export function Sequence2({ onComplete, initialState }: Sequence2Props) {
               const isActive = index === currentStatusIndex
               const isPrev = index === currentStatusIndex - 1
               const isNext = index === currentStatusIndex + 1
+              const isVisible = isActive || isPrev || isNext
 
               return (
                 <motion.div
                   key={status}
                   className="flex-shrink-0 font-mohave font-medium uppercase tracking-wider text-center"
                   style={{
-                    width: 200,
-                    fontSize: isActive ? '24px' : '16px',
-                    color: isActive ? STATUS_COLORS[status] : '#FFFFFF',
-                    opacity: isActive ? 1 : isPrev || isNext ? 0.4 : 0,
+                    width: 250,
                   }}
                   animate={{
                     fontSize: isActive ? '24px' : '16px',
                     color: isActive ? STATUS_COLORS[status] : '#FFFFFF',
-                    opacity: isActive ? 1 : isPrev || isNext ? 0.4 : 0,
+                    opacity: isActive ? 1 : isVisible ? 0.4 : 0,
                   }}
                   transition={{
-                    duration: getTransitionDuration() * 0.8,
+                    fontSize: { duration: getTransitionDuration() * 0.6 },
+                    color: { duration: 0.1 }, // Instant color change
+                    opacity: { duration: getTransitionDuration() * 0.8 },
                   }}
                 >
                   {STATUS_LABELS[status]}

@@ -26,35 +26,42 @@ const SAMPLE_TASKS = [
 
 export function Sequence1B({ onComplete }: Sequence1BProps) {
   const [activeTask, setActiveTask] = useState<number | null>(null)
+  const [showDetails, setShowDetails] = useState<number | null>(null)
   const [collapsing, setCollapsing] = useState(false)
   const [textVisible, setTextVisible] = useState(false)
 
   useEffect(() => {
     const timers: NodeJS.Timeout[] = []
 
-    // Task 1: select
+    // Show text at start
+    timers.push(setTimeout(() => setTextVisible(true), 200))
+
+    // Task 1: select, show details, hide details, deselect
     timers.push(setTimeout(() => setActiveTask(0), 500))
-    // Task 1: deselect
-    timers.push(setTimeout(() => setActiveTask(null), 2500))
+    timers.push(setTimeout(() => setShowDetails(0), 700))
+    timers.push(setTimeout(() => setShowDetails(null), 2200))
+    timers.push(setTimeout(() => setActiveTask(null), 2400))
 
-    // Task 2: select
-    timers.push(setTimeout(() => setActiveTask(1), 3000))
-    // Task 2: deselect
-    timers.push(setTimeout(() => setActiveTask(null), 5000))
+    // Task 2: select, show details, hide details, deselect
+    timers.push(setTimeout(() => setActiveTask(1), 2900))
+    timers.push(setTimeout(() => setShowDetails(1), 3100))
+    timers.push(setTimeout(() => setShowDetails(null), 4600))
+    timers.push(setTimeout(() => setActiveTask(null), 4800))
 
-    // Task 3: select
-    timers.push(setTimeout(() => setActiveTask(2), 5500))
-    // Task 3: deselect
-    timers.push(setTimeout(() => setActiveTask(null), 7500))
+    // Task 3: select, show details, hide details, deselect
+    timers.push(setTimeout(() => setActiveTask(2), 5300))
+    timers.push(setTimeout(() => setShowDetails(2), 5500))
+    timers.push(setTimeout(() => setShowDetails(null), 7000))
+    timers.push(setTimeout(() => setActiveTask(null), 7200))
 
-    // Brief hold, then text appears
-    timers.push(setTimeout(() => setTextVisible(true), 8000))
+    // Hide text before collapse
+    timers.push(setTimeout(() => setTextVisible(false), 7500))
 
     // Collapse tasks back into folder
-    timers.push(setTimeout(() => setCollapsing(true), 9500))
+    timers.push(setTimeout(() => setCollapsing(true), 7800))
 
     // Complete sequence
-    timers.push(setTimeout(() => onComplete(), 11000))
+    timers.push(setTimeout(() => onComplete(), 9500))
 
     return () => timers.forEach(clearTimeout)
   }, [onComplete])
@@ -70,10 +77,10 @@ export function Sequence1B({ onComplete }: Sequence1BProps) {
       <AnimatePresence>
         {textVisible && (
           <motion.div
-            className="absolute top-24 left-0 right-0 text-center"
+            className="absolute top-24 left-0 right-0 text-center px-4"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.4 }}
           >
             <p className="font-mohave font-medium text-[20px] md:text-[24px] uppercase tracking-wider text-white">
@@ -85,17 +92,18 @@ export function Sequence1B({ onComplete }: Sequence1BProps) {
 
       {/* Task folders with details */}
       <div
-        className="absolute flex flex-col items-start gap-6"
-        style={{ top: '20%', left: '50%', transform: 'translateX(-50%)' }}
+        className="absolute flex flex-col items-start gap-8"
+        style={{ top: '15%', left: '35%' }}
       >
         {SAMPLE_TASKS.map((task, index) => (
           <motion.div
             key={index}
             className="relative flex items-center"
-            initial={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 1, y: 0, x: 0 }}
             animate={{
               opacity: collapsing ? 0 : 1,
-              y: collapsing ? 100 : 0,
+              y: collapsing ? 150 : 0,
+              x: activeTask === index ? -20 : 0,
             }}
             transition={{
               delay: collapsing ? index * 0.15 : 0,
@@ -109,16 +117,16 @@ export function Sequence1B({ onComplete }: Sequence1BProps) {
               <TaskFolder color={getTaskColor(index)} isActive={activeTask === index} />
             </div>
 
-            {/* Task details (appear when active) - absolutely positioned to avoid layout shift */}
+            {/* Task details (slide out from folder when active) - absolutely positioned */}
             <AnimatePresence>
-              {activeTask === index && (
+              {showDetails === index && (
                 <motion.div
-                  className="absolute flex items-center gap-4"
-                  style={{ left: 80, color: task.color }}
-                  initial={{ opacity: 0, x: -10 }}
+                  className="absolute flex items-center gap-4 whitespace-nowrap"
+                  style={{ left: 60, color: task.color }}
+                  initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  transition={{ duration: 0.3 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ type: 'spring', stiffness: 180, damping: 20 }}
                 >
                   {/* Task label */}
                   <span className="font-mohave font-medium text-[18px] uppercase tracking-wide">

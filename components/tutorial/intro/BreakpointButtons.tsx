@@ -3,14 +3,15 @@
 import { motion } from 'framer-motion'
 
 interface BreakpointButtonsProps {
-  variant: 'gotit' | 'begin'
+  variant: 'gotit' | 'begin' | 'back-only'
   onContinue: () => void
   onBack: () => void
 }
 
 export function BreakpointButtons({ variant, onContinue, onBack }: BreakpointButtonsProps) {
   const continueLabel = variant === 'gotit' ? 'GOT IT' : 'BEGIN TUTORIAL'
-  const backLabel = variant === 'gotit' ? 'BACK' : 'SKIP'
+  const backLabel = variant === 'gotit' ? 'BACK' : variant === 'begin' ? 'SKIP' : 'BACK'
+  const showContinue = variant !== 'back-only'
 
   return (
     <motion.div
@@ -22,12 +23,14 @@ export function BreakpointButtons({ variant, onContinue, onBack }: BreakpointBut
       style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
     >
       {/* Continue button */}
-      <button
-        onClick={onContinue}
-        className="font-mohave font-medium text-[16px] uppercase tracking-wider text-white px-8 py-3 border-2 border-white rounded-[5px] transition-all hover:bg-white hover:text-black"
-      >
-        {continueLabel}
-      </button>
+      {showContinue && (
+        <button
+          onClick={onContinue}
+          className="font-mohave font-medium text-[16px] uppercase tracking-wider text-white px-8 py-3 border-2 border-white rounded-[5px] transition-all hover:bg-white hover:text-black"
+        >
+          {continueLabel}
+        </button>
+      )}
 
       {/* Back/Skip button */}
       <button

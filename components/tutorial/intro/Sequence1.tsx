@@ -62,8 +62,8 @@ export function Sequence1({ onComplete }: Sequence1Props) {
       <AnimatePresence>
         {tasksVisible && (
           <motion.div
-            className="absolute flex flex-col items-start gap-6"
-            style={{ top: '20%', left: '50%', transform: 'translateX(-50%)' }}
+            className="absolute flex flex-col items-start gap-8"
+            style={{ top: '15%', left: '35%' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
